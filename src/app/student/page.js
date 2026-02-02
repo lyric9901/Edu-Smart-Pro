@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, Suspense } from "react"; // 1. Added Suspense
 import { useRouter, useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { ref, get, onValue } from "firebase/database";
@@ -22,7 +22,8 @@ const pageVariants = {
   exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.2 } }
 };
 
-export default function StudentPortal() {
+// --- 2. RENAME MAIN FUNCTION TO 'StudentContent' ---
+function StudentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -112,11 +113,9 @@ export default function StudentPortal() {
         }
       });
 
-      // Only update state if data ACTUALLY changed to prevent infinite re-renders
       if (updatedData) {
         setStudents(prev => {
             const currentData = prev[activeStudentIndex];
-            // Compare stringified versions to detect deep changes
             if (JSON.stringify(currentData) !== JSON.stringify(updatedData)) {
                 const newStudents = [...prev];
                 newStudents[activeStudentIndex] = updatedData;
@@ -132,7 +131,7 @@ export default function StudentPortal() {
       unsubNotices();
       unsubBatches();
     };
-  }, [studentSchoolId, studentName, studentPhone, activeStudentIndex]); // Stable dependencies
+  }, [studentSchoolId, studentName, studentPhone, activeStudentIndex]);
 
 
   // --- ACTIONS ---
@@ -149,7 +148,6 @@ export default function StudentPortal() {
       const schoolId = currentStudent?.schoolId;
       localStorage.removeItem("eduSmartStudentsList");
       localStorage.removeItem("eduSmartStudent");
-      // Use window.location to force full reload and clear any in-memory states
       window.location.href = `/?schoolId=${schoolId}`;
     }
   };
@@ -181,7 +179,6 @@ export default function StudentPortal() {
       }
 
       if (found) {
-        // Prevent duplicate child
         if (students.some(s => s.name === found.name && s.phone === found.phone)) {
             setAddError("Student already added.");
             return;
@@ -209,7 +206,6 @@ export default function StudentPortal() {
     const currentYear = new Date().getFullYear();
     const feePaid = Object.values(currentStudent.fees?.[currentYear] || {}).filter(v => v === "paid").length;
     
-    // Streak Logic
     let streak = 0;
     const sortedDates = Object.keys(currentStudent.attendance || {}).sort((a,b) => new Date(b) - new Date(a));
     for (let date of sortedDates) {
@@ -217,7 +213,6 @@ export default function StudentPortal() {
         else break; 
     }
 
-    // Monthly Data
     const monthlyData = [0,0,0,0,0,0];
     const monthLabels = [];
     for(let i=5; i>=0; i--) {
@@ -400,7 +395,6 @@ export default function StudentPortal() {
                             
                             {Array.from({ length: new Date(viewDate.getFullYear(), viewDate.getMonth() + 1, 0).getDate() }).map((_, i) => {
                                 const day = i + 1;
-                                // Convert JS Date to YYYY-MM-DD
                                 const y = viewDate.getFullYear();
                                 const m = String(viewDate.getMonth() + 1).padStart(2, '0');
                                 const dStr = String(day).padStart(2, '0');
@@ -444,7 +438,7 @@ export default function StudentPortal() {
                 </motion.div>
             )}
 
-            {/* 4. NOTICES (Full List) */}
+            {/* 4. NOTICES */}
             {activeTab === 'notices' && (
                 <motion.div key="notices" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4">
                     <h2 className="text-2xl font-bold px-2">Inbox</h2>
@@ -470,7 +464,7 @@ export default function StudentPortal() {
                 </motion.div>
             )}
 
-            {/* 5. ANALYTICS (Full Stats) */}
+            {/* 5. ANALYTICS */}
             {activeTab === 'analytics' && (
                 <motion.div key="analytics" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="space-y-6">
                     <h2 className="text-2xl font-bold px-2">Analytics</h2>
@@ -495,7 +489,7 @@ export default function StudentPortal() {
                 </motion.div>
             )}
 
-            {/* 6. TIMING VIEW (NEW) */}
+            {/* 6. TIMING VIEW */}
             {activeTab === 'timing' && (
                 <motion.div key="timing" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="flex flex-col items-center justify-center min-h-[50vh]">
                         <div className="w-32 h-32 bg-white dark:bg-zinc-900 border-4 border-purple-100 dark:border-purple-900/30 text-purple-600 rounded-full flex items-center justify-center mb-8 shadow-xl">
@@ -583,5 +577,14 @@ export default function StudentPortal() {
       </AnimatePresence>
 
     </div>
+  );
+}
+
+// --- 3. WRAPPER FOR SUSPENSE (Required for build) ---
+export default function StudentPortalPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center text-slate-400 font-bold bg-slate-50 dark:bg-black">Loading Portal...</div>}>
+      <StudentContent />
+    </Suspense>
   );
 }
