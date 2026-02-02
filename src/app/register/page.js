@@ -1,260 +1,259 @@
 "use client";
-import { useState } from "react";
+export const dynamic = "force-dynamic";
+
+import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { ref, update } from "firebase/database";
+import { ref, onValue, remove, update } from "firebase/database";
+import { ShieldAlert, Trash2, Key, Search, RefreshCw, LogOut, ArrowLeft, Eye, EyeOff, Edit, X, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
-import { 
-  Building2, User, Phone, Lock, CheckCircle2, Copy, 
-  TrendingUp, ShieldCheck, Clock, IndianRupee, Star, ChevronRight, FileText, LockKeyhole
-} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
-// --- ANIMATIONS ---
-const fadeInUp = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
-};
-
-const stagger = {
-  visible: { transition: { staggerChildren: 0.1 } }
-};
-
-export default function Register() {
+export default function SuperAdmin() {
   const router = useRouter();
-  const [form, setForm] = useState({ name: "", owner: "", phone: "", username: "", password: "" });
-  const [loading, setLoading] = useState(false);
-  const [magicLink, setMagicLink] = useState("");
+  const [schools, setSchools] = useState({}); 
+  const [admins, setAdmins] = useState({});   
+  const [combinedData, setCombinedData] = useState([]);
+  
+  const [masterKey, setMasterKey] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [search, setSearch] = useState("");
+  const [isClient, setIsClient] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({});
 
-  const handleRegister = async (e) => {
+  // --- MODAL STATES ---
+  const [editingSchool, setEditingSchool] = useState(null); // For General Info
+  const [resettingPassword, setResettingPassword] = useState(null); // For Password
+  
+  // --- FORMS ---
+  const [editForm, setEditForm] = useState({ name: "", owner: "", phone: "" });
+  const [passForm, setPassForm] = useState("");
+
+  // 1. INITIALIZE
+  useEffect(() => {
+    setIsClient(true);
+    const storedAuth = localStorage.getItem("superAdminAuth");
+    if (storedAuth === "true") setIsAuthenticated(true);
+  }, []);
+
+  // 2. AUTH
+  const handleLogin = (e) => {
     e.preventDefault();
-    setLoading(true);
-
-    const schoolId = Date.now().toString(); // Simple Unique ID
-    const updates = {};
-    
-    // Create Admin
-    updates[`admins/${form.username}`] = { 
-        password: form.password, 
-        schoolId: schoolId,
-        role: "admin"
-    };
-    
-    // Create School Profile
-    updates[`schools/${schoolId}/info`] = {
-        name: form.name,
-        owner: form.owner,
-        phone: form.phone,
-        plan: "premium", 
-        createdAt: Date.now()
-    };
-
-    try {
-        await update(ref(db), updates);
-        
-        // --- FIXED LINK GENERATION ---
-        // Old (Wrong): .../login?schoolId=...
-        // New (Correct): .../?schoolId=... (Points to Root Page)
-        const link = `${window.location.origin}/?schoolId=${schoolId}`;
-        setMagicLink(link);
-    } catch (error) {
-        alert("Registration Failed: " + error.message);
+    const secret = process.env.NEXT_PUBLIC_SUPER_ADMIN_KEY || "998357"; 
+    if (masterKey === secret) {
+      setIsAuthenticated(true);
+      localStorage.setItem("superAdminAuth", "true");
+    } else {
+      alert("Invalid Master Key");
     }
-    setLoading(false);
   };
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(magicLink);
-    alert("Magic Link Copied! Send this to your students.");
+  const handleLogout = () => {
+      if(confirm("Logout?")) {
+        setIsAuthenticated(false);
+        localStorage.removeItem("superAdminAuth");
+      }
   };
 
-  // --- SUCCESS VIEW ---
-  if (magicLink) {
+  // 3. FETCH DATA
+  useEffect(() => {
+    if (isAuthenticated) {
+      const unsubSchools = onValue(ref(db, "schools"), (snap) => setSchools(snap.val() || {}));
+      const unsubAdmins = onValue(ref(db, "admins"), (snap) => setAdmins(snap.val() || {}));
+      return () => { unsubSchools(); unsubAdmins(); };
+    }
+  }, [isAuthenticated]);
+
+  // 4. COMBINE DATA
+  useEffect(() => {
+    if (schools) {
+      const list = Object.entries(schools).map(([id, val]) => {
+        const adminEntry = Object.entries(admins || {}).find(([_, v]) => v.schoolId === id);
+        return {
+          id,
+          ...val.info,
+          username: adminEntry ? adminEntry[0] : null,
+          password: adminEntry ? adminEntry[1].password : null
+        };
+      });
+      list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setCombinedData(list);
+    }
+  }, [schools, admins]);
+
+  // --- ACTIONS ---
+
+  // A. DELETE SCHOOL
+  const deleteSchool = async (schoolId, schoolName, username) => {
+    if (confirm(`⚠️ PERMANENTLY DELETE "${schoolName}"?\n\nThis will remove all students, fees, and login access.`)) {
+        await remove(ref(db, `schools/${schoolId}`));
+        if (username) await remove(ref(db, `admins/${username}`));
+        alert("Deleted successfully.");
+    }
+  };
+
+  // B. EDIT SCHOOL INFO
+  const openEditModal = (school) => {
+      setEditingSchool(school);
+      setEditForm({ name: school.name, owner: school.owner, phone: school.phone });
+  };
+
+  const saveSchoolInfo = async () => {
+      if(!editingSchool) return;
+      await update(ref(db, `schools/${editingSchool.id}/info`), {
+          name: editForm.name,
+          owner: editForm.owner,
+          phone: editForm.phone
+      });
+      setEditingSchool(null);
+  };
+
+  // C. CHANGE PASSWORD
+  const openPassModal = (school) => {
+      setResettingPassword(school);
+      setPassForm(""); // Reset input
+  };
+
+  const saveNewPassword = async () => {
+      if(!resettingPassword || !resettingPassword.username || !passForm.trim()) return;
+      await update(ref(db, `admins/${resettingPassword.username}`), {
+          password: passForm.trim()
+      });
+      setResettingPassword(null);
+      alert("Password updated!");
+  };
+
+  const togglePassword = (id) => {
+    setShowPasswords(prev => ({ ...prev, [id]: !prev[id] }));
+  };
+
+  if (!isClient) return null; 
+
+  // --- LOGIN UI ---
+  if (!isAuthenticated) {
     return (
-        <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-6">
-            <motion.div 
-                initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
-                className="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border border-green-100"
-            >
-                <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <CheckCircle2 className="text-green-600 w-10 h-10" />
-                </div>
-                <h1 className="text-3xl font-black text-gray-900 mb-2">Registration Successful!</h1>
-                <p className="text-gray-500 mb-8 font-medium">Congratulations! Your coaching is now online.</p>
-                
-                <div className="bg-slate-50 p-5 rounded-2xl border border-slate-200 text-left mb-6 relative overflow-hidden">
-                    <div className="absolute top-0 right-0 bg-yellow-400 text-[10px] font-bold px-2 py-1 rounded-bl-lg">ADMIN ACCESS</div>
-                    <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Your Magic Link</label>
-                    <div className="flex gap-3 items-center mt-2">
-                        <code className="flex-1 bg-white p-3 rounded-xl border border-slate-200 text-sm font-mono text-slate-600 overflow-hidden text-ellipsis whitespace-nowrap">
-                            {magicLink}
-                        </code>
-                        <button onClick={copyLink} className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-200">
-                            <Copy size={18}/>
-                        </button>
-                    </div>
-                    <p className="text-xs text-slate-500 mt-3 flex items-center gap-1">
-                        <ShieldCheck size={12} className="text-green-600"/> Save this link safely. It's your key.
-                    </p>
-                </div>
-
-                <button onClick={() => router.push(magicLink.replace(window.location.origin, ""))} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:scale-[1.02] transition shadow-xl">
-                    Go to Login Portal
-                </button>
-            </motion.div>
+        <div className="min-h-screen bg-black flex items-center justify-center p-4">
+            <form onSubmit={handleLogin} className="bg-zinc-900 p-8 rounded-3xl border border-zinc-800 text-center w-full max-w-sm">
+                <ShieldAlert className="text-red-500 mx-auto mb-4" size={40} />
+                <h1 className="text-xl font-bold text-white mb-6">Restricted Area</h1>
+                <input type="password" placeholder="Master Key" className="w-full bg-black border border-zinc-700 p-3 rounded-xl text-white mb-4 text-center" onChange={e => setMasterKey(e.target.value)} />
+                <button className="w-full bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700">Unlock</button>
+            </form>
         </div>
     );
   }
 
-  // --- REGISTRATION VIEW ---
+  const filteredSchools = combinedData.filter(s => 
+    (s.name?.toLowerCase() || "").includes(search.toLowerCase()) || 
+    (s.owner?.toLowerCase() || "").includes(search.toLowerCase())
+  );
+
   return (
-    <div className="min-h-screen bg-slate-50 lg:flex overflow-hidden">
-      
-      {/* LEFT SIDE: SALES PITCH */}
-      <motion.div 
-        initial="hidden" animate="visible" variants={stagger}
-        className="lg:w-1/2 p-8 lg:p-16 bg-blue-600 text-white flex flex-col justify-center relative overflow-hidden"
-      >
-        <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
-        <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-900/30 rounded-full blur-3xl -ml-10 -mb-10"></div>
-
-        <motion.div variants={fadeInUp} className="relative z-10">
-            <span className="bg-yellow-400 text-blue-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block shadow-lg">
-                Lucknow's #1 Coaching App
-            </span>
-            <h1 className="text-4xl lg:text-6xl font-black mb-6 leading-tight">
-                Ab Coaching Chalegi <br/> <span className="text-yellow-300">Digital.</span>
-            </h1>
-            <p className="text-blue-100 text-lg mb-10 max-w-md leading-relaxed">
-                Attendance register aur fees ki notebook ko bolo bye-bye. Manage everything from your phone. **Bas 2 min mein setup.**
-            </p>
-
-            <div className="grid gap-6 mb-12">
-                {[
-                    { icon: <Clock size={24}/>, title: "Save 10+ Hours/Week", desc: "Auto-attendance & instant reports." },
-                    { icon: <IndianRupee size={24}/>, title: "100% Fees Recovery", desc: "Auto-reminders on WhatsApp." },
-                    { icon: <TrendingUp size={24}/>, title: "Grow Your Brand", desc: "Professional app for students & parents." }
-                ].map((item, i) => (
-                    <div key={i} className="flex gap-4 items-start">
-                        <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
-                            {item.icon}
-                        </div>
-                        <div>
-                            <h3 className="font-bold text-lg">{item.title}</h3>
-                            <p className="text-blue-200 text-sm">{item.desc}</p>
-                        </div>
-                    </div>
-                ))}
-            </div>
-
-            <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 relative">
-                <div className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md animate-bounce">
-                    70% OFF TILL FEB 31
-                </div>
-                <div className="flex justify-between items-end">
-                    <div>
-                        <p className="text-blue-200 text-sm font-medium mb-1">Lifetime Premium Access</p>
-                        <div className="flex items-center gap-3">
-                            <span className="text-4xl font-black text-white">₹199</span>
-                            <span className="text-lg text-blue-300 line-through decoration-red-400 decoration-2">₹599</span>
-                        </div>
-                    </div>
-                    <div className="text-right">
-                        <div className="flex text-yellow-400 mb-1">
-                            {[1,2,3,4,5].map(s => <Star key={s} size={14} fill="currentColor"/>)}
-                        </div>
-                        <p className="text-xs text-blue-200">20+ Happy Tutors in UP - 2025</p>
-                    </div>
+    <div className="min-h-screen bg-zinc-950 text-white p-6 font-sans relative">
+        <div className="max-w-7xl mx-auto">
+            {/* Header */}
+            <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-6">
+                <h1 className="text-2xl font-black flex items-center gap-3 text-red-500"><ShieldAlert/> Super Admin</h1>
+                <div className="flex gap-3">
+                    <button onClick={() => router.push('/')} className="bg-zinc-900 px-4 py-2 rounded-lg text-sm font-bold">Home</button>
+                    <button onClick={handleLogout} className="bg-red-900/20 text-red-400 px-4 py-2 rounded-lg text-sm font-bold">Logout</button>
                 </div>
             </div>
-        </motion.div>
-      </motion.div>
 
-      {/* RIGHT SIDE: FORM */}
-      <div className="lg:w-1/2 p-4 lg:p-12 flex flex-col items-center justify-center bg-white h-full overflow-y-auto">
-        <motion.div 
-            initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-            className="w-full max-w-md space-y-8 my-auto"
-        >
-            <div className="text-center lg:text-left">
-                <h2 className="text-3xl font-black text-slate-900">Get Started</h2>
-                <p className="text-slate-500 mt-2">Join the digital revolution. Create your account.</p>
+            {/* Search */}
+            <div className="flex gap-3 mb-6">
+                <div className="relative flex-1">
+                    <Search className="absolute left-4 top-3.5 text-zinc-600" size={18} />
+                    <input placeholder="Search..." className="w-full bg-zinc-900 border border-zinc-800 pl-12 p-3 rounded-xl text-sm text-white focus:border-blue-500 outline-none" onChange={e => setSearch(e.target.value)} />
+                </div>
             </div>
 
-            <form onSubmit={handleRegister} className="space-y-5">
-                
-                {/* Coaching Details */}
-                <div className="space-y-4">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Institute Details</p>
-                    <div className="bg-slate-50 border border-slate-200 rounded-2xl p-1 flex items-center focus-within:ring-2 ring-blue-500 transition-all">
-                        <div className="p-3 text-slate-400"><Building2 size={20}/></div>
-                        <input required placeholder="Coaching Name (e.g. Toppers Academy)" className="bg-transparent w-full outline-none text-slate-800 font-medium placeholder:font-normal" onChange={e => setForm({...form, name: e.target.value})} />
-                    </div>
-                    <div className="flex gap-4">
-                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-1 flex items-center focus-within:ring-2 ring-blue-500 transition-all w-1/2">
-                            <div className="p-3 text-slate-400"><User size={20}/></div>
-                            <input required placeholder="Owner Name" className="bg-transparent w-full outline-none text-slate-800 font-medium" onChange={e => setForm({...form, owner: e.target.value})} />
-                        </div>
-                        <div className="bg-slate-50 border border-slate-200 rounded-2xl p-1 flex items-center focus-within:ring-2 ring-blue-500 transition-all w-1/2">
-                            <div className="p-3 text-slate-400"><Phone size={20}/></div>
-                            <input required placeholder="Mobile" type="tel" className="bg-transparent w-full outline-none text-slate-800 font-medium" onChange={e => setForm({...form, phone: e.target.value})} />
-                        </div>
-                    </div>
+            {/* Table */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+                <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-zinc-950 text-zinc-500 font-bold uppercase text-xs">
+                            <tr>
+                                <th className="p-5">Coaching</th>
+                                <th className="p-5">Credentials</th>
+                                <th className="p-5 text-right">Controls</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-zinc-800/50">
+                            {filteredSchools.map((school) => (
+                                <tr key={school.id} className="hover:bg-zinc-800/30">
+                                    <td className="p-5">
+                                        <div className="font-bold text-lg text-white">{school.name}</div>
+                                        <div className="text-zinc-500">{school.owner} • {school.phone}</div>
+                                    </td>
+                                    <td className="p-5">
+                                        {school.username ? (
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2"><span className="text-zinc-500 text-xs w-8">ID:</span> <span className="text-blue-400 font-mono">{school.username}</span></div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-zinc-500 text-xs w-8">PW:</span> 
+                                                    <span className="text-zinc-300 font-mono">{showPasswords[school.id] ? school.password : "••••••"}</span>
+                                                    <button onClick={() => togglePassword(school.id)} className="text-zinc-600 hover:text-white"><Eye size={14}/></button>
+                                                </div>
+                                            </div>
+                                        ) : <span className="text-red-500 text-xs font-bold">No Admin</span>}
+                                    </td>
+                                    <td className="p-5 text-right">
+                                        <div className="flex justify-end gap-2">
+                                            <button onClick={() => openEditModal(school)} className="p-2 bg-blue-900/20 text-blue-400 rounded-lg hover:bg-blue-900/40" title="Edit Info"><Edit size={18}/></button>
+                                            <button onClick={() => openPassModal(school)} className="p-2 bg-yellow-900/20 text-yellow-400 rounded-lg hover:bg-yellow-900/40" title="Change Password"><Key size={18}/></button>
+                                            <button onClick={() => deleteSchool(school.id, school.name, school.username)} className="p-2 bg-red-900/20 text-red-400 rounded-lg hover:bg-red-900/40" title="Delete"><Trash2 size={18}/></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
                 </div>
+            </div>
+        </div>
 
-                {/* Login Credentials */}
-                <div className="space-y-4 pt-2">
-                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Create Login</p>
-                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-1 flex items-center focus-within:ring-2 ring-blue-500 transition-all">
-                        <div className="p-3 text-blue-500"><User size={20}/></div>
-                        <input required placeholder="Choose Username (e.g. shani123)" className="bg-transparent w-full outline-none text-slate-800 font-bold placeholder:font-normal placeholder:text-blue-300" onChange={e => setForm({...form, username: e.target.value})} />
+        {/* --- EDIT MODAL --- */}
+        <AnimatePresence>
+        {editingSchool && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-zinc-900 border border-zinc-800 w-full max-w-md p-6 rounded-2xl shadow-2xl">
+                    <h3 className="text-xl font-bold mb-4">Edit Coaching Details</h3>
+                    <div className="space-y-3">
+                        <input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} placeholder="Coaching Name" className="w-full bg-black border border-zinc-700 p-3 rounded-xl text-white outline-none focus:border-blue-500" />
+                        <input value={editForm.owner} onChange={e => setEditForm({...editForm, owner: e.target.value})} placeholder="Owner Name" className="w-full bg-black border border-zinc-700 p-3 rounded-xl text-white outline-none focus:border-blue-500" />
+                        <input value={editForm.phone} onChange={e => setEditForm({...editForm, phone: e.target.value})} placeholder="Phone" className="w-full bg-black border border-zinc-700 p-3 rounded-xl text-white outline-none focus:border-blue-500" />
                     </div>
-                    <div className="bg-blue-50 border border-blue-100 rounded-2xl p-1 flex items-center focus-within:ring-2 ring-blue-500 transition-all">
-                        <div className="p-3 text-blue-500"><Lock size={20}/></div>
-                        <input required type="password" placeholder="Set Password" className="bg-transparent w-full outline-none text-slate-800 font-bold placeholder:font-normal placeholder:text-blue-300" onChange={e => setForm({...form, password: e.target.value})} />
+                    <div className="flex gap-3 mt-6">
+                        <button onClick={() => setEditingSchool(null)} className="flex-1 py-3 bg-zinc-800 rounded-xl font-bold text-zinc-400 hover:bg-zinc-700">Cancel</button>
+                        <button onClick={saveSchoolInfo} className="flex-1 py-3 bg-blue-600 rounded-xl font-bold text-white hover:bg-blue-700 flex items-center justify-center gap-2"><Save size={18}/> Save</button>
                     </div>
-                </div>
+                </motion.div>
+            </motion.div>
+        )}
+        </AnimatePresence>
 
-                <div className="pt-4">
-                    <button disabled={loading} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-slate-200 hover:scale-[1.02] active:scale-95 transition-all flex justify-center items-center gap-2">
-                        {loading ? (
-                            <span className="animate-pulse">Creating Account...</span>
-                        ) : (
-                            <>Claim Offer & Register <ChevronRight size={20} strokeWidth={3}/></>
-                        )}
-                    </button>
-                    <p className="text-center text-xs text-slate-400 mt-4">
-                        By registering, you agree to our Terms & "Paisa Vasool" Policy.
-                    </p>
-                </div>
-            </form>
-
- {/* --- UPDATED FOOTER SECTION --- */}
-<footer className="mt-10 border-t border-slate-100 pt-6">
-    <div className="flex flex-wrap justify-center gap-4 text-xs font-medium text-slate-400 mb-4">
-        {/* Use Link component for faster navigation */}
-        <a href="/legal/privacy" className="flex items-center gap-1 hover:text-slate-600 transition">
-            <ShieldCheck size={14}/> Privacy Policy
-        </a>
-        <span>•</span>
-        <a href="/legal/refund" className="flex items-center gap-1 hover:text-slate-600 transition">
-            <IndianRupee size={14}/> Refund Policy
-        </a>
-        <span>•</span>
-        <a href="/legal/terms" className="flex items-center gap-1 hover:text-slate-600 transition">
-            <FileText size={14}/> Terms of Service
-        </a>
-    </div>
-    <div className="text-center">
-        <p className="text-[10px] text-slate-300 uppercase tracking-widest flex items-center justify-center gap-1">
-            <LockKeyhole size={10}/> 100% Secure & Encrypted
-        </p>
-        <p className="text-[10px] text-slate-300 mt-1">© 2026 EduSmart India.</p>
-    </div>
-</footer>
-
-        </motion.div>
-      </div>
-
+        {/* --- PASSWORD MODAL --- */}
+        <AnimatePresence>
+        {resettingPassword && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-zinc-900 border border-zinc-800 w-full max-w-md p-6 rounded-2xl shadow-2xl">
+                    <h3 className="text-xl font-bold mb-2">Reset Password</h3>
+                    <p className="text-zinc-500 text-sm mb-4">New password for <strong>{resettingPassword.username}</strong></p>
+                    <input 
+                        type="text" 
+                        value={passForm} 
+                        onChange={e => setPassForm(e.target.value)} 
+                        placeholder="Enter New Password" 
+                        className="w-full bg-black border border-zinc-700 p-3 rounded-xl text-white outline-none focus:border-yellow-500 font-mono text-center tracking-widest text-lg" 
+                    />
+                    <div className="flex gap-3 mt-6">
+                        <button onClick={() => setResettingPassword(null)} className="flex-1 py-3 bg-zinc-800 rounded-xl font-bold text-zinc-400 hover:bg-zinc-700">Cancel</button>
+                        <button onClick={saveNewPassword} className="flex-1 py-3 bg-yellow-600 rounded-xl font-bold text-black hover:bg-yellow-500 flex items-center justify-center gap-2"><Key size={18}/> Update</button>
+                    </div>
+                </motion.div>
+            </motion.div>
+        )}
+        </AnimatePresence>
     </div>
   );
 }
