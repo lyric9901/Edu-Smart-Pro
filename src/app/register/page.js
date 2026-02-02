@@ -51,12 +51,10 @@ export default function Register() {
     try {
         await update(ref(db), updates);
         
-        // --- OPTIONAL: Trigger n8n Webhook Here ---
-        // await fetch('https://your-n8n-instance.com/webhook/new-school', { 
-        //   method: 'POST', body: JSON.stringify({ ...form, schoolId }) 
-        // });
-
-        const link = `${window.location.origin}/login?schoolId=${schoolId}`;
+        // --- FIXED LINK GENERATION ---
+        // Old (Wrong): .../login?schoolId=...
+        // New (Correct): .../?schoolId=... (Points to Root Page)
+        const link = `${window.location.origin}/?schoolId=${schoolId}`;
         setMagicLink(link);
     } catch (error) {
         alert("Registration Failed: " + error.message);
@@ -100,7 +98,7 @@ export default function Register() {
                 </div>
 
                 <button onClick={() => router.push(magicLink.replace(window.location.origin, ""))} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:scale-[1.02] transition shadow-xl">
-                    Go to Dashboard
+                    Go to Login Portal
                 </button>
             </motion.div>
         </div>
