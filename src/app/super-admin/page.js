@@ -4,7 +4,7 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { ref, onValue, remove } from "firebase/database";
-import { ShieldAlert, Trash2, Key, Search, RefreshCw, LogOut, ArrowLeft } from "lucide-react";
+import { ShieldAlert, Trash2, Key, Search, RefreshCw, LogOut, ArrowLeft, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function SuperAdmin() {
@@ -13,21 +13,40 @@ export default function SuperAdmin() {
   const [masterKey, setMasterKey] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [search, setSearch] = useState("");
+  const [isClient, setIsClient] = useState(false); // To avoid hydration mismatch
 
-  // 1. AUTH CHECK (ENV VAR)
+  // 1. INITIALIZE & CHECK SESSION
+  useEffect(() => {
+    setIsClient(true);
+    const storedAuth = localStorage.getItem("superAdminAuth");
+    if (storedAuth === "true") {
+        setIsAuthenticated(true);
+    }
+  }, []);
+
+  // 2. HANDLE LOGIN
   const handleLogin = (e) => {
     e.preventDefault();
-    // Access secret from Vercel Environment Variables
-    const secret = process.nextTick.NEXT_PUBLIC_SUPER_ADMIN_KEY || "998357"; 
+    // In Vercel, set NEXT_PUBLIC_SUPER_ADMIN_KEY in Environment Variables
+    const secret = process.env.NEXT_PUBLIC_SUPER_ADMIN_KEY || "998357"; 
     
     if (masterKey === secret) {
       setIsAuthenticated(true);
+      localStorage.setItem("superAdminAuth", "true"); // Persist Login
     } else {
       alert("Invalid Master Key");
     }
   };
 
-  // 2. FETCH ALL SCHOOLS
+  // 3. LOGOUT
+  const handleLogout = () => {
+      if(confirm("Are you sure you want to logout?")) {
+        setIsAuthenticated(false);
+        localStorage.removeItem("superAdminAuth");
+      }
+  };
+
+  // 4. FETCH SCHOOLS (Real-time)
   useEffect(() => {
     if (isAuthenticated) {
       const schoolsRef = ref(db, "schools");
@@ -36,8 +55,10 @@ export default function SuperAdmin() {
         if (data) {
           const list = Object.entries(data).map(([id, val]) => ({
             id,
-            ...val.info
+            ...(val.info || {}) // <--- FIXED: Handles missing info safely
           }));
+          // Sort by creation date (newest first) if available, else by name
+          list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
           setSchools(list);
         } else {
           setSchools([]);
@@ -46,18 +67,22 @@ export default function SuperAdmin() {
     }
   }, [isAuthenticated]);
 
-  // 3. DELETE SCHOOL
+  // 5. ACTIONS
   const deleteSchool = async (schoolId, schoolName) => {
-    if (confirm(`⚠️ DANGER: Delete "${schoolName}"? This cannot be undone.`)) {
+    if (confirm(`⚠️ DANGER: Delete "${schoolName}"? This permanently removes all student data & logins. Cannot be undone.`)) {
         await remove(ref(db, `schools/${schoolId}`));
-        // Also remove admin login for cleanup if possible, but school deletion is main priority
-        alert("School Deleted.");
+        // Optional: Remove admin login too if you track it separately
+        await remove(ref(db, `admins/${schoolName}`)); 
+        alert("School Data Deleted.");
     }
   };
 
-  const resetPassword = async () => {
-    alert("To reset a password, please use the Firebase Console directly for security reasons.");
+  const resetPassword = () => {
+    alert("Password reset must be done via Firebase Console for security.");
   };
+
+  // Prevent hydration mismatch on load
+  if (!isClient) return null; 
 
   // --- LOGIN VIEW ---
   if (!isAuthenticated) {
@@ -91,8 +116,8 @@ export default function SuperAdmin() {
 
   // --- DASHBOARD VIEW ---
   const filteredSchools = schools.filter(s => 
-    s.name?.toLowerCase().includes(search.toLowerCase()) || 
-    s.owner?.toLowerCase().includes(search.toLowerCase())
+    (s.name?.toLowerCase() || "").includes(search.toLowerCase()) || 
+    (s.owner?.toLowerCase() || "").includes(search.toLowerCase())
   );
 
   return (
@@ -110,7 +135,7 @@ export default function SuperAdmin() {
                     <button onClick={() => router.push('/')} className="bg-zinc-900 hover:bg-zinc-800 px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition">
                         Home
                     </button>
-                    <button onClick={() => setIsAuthenticated(false)} className="bg-red-900/20 hover:bg-red-900/40 text-red-400 px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition">
+                    <button onClick={handleLogout} className="bg-red-900/20 hover:bg-red-900/40 text-red-400 px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition">
                         <LogOut size={16}/> Logout
                     </button>
                 </div>
@@ -129,7 +154,7 @@ export default function SuperAdmin() {
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                         </span>
-                        Online
+                        Online & Live
                     </div>
                 </div>
             </div>
@@ -144,7 +169,12 @@ export default function SuperAdmin() {
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-                <button onClick={() => window.location.reload()} className="p-3 bg-zinc-900 rounded-xl hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition">
+                {/* Fixed Refresh Button: No longer reloads page, just acts as a visual reset */}
+                <button 
+                    onClick={() => { setSearch(""); alert("Data is already live (Real-time)."); }} 
+                    className="p-3 bg-zinc-900 rounded-xl hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition"
+                    title="Refresh Data"
+                >
                     <RefreshCw size={20} />
                 </button>
             </div>
@@ -165,15 +195,17 @@ export default function SuperAdmin() {
                         <tbody className="divide-y divide-zinc-800/50">
                             {filteredSchools.map((school) => (
                                 <tr key={school.id} className="hover:bg-zinc-800/30 transition group">
-                                    <td className="p-5 font-bold text-white">{school.name}</td>
-                                    <td className="p-5 text-zinc-400">{school.owner}</td>
-                                    <td className="p-5 text-zinc-400 font-mono">{school.phone}</td>
-                                    <td className="p-5"><code className="bg-black px-2 py-1 rounded text-xs text-zinc-500 font-mono">{school.id}</code></td>
+                                    <td className="p-5 font-bold text-white">
+                                        {school.name || <span className="text-red-500 italic">Unknown</span>}
+                                    </td>
+                                    <td className="p-5 text-zinc-400">{school.owner || "N/A"}</td>
+                                    <td className="p-5 text-zinc-400 font-mono">{school.phone || "N/A"}</td>
+                                    <td className="p-5"><code className="bg-black px-2 py-1 rounded text-xs text-zinc-500 font-mono select-all">{school.id}</code></td>
                                     <td className="p-5 text-right flex justify-end gap-2">
-                                        <button onClick={() => resetPassword()} className="p-2 bg-zinc-800 text-zinc-400 rounded-lg hover:bg-blue-900/30 hover:text-blue-400 transition">
+                                        <button onClick={() => resetPassword()} className="p-2 bg-zinc-800 text-zinc-400 rounded-lg hover:bg-blue-900/30 hover:text-blue-400 transition" title="Reset Password">
                                             <Key size={16} />
                                         </button>
-                                        <button onClick={() => deleteSchool(school.id, school.name)} className="p-2 bg-zinc-800 text-red-400 rounded-lg hover:bg-red-900/30 hover:text-red-300 transition">
+                                        <button onClick={() => deleteSchool(school.id, school.name)} className="p-2 bg-zinc-800 text-red-400 rounded-lg hover:bg-red-900/30 hover:text-red-300 transition" title="Delete School">
                                             <Trash2 size={16} />
                                         </button>
                                     </td>
@@ -181,7 +213,9 @@ export default function SuperAdmin() {
                             ))}
                             {filteredSchools.length === 0 && (
                                 <tr>
-                                    <td colSpan="5" className="p-10 text-center text-zinc-600">No schools found.</td>
+                                    <td colSpan="5" className="p-10 text-center text-zinc-600 italic">
+                                        No schools found. New registrations will appear here instantly.
+                                    </td>
                                 </tr>
                             )}
                         </tbody>
