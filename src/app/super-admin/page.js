@@ -4,16 +4,20 @@ export const dynamic = "force-dynamic";
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
 import { ref, onValue, remove } from "firebase/database";
-import { ShieldAlert, Trash2, Key, Search, RefreshCw, LogOut, ArrowLeft, Loader2 } from "lucide-react";
+import { ShieldAlert, Trash2, Key, Search, RefreshCw, LogOut, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 export default function SuperAdmin() {
   const router = useRouter();
-  const [schools, setSchools] = useState([]);
+  const [schools, setSchools] = useState({}); // Store as object for easier lookup
+  const [admins, setAdmins] = useState({});   // Store as object
+  const [combinedData, setCombinedData] = useState([]);
+  
   const [masterKey, setMasterKey] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [search, setSearch] = useState("");
-  const [isClient, setIsClient] = useState(false); // To avoid hydration mismatch
+  const [isClient, setIsClient] = useState(false);
+  const [showPasswords, setShowPasswords] = useState({}); // Toggle visibility per row
 
   // 1. INITIALIZE & CHECK SESSION
   useEffect(() => {
@@ -27,18 +31,16 @@ export default function SuperAdmin() {
   // 2. HANDLE LOGIN
   const handleLogin = (e) => {
     e.preventDefault();
-    // In Vercel, set NEXT_PUBLIC_SUPER_ADMIN_KEY in Environment Variables
     const secret = process.env.NEXT_PUBLIC_SUPER_ADMIN_KEY || "998357"; 
     
     if (masterKey === secret) {
       setIsAuthenticated(true);
-      localStorage.setItem("superAdminAuth", "true"); // Persist Login
+      localStorage.setItem("superAdminAuth", "true");
     } else {
       alert("Invalid Master Key");
     }
   };
 
-  // 3. LOGOUT
   const handleLogout = () => {
       if(confirm("Are you sure you want to logout?")) {
         setIsAuthenticated(false);
@@ -46,42 +48,75 @@ export default function SuperAdmin() {
       }
   };
 
-  // 4. FETCH SCHOOLS (Real-time)
+  // 3. FETCH DATA (Schools & Admins)
   useEffect(() => {
     if (isAuthenticated) {
+      // Fetch Schools
       const schoolsRef = ref(db, "schools");
-      return onValue(schoolsRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const list = Object.entries(data).map(([id, val]) => ({
-            id,
-            ...(val.info || {}) // <--- FIXED: Handles missing info safely
-          }));
-          // Sort by creation date (newest first) if available, else by name
-          list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-          setSchools(list);
-        } else {
-          setSchools([]);
-        }
+      const unsubSchools = onValue(schoolsRef, (snapshot) => {
+        setSchools(snapshot.val() || {});
       });
+
+      // Fetch Admins (To link usernames)
+      const adminsRef = ref(db, "admins");
+      const unsubAdmins = onValue(adminsRef, (snapshot) => {
+        setAdmins(snapshot.val() || {});
+      });
+
+      return () => {
+        unsubSchools();
+        unsubAdmins();
+      };
     }
   }, [isAuthenticated]);
 
-  // 5. ACTIONS
-  const deleteSchool = async (schoolId, schoolName) => {
-    if (confirm(`⚠️ DANGER: Delete "${schoolName}"? This permanently removes all student data & logins. Cannot be undone.`)) {
-        await remove(ref(db, `schools/${schoolId}`));
-        // Optional: Remove admin login too if you track it separately
-        await remove(ref(db, `admins/${schoolName}`)); 
-        alert("School Data Deleted.");
+  // 4. COMBINE DATA
+  useEffect(() => {
+    if (schools) {
+      const list = Object.entries(schools).map(([id, val]) => {
+        // Find matching admin for this school ID
+        const adminEntry = Object.entries(admins || {}).find(([username, adminData]) => adminData.schoolId === id);
+        const adminUsername = adminEntry ? adminEntry[0] : null;
+        const adminPassword = adminEntry ? adminEntry[1].password : null;
+
+        return {
+          id,
+          ...val.info,
+          username: adminUsername,
+          password: adminPassword
+        };
+      });
+      // Sort by creation date (newest first)
+      list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setCombinedData(list);
+    }
+  }, [schools, admins]);
+
+  // 5. DELETE ACTION (Removes School + Admin Login)
+  const deleteSchool = async (schoolId, schoolName, username) => {
+    const confirmMsg = `⚠️ DANGER: Are you sure you want to delete "${schoolName}"?\n\nThis will permanently delete:\n1. All student data, fees, attendance.\n2. The admin login "${username}".\n\nThis action CANNOT be undone.`;
+    
+    if (confirm(confirmMsg)) {
+        try {
+            // 1. Delete School Data
+            await remove(ref(db, `schools/${schoolId}`));
+            
+            // 2. Delete Admin Login (if exists)
+            if (username) {
+                await remove(ref(db, `admins/${username}`));
+            }
+            
+            alert("✅ School and Admin credentials deleted successfully.");
+        } catch (error) {
+            alert("Error deleting data: " + error.message);
+        }
     }
   };
 
-  const resetPassword = () => {
-    alert("Password reset must be done via Firebase Console for security.");
+  const togglePassword = (id) => {
+    setShowPasswords(prev => ({ ...prev, [id]: !prev[id] }));
   };
 
-  // Prevent hydration mismatch on load
   if (!isClient) return null; 
 
   // --- LOGIN VIEW ---
@@ -115,9 +150,10 @@ export default function SuperAdmin() {
   }
 
   // --- DASHBOARD VIEW ---
-  const filteredSchools = schools.filter(s => 
+  const filteredSchools = combinedData.filter(s => 
     (s.name?.toLowerCase() || "").includes(search.toLowerCase()) || 
-    (s.owner?.toLowerCase() || "").includes(search.toLowerCase())
+    (s.owner?.toLowerCase() || "").includes(search.toLowerCase()) ||
+    (s.username?.toLowerCase() || "").includes(search.toLowerCase())
   );
 
   return (
@@ -145,16 +181,16 @@ export default function SuperAdmin() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900">
                     <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider">Total Schools</div>
-                    <div className="text-4xl font-black text-white mt-2">{schools.length}</div>
+                    <div className="text-4xl font-black text-white mt-2">{combinedData.length}</div>
                 </div>
                 <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900">
-                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider">Database Status</div>
+                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider">System Status</div>
                     <div className="text-emerald-500 font-bold mt-2 flex items-center gap-2">
                         <span className="relative flex h-3 w-3">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                           <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                         </span>
-                        Online & Live
+                        Live Sync
                     </div>
                 </div>
             </div>
@@ -164,16 +200,15 @@ export default function SuperAdmin() {
                 <div className="relative flex-1">
                     <Search className="absolute left-4 top-3.5 text-zinc-600" size={18} />
                     <input 
-                        placeholder="Search by school name or owner..." 
+                        placeholder="Search by school, owner, or username..." 
                         className="w-full bg-zinc-900 border border-zinc-800 pl-12 p-3 rounded-xl text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-900 outline-none transition"
                         onChange={e => setSearch(e.target.value)}
                     />
                 </div>
-                {/* Fixed Refresh Button: No longer reloads page, just acts as a visual reset */}
                 <button 
-                    onClick={() => { setSearch(""); alert("Data is already live (Real-time)."); }} 
+                    onClick={() => setSearch("")} 
                     className="p-3 bg-zinc-900 rounded-xl hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition"
-                    title="Refresh Data"
+                    title="Clear Search"
                 >
                     <RefreshCw size={20} />
                 </button>
@@ -185,36 +220,68 @@ export default function SuperAdmin() {
                     <table className="w-full text-left text-sm">
                         <thead className="bg-zinc-950 text-zinc-500 font-bold uppercase text-xs">
                             <tr>
-                                <th className="p-5">School Name</th>
-                                <th className="p-5">Owner</th>
-                                <th className="p-5">Phone</th>
-                                <th className="p-5">School ID</th>
+                                <th className="p-5">School Info</th>
+                                <th className="p-5">Admin Credentials</th>
+                                <th className="p-5">Contact</th>
                                 <th className="p-5 text-right">Actions</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-800/50">
                             {filteredSchools.map((school) => (
                                 <tr key={school.id} className="hover:bg-zinc-800/30 transition group">
-                                    <td className="p-5 font-bold text-white">
-                                        {school.name || <span className="text-red-500 italic">Unknown</span>}
+                                    {/* School Info */}
+                                    <td className="p-5">
+                                        <div className="font-bold text-white text-base">{school.name || <span className="text-red-500 italic">Unknown</span>}</div>
+                                        <div className="text-zinc-500 text-xs mt-1">ID: <span className="font-mono text-zinc-400">{school.id}</span></div>
                                     </td>
-                                    <td className="p-5 text-zinc-400">{school.owner || "N/A"}</td>
-                                    <td className="p-5 text-zinc-400 font-mono">{school.phone || "N/A"}</td>
-                                    <td className="p-5"><code className="bg-black px-2 py-1 rounded text-xs text-zinc-500 font-mono select-all">{school.id}</code></td>
-                                    <td className="p-5 text-right flex justify-end gap-2">
-                                        <button onClick={() => resetPassword()} className="p-2 bg-zinc-800 text-zinc-400 rounded-lg hover:bg-blue-900/30 hover:text-blue-400 transition" title="Reset Password">
-                                            <Key size={16} />
-                                        </button>
-                                        <button onClick={() => deleteSchool(school.id, school.name)} className="p-2 bg-zinc-800 text-red-400 rounded-lg hover:bg-red-900/30 hover:text-red-300 transition" title="Delete School">
-                                            <Trash2 size={16} />
+
+                                    {/* Admin Credentials */}
+                                    <td className="p-5">
+                                        {school.username ? (
+                                            <div className="flex flex-col gap-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-zinc-500 text-xs uppercase font-bold w-12">User:</span>
+                                                    <span className="text-blue-400 font-mono font-medium">{school.username}</span>
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-zinc-500 text-xs uppercase font-bold w-12">Pass:</span>
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-zinc-300 font-mono">
+                                                            {showPasswords[school.id] ? school.password : "••••••••"}
+                                                        </span>
+                                                        <button onClick={() => togglePassword(school.id)} className="text-zinc-600 hover:text-zinc-400">
+                                                            {showPasswords[school.id] ? <EyeOff size={12}/> : <Eye size={12}/>}
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <span className="text-red-500 text-xs font-bold bg-red-900/20 px-2 py-1 rounded">NO ADMIN LINKED</span>
+                                        )}
+                                    </td>
+
+                                    {/* Contact Info */}
+                                    <td className="p-5">
+                                        <div className="text-zinc-300">{school.owner || "N/A"}</div>
+                                        <div className="text-zinc-500 text-xs font-mono mt-1">{school.phone || "N/A"}</div>
+                                    </td>
+
+                                    {/* Actions */}
+                                    <td className="p-5 text-right">
+                                        <button 
+                                            onClick={() => deleteSchool(school.id, school.name, school.username)} 
+                                            className="bg-zinc-800 text-red-400 hover:bg-red-900/30 hover:text-red-300 px-4 py-2 rounded-lg transition flex items-center gap-2 ml-auto text-xs font-bold"
+                                            title="Delete School & Admin"
+                                        >
+                                            <Trash2 size={16} /> Delete
                                         </button>
                                     </td>
                                 </tr>
                             ))}
                             {filteredSchools.length === 0 && (
                                 <tr>
-                                    <td colSpan="5" className="p-10 text-center text-zinc-600 italic">
-                                        No schools found. New registrations will appear here instantly.
+                                    <td colSpan="4" className="p-10 text-center text-zinc-600 italic">
+                                        No matching schools found.
                                     </td>
                                 </tr>
                             )}
