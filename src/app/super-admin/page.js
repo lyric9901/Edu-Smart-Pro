@@ -3,36 +3,42 @@ export const dynamic = "force-dynamic";
 
 import { useState, useEffect } from "react";
 import { db } from "@/lib/firebase";
-import { ref, onValue, remove } from "firebase/database";
-import { ShieldAlert, Trash2, Key, Search, RefreshCw, LogOut, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import { ref, onValue, remove, update } from "firebase/database";
+import { ShieldAlert, Trash2, Key, Search, RefreshCw, LogOut, ArrowLeft, Eye, EyeOff, Edit, X, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { motion, AnimatePresence } from "framer-motion";
 
 export default function SuperAdmin() {
   const router = useRouter();
-  const [schools, setSchools] = useState({}); // Store as object for easier lookup
-  const [admins, setAdmins] = useState({});   // Store as object
+  const [schools, setSchools] = useState({}); 
+  const [admins, setAdmins] = useState({});   
   const [combinedData, setCombinedData] = useState([]);
   
   const [masterKey, setMasterKey] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [search, setSearch] = useState("");
   const [isClient, setIsClient] = useState(false);
-  const [showPasswords, setShowPasswords] = useState({}); // Toggle visibility per row
+  const [showPasswords, setShowPasswords] = useState({});
 
-  // 1. INITIALIZE & CHECK SESSION
+  // --- MODAL STATES ---
+  const [editingSchool, setEditingSchool] = useState(null); // For General Info
+  const [resettingPassword, setResettingPassword] = useState(null); // For Password
+  
+  // --- FORMS ---
+  const [editForm, setEditForm] = useState({ name: "", owner: "", phone: "" });
+  const [passForm, setPassForm] = useState("");
+
+  // 1. INITIALIZE
   useEffect(() => {
     setIsClient(true);
     const storedAuth = localStorage.getItem("superAdminAuth");
-    if (storedAuth === "true") {
-        setIsAuthenticated(true);
-    }
+    if (storedAuth === "true") setIsAuthenticated(true);
   }, []);
 
-  // 2. HANDLE LOGIN
+  // 2. AUTH
   const handleLogin = (e) => {
     e.preventDefault();
     const secret = process.env.NEXT_PUBLIC_SUPER_ADMIN_KEY || "998357"; 
-    
     if (masterKey === secret) {
       setIsAuthenticated(true);
       localStorage.setItem("superAdminAuth", "true");
@@ -42,31 +48,18 @@ export default function SuperAdmin() {
   };
 
   const handleLogout = () => {
-      if(confirm("Are you sure you want to logout?")) {
+      if(confirm("Logout?")) {
         setIsAuthenticated(false);
         localStorage.removeItem("superAdminAuth");
       }
   };
 
-  // 3. FETCH DATA (Schools & Admins)
+  // 3. FETCH DATA
   useEffect(() => {
     if (isAuthenticated) {
-      // Fetch Schools
-      const schoolsRef = ref(db, "schools");
-      const unsubSchools = onValue(schoolsRef, (snapshot) => {
-        setSchools(snapshot.val() || {});
-      });
-
-      // Fetch Admins (To link usernames)
-      const adminsRef = ref(db, "admins");
-      const unsubAdmins = onValue(adminsRef, (snapshot) => {
-        setAdmins(snapshot.val() || {});
-      });
-
-      return () => {
-        unsubSchools();
-        unsubAdmins();
-      };
+      const unsubSchools = onValue(ref(db, "schools"), (snap) => setSchools(snap.val() || {}));
+      const unsubAdmins = onValue(ref(db, "admins"), (snap) => setAdmins(snap.val() || {}));
+      return () => { unsubSchools(); unsubAdmins(); };
     }
   }, [isAuthenticated]);
 
@@ -74,43 +67,59 @@ export default function SuperAdmin() {
   useEffect(() => {
     if (schools) {
       const list = Object.entries(schools).map(([id, val]) => {
-        // Find matching admin for this school ID
-        const adminEntry = Object.entries(admins || {}).find(([username, adminData]) => adminData.schoolId === id);
-        const adminUsername = adminEntry ? adminEntry[0] : null;
-        const adminPassword = adminEntry ? adminEntry[1].password : null;
-
+        const adminEntry = Object.entries(admins || {}).find(([_, v]) => v.schoolId === id);
         return {
           id,
           ...val.info,
-          username: adminUsername,
-          password: adminPassword
+          username: adminEntry ? adminEntry[0] : null,
+          password: adminEntry ? adminEntry[1].password : null
         };
       });
-      // Sort by creation date (newest first)
       list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       setCombinedData(list);
     }
   }, [schools, admins]);
 
-  // 5. DELETE ACTION (Removes School + Admin Login)
+  // --- ACTIONS ---
+
+  // A. DELETE SCHOOL
   const deleteSchool = async (schoolId, schoolName, username) => {
-    const confirmMsg = `⚠️ DANGER: Are you sure you want to delete "${schoolName}"?\n\nThis will permanently delete:\n1. All student data, fees, attendance.\n2. The admin login "${username}".\n\nThis action CANNOT be undone.`;
-    
-    if (confirm(confirmMsg)) {
-        try {
-            // 1. Delete School Data
-            await remove(ref(db, `schools/${schoolId}`));
-            
-            // 2. Delete Admin Login (if exists)
-            if (username) {
-                await remove(ref(db, `admins/${username}`));
-            }
-            
-            alert("✅ School and Admin credentials deleted successfully.");
-        } catch (error) {
-            alert("Error deleting data: " + error.message);
-        }
+    if (confirm(`⚠️ PERMANENTLY DELETE "${schoolName}"?\n\nThis will remove all students, fees, and login access.`)) {
+        await remove(ref(db, `schools/${schoolId}`));
+        if (username) await remove(ref(db, `admins/${username}`));
+        alert("Deleted successfully.");
     }
+  };
+
+  // B. EDIT SCHOOL INFO
+  const openEditModal = (school) => {
+      setEditingSchool(school);
+      setEditForm({ name: school.name, owner: school.owner, phone: school.phone });
+  };
+
+  const saveSchoolInfo = async () => {
+      if(!editingSchool) return;
+      await update(ref(db, `schools/${editingSchool.id}/info`), {
+          name: editForm.name,
+          owner: editForm.owner,
+          phone: editForm.phone
+      });
+      setEditingSchool(null);
+  };
+
+  // C. CHANGE PASSWORD
+  const openPassModal = (school) => {
+      setResettingPassword(school);
+      setPassForm(""); // Reset input
+  };
+
+  const saveNewPassword = async () => {
+      if(!resettingPassword || !resettingPassword.username || !passForm.trim()) return;
+      await update(ref(db, `admins/${resettingPassword.username}`), {
+          password: passForm.trim()
+      });
+      setResettingPassword(null);
+      alert("Password updated!");
   };
 
   const togglePassword = (id) => {
@@ -119,177 +128,132 @@ export default function SuperAdmin() {
 
   if (!isClient) return null; 
 
-  // --- LOGIN VIEW ---
+  // --- LOGIN UI ---
   if (!isAuthenticated) {
     return (
         <div className="min-h-screen bg-black flex items-center justify-center p-4">
-            <div className="w-full max-w-sm">
-                <button onClick={() => router.push('/')} className="text-zinc-500 hover:text-white flex items-center gap-2 mb-6 transition">
-                    <ArrowLeft size={16}/> Back Home
-                </button>
-                <form onSubmit={handleLogin} className="bg-zinc-900 p-8 rounded-3xl border border-zinc-800 text-center shadow-2xl">
-                    <div className="w-16 h-16 bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <ShieldAlert className="text-red-500" size={32} />
-                    </div>
-                    <h1 className="text-xl font-bold text-white mb-2">Super Admin</h1>
-                    <p className="text-zinc-500 text-sm mb-6">Restricted Access Only</p>
-                    
-                    <input 
-                        type="password" 
-                        placeholder="Master Key" 
-                        className="w-full bg-black border border-zinc-700 p-3.5 rounded-xl text-white mb-4 focus:border-red-500 focus:ring-1 focus:ring-red-900 outline-none transition text-center tracking-widest font-bold"
-                        onChange={e => setMasterKey(e.target.value)}
-                    />
-                    <button className="w-full bg-red-600 text-white py-3.5 rounded-xl font-bold hover:bg-red-700 transition shadow-lg shadow-red-900/20">
-                        Unlock Panel
-                    </button>
-                </form>
-            </div>
+            <form onSubmit={handleLogin} className="bg-zinc-900 p-8 rounded-3xl border border-zinc-800 text-center w-full max-w-sm">
+                <ShieldAlert className="text-red-500 mx-auto mb-4" size={40} />
+                <h1 className="text-xl font-bold text-white mb-6">Restricted Area</h1>
+                <input type="password" placeholder="Master Key" className="w-full bg-black border border-zinc-700 p-3 rounded-xl text-white mb-4 text-center" onChange={e => setMasterKey(e.target.value)} />
+                <button className="w-full bg-red-600 text-white py-3 rounded-xl font-bold hover:bg-red-700">Unlock</button>
+            </form>
         </div>
     );
   }
 
-  // --- DASHBOARD VIEW ---
   const filteredSchools = combinedData.filter(s => 
     (s.name?.toLowerCase() || "").includes(search.toLowerCase()) || 
-    (s.owner?.toLowerCase() || "").includes(search.toLowerCase()) ||
-    (s.username?.toLowerCase() || "").includes(search.toLowerCase())
+    (s.owner?.toLowerCase() || "").includes(search.toLowerCase())
   );
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white p-6 font-sans">
+    <div className="min-h-screen bg-zinc-950 text-white p-6 font-sans relative">
         <div className="max-w-7xl mx-auto">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 border-b border-zinc-900 pb-6 gap-4">
-                <div>
-                    <h1 className="text-3xl font-black flex items-center gap-3">
-                        <ShieldAlert className="text-red-500"/> EduSmart Admin
-                    </h1>
-                    <p className="text-zinc-500 mt-1 font-medium">Global Control Center</p>
-                </div>
+            <div className="flex justify-between items-center mb-8 border-b border-zinc-900 pb-6">
+                <h1 className="text-2xl font-black flex items-center gap-3 text-red-500"><ShieldAlert/> Super Admin</h1>
                 <div className="flex gap-3">
-                    <button onClick={() => router.push('/')} className="bg-zinc-900 hover:bg-zinc-800 px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition">
-                        Home
-                    </button>
-                    <button onClick={handleLogout} className="bg-red-900/20 hover:bg-red-900/40 text-red-400 px-5 py-2.5 rounded-xl flex items-center gap-2 text-sm font-bold transition">
-                        <LogOut size={16}/> Logout
-                    </button>
+                    <button onClick={() => router.push('/')} className="bg-zinc-900 px-4 py-2 rounded-lg text-sm font-bold">Home</button>
+                    <button onClick={handleLogout} className="bg-red-900/20 text-red-400 px-4 py-2 rounded-lg text-sm font-bold">Logout</button>
                 </div>
             </div>
 
-            {/* Stats */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900">
-                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider">Total Schools</div>
-                    <div className="text-4xl font-black text-white mt-2">{combinedData.length}</div>
-                </div>
-                <div className="bg-zinc-900/50 p-6 rounded-2xl border border-zinc-900">
-                    <div className="text-zinc-500 text-xs font-bold uppercase tracking-wider">System Status</div>
-                    <div className="text-emerald-500 font-bold mt-2 flex items-center gap-2">
-                        <span className="relative flex h-3 w-3">
-                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
-                        </span>
-                        Live Sync
-                    </div>
-                </div>
-            </div>
-
-            {/* Controls */}
+            {/* Search */}
             <div className="flex gap-3 mb-6">
                 <div className="relative flex-1">
                     <Search className="absolute left-4 top-3.5 text-zinc-600" size={18} />
-                    <input 
-                        placeholder="Search by school, owner, or username..." 
-                        className="w-full bg-zinc-900 border border-zinc-800 pl-12 p-3 rounded-xl text-sm text-white focus:border-blue-500 focus:ring-1 focus:ring-blue-900 outline-none transition"
-                        onChange={e => setSearch(e.target.value)}
-                    />
+                    <input placeholder="Search..." className="w-full bg-zinc-900 border border-zinc-800 pl-12 p-3 rounded-xl text-sm text-white focus:border-blue-500 outline-none" onChange={e => setSearch(e.target.value)} />
                 </div>
-                <button 
-                    onClick={() => setSearch("")} 
-                    className="p-3 bg-zinc-900 rounded-xl hover:bg-zinc-800 border border-zinc-800 text-zinc-400 hover:text-white transition"
-                    title="Clear Search"
-                >
-                    <RefreshCw size={20} />
-                </button>
             </div>
 
-            {/* Data Table */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden shadow-2xl">
+            {/* Table */}
+            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
                         <thead className="bg-zinc-950 text-zinc-500 font-bold uppercase text-xs">
                             <tr>
-                                <th className="p-5">School Info</th>
-                                <th className="p-5">Admin Credentials</th>
-                                <th className="p-5">Contact</th>
-                                <th className="p-5 text-right">Actions</th>
+                                <th className="p-5">Coaching</th>
+                                <th className="p-5">Credentials</th>
+                                <th className="p-5 text-right">Controls</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-800/50">
                             {filteredSchools.map((school) => (
-                                <tr key={school.id} className="hover:bg-zinc-800/30 transition group">
-                                    {/* School Info */}
+                                <tr key={school.id} className="hover:bg-zinc-800/30">
                                     <td className="p-5">
-                                        <div className="font-bold text-white text-base">{school.name || <span className="text-red-500 italic">Unknown</span>}</div>
-                                        <div className="text-zinc-500 text-xs mt-1">ID: <span className="font-mono text-zinc-400">{school.id}</span></div>
+                                        <div className="font-bold text-lg text-white">{school.name}</div>
+                                        <div className="text-zinc-500">{school.owner} • {school.phone}</div>
                                     </td>
-
-                                    {/* Admin Credentials */}
                                     <td className="p-5">
                                         {school.username ? (
-                                            <div className="flex flex-col gap-1">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2"><span className="text-zinc-500 text-xs w-8">ID:</span> <span className="text-blue-400 font-mono">{school.username}</span></div>
                                                 <div className="flex items-center gap-2">
-                                                    <span className="text-zinc-500 text-xs uppercase font-bold w-12">User:</span>
-                                                    <span className="text-blue-400 font-mono font-medium">{school.username}</span>
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-zinc-500 text-xs uppercase font-bold w-12">Pass:</span>
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-zinc-300 font-mono">
-                                                            {showPasswords[school.id] ? school.password : "••••••••"}
-                                                        </span>
-                                                        <button onClick={() => togglePassword(school.id)} className="text-zinc-600 hover:text-zinc-400">
-                                                            {showPasswords[school.id] ? <EyeOff size={12}/> : <Eye size={12}/>}
-                                                        </button>
-                                                    </div>
+                                                    <span className="text-zinc-500 text-xs w-8">PW:</span> 
+                                                    <span className="text-zinc-300 font-mono">{showPasswords[school.id] ? school.password : "••••••"}</span>
+                                                    <button onClick={() => togglePassword(school.id)} className="text-zinc-600 hover:text-white"><Eye size={14}/></button>
                                                 </div>
                                             </div>
-                                        ) : (
-                                            <span className="text-red-500 text-xs font-bold bg-red-900/20 px-2 py-1 rounded">NO ADMIN LINKED</span>
-                                        )}
+                                        ) : <span className="text-red-500 text-xs font-bold">No Admin</span>}
                                     </td>
-
-                                    {/* Contact Info */}
-                                    <td className="p-5">
-                                        <div className="text-zinc-300">{school.owner || "N/A"}</div>
-                                        <div className="text-zinc-500 text-xs font-mono mt-1">{school.phone || "N/A"}</div>
-                                    </td>
-
-                                    {/* Actions */}
                                     <td className="p-5 text-right">
-                                        <button 
-                                            onClick={() => deleteSchool(school.id, school.name, school.username)} 
-                                            className="bg-zinc-800 text-red-400 hover:bg-red-900/30 hover:text-red-300 px-4 py-2 rounded-lg transition flex items-center gap-2 ml-auto text-xs font-bold"
-                                            title="Delete School & Admin"
-                                        >
-                                            <Trash2 size={16} /> Delete
-                                        </button>
+                                        <div className="flex justify-end gap-2">
+                                            <button onClick={() => openEditModal(school)} className="p-2 bg-blue-900/20 text-blue-400 rounded-lg hover:bg-blue-900/40" title="Edit Info"><Edit size={18}/></button>
+                                            <button onClick={() => openPassModal(school)} className="p-2 bg-yellow-900/20 text-yellow-400 rounded-lg hover:bg-yellow-900/40" title="Change Password"><Key size={18}/></button>
+                                            <button onClick={() => deleteSchool(school.id, school.name, school.username)} className="p-2 bg-red-900/20 text-red-400 rounded-lg hover:bg-red-900/40" title="Delete"><Trash2 size={18}/></button>
+                                        </div>
                                     </td>
                                 </tr>
                             ))}
-                            {filteredSchools.length === 0 && (
-                                <tr>
-                                    <td colSpan="4" className="p-10 text-center text-zinc-600 italic">
-                                        No matching schools found.
-                                    </td>
-                                </tr>
-                            )}
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
+
+        {/* --- EDIT MODAL --- */}
+        <AnimatePresence>
+        {editingSchool && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-zinc-900 border border-zinc-800 w-full max-w-md p-6 rounded-2xl shadow-2xl">
+                    <h3 className="text-xl font-bold mb-4">Edit Coaching Details</h3>
+                    <div className="space-y-3">
+                        <input value={editForm.name} onChange={e => setEditForm({...editForm, name: e.target.value})} placeholder="Coaching Name" className="w-full bg-black border border-zinc-700 p-3 rounded-xl text-white outline-none focus:border-blue-500" />
+                        <input value={editForm.owner} onChange={e => setEditForm({...editForm, owner: e.target.value})} placeholder="Owner Name" className="w-full bg-black border border-zinc-700 p-3 rounded-xl text-white outline-none focus:border-blue-500" />
+                        <input value={editForm.phone} onChange={e => setEditForm({...editForm, phone: e.target.value})} placeholder="Phone" className="w-full bg-black border border-zinc-700 p-3 rounded-xl text-white outline-none focus:border-blue-500" />
+                    </div>
+                    <div className="flex gap-3 mt-6">
+                        <button onClick={() => setEditingSchool(null)} className="flex-1 py-3 bg-zinc-800 rounded-xl font-bold text-zinc-400 hover:bg-zinc-700">Cancel</button>
+                        <button onClick={saveSchoolInfo} className="flex-1 py-3 bg-blue-600 rounded-xl font-bold text-white hover:bg-blue-700 flex items-center justify-center gap-2"><Save size={18}/> Save</button>
+                    </div>
+                </motion.div>
+            </motion.div>
+        )}
+        </AnimatePresence>
+
+        {/* --- PASSWORD MODAL --- */}
+        <AnimatePresence>
+        {resettingPassword && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+                <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }} className="bg-zinc-900 border border-zinc-800 w-full max-w-md p-6 rounded-2xl shadow-2xl">
+                    <h3 className="text-xl font-bold mb-2">Reset Password</h3>
+                    <p className="text-zinc-500 text-sm mb-4">New password for <strong>{resettingPassword.username}</strong></p>
+                    <input 
+                        type="text" 
+                        value={passForm} 
+                        onChange={e => setPassForm(e.target.value)} 
+                        placeholder="Enter New Password" 
+                        className="w-full bg-black border border-zinc-700 p-3 rounded-xl text-white outline-none focus:border-yellow-500 font-mono text-center tracking-widest text-lg" 
+                    />
+                    <div className="flex gap-3 mt-6">
+                        <button onClick={() => setResettingPassword(null)} className="flex-1 py-3 bg-zinc-800 rounded-xl font-bold text-zinc-400 hover:bg-zinc-700">Cancel</button>
+                        <button onClick={saveNewPassword} className="flex-1 py-3 bg-yellow-600 rounded-xl font-bold text-black hover:bg-yellow-500 flex items-center justify-center gap-2"><Key size={18}/> Update</button>
+                    </div>
+                </motion.div>
+            </motion.div>
+        )}
+        </AnimatePresence>
     </div>
   );
 }
