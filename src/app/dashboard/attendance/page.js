@@ -2,9 +2,12 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { ref, onValue, set } from "firebase/database";
+import { ref, onValue, set, update } from "firebase/database";
 import { motion, AnimatePresence } from "framer-motion";
-import { Calendar, Check, X, Minus, Users, CheckCircle2, ChevronRight } from "lucide-react";
+import { 
+  Calendar, Check, X, Minus, Users, CheckCircle2, 
+  ChevronLeft, ChevronRight, MoreHorizontal 
+} from "lucide-react";
 
 // --- ANIMATION VARIANTS ---
 const containerVariants = {
@@ -23,17 +26,29 @@ const itemVariants = {
 export default function AttendancePage() {
   const { user } = useAuth();
   
+  // Helper: Get Local Date String (YYYY-MM-DD) correctly
+  const getLocalToday = () => {
+    const d = new Date();
+    const offset = d.getTimezoneOffset() * 60000;
+    return new Date(d.getTime() - offset).toISOString().split('T')[0];
+  };
+
   // State
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split("T")[0]); 
+  const [selectedDate, setSelectedDate] = useState(getLocalToday()); 
   const [stats, setStats] = useState({ present: 0, absent: 0, total: 0 });
   const [mounted, setMounted] = useState(false);
+  const [isPastDate, setIsPastDate] = useState(false);
 
   // --- INITIALIZATION ---
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setIsPastDate(selectedDate !== getLocalToday());
+  }, [selectedDate]);
 
   // 1. Fetch Batches
   useEffect(() => {
@@ -48,6 +63,7 @@ export default function AttendancePage() {
             students: val.students || []
           }));
           setBatches(list);
+          // Preserve selection if data updates
           if (selectedBatch) {
              const updated = list.find(b => b.id === selectedBatch.id);
              if (updated) setSelectedBatch(updated);
@@ -94,6 +110,36 @@ export default function AttendancePage() {
     set(ref(db, path), newStatus);
   };
 
+  // Bulk Actions
+  const markAll = (status) => {
+    if (!selectedBatch) return;
+    
+    const updates = {};
+    const updatedBatch = { ...selectedBatch };
+    
+    updatedBatch.students.forEach((student, index) => {
+        // Update Local State
+        if (!updatedBatch.students[index].attendance) updatedBatch.students[index].attendance = {};
+        updatedBatch.students[index].attendance[selectedDate] = status;
+
+        // Prepare Firebase Update
+        const path = `schools/${user.schoolId}/batches/${selectedBatch.id}/students/${index}/attendance/${selectedDate}`;
+        updates[path] = status;
+    });
+
+    setSelectedBatch(updatedBatch);
+    update(ref(db), updates);
+  };
+
+  // Date Navigation
+  const changeDate = (days) => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + days);
+    const offset = d.getTimezoneOffset() * 60000;
+    const newDate = new Date(d.getTime() - offset).toISOString().split('T')[0];
+    setSelectedDate(newDate);
+  };
+
   const getStatus = (student) => student.attendance?.[selectedDate] || "not-marked";
 
   const getStatusUI = (status) => {
@@ -129,9 +175,11 @@ export default function AttendancePage() {
         >
             <div>
                 <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-                    <CheckCircle2 className="text-green-600" size={32} /> Attendance
+                    <CheckCircle2 className="text-blue-600" size={32} /> Attendance
                 </h1>
-                <p className="text-slate-500 dark:text-zinc-400 text-sm font-medium">Daily Tracking</p>
+                <p className="text-slate-500 dark:text-zinc-400 text-sm font-medium">
+                  {isPastDate ? "Managing Past Records" : "Today's Tracker"}
+                </p>
             </div>
         </motion.div>
 
@@ -140,16 +188,34 @@ export default function AttendancePage() {
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}
             className="bg-white dark:bg-zinc-900 p-5 rounded-[2rem] shadow-sm border border-slate-200 dark:border-zinc-800 flex flex-col md:flex-row gap-4 justify-between items-center"
         >
-            <div className="flex items-center gap-3 bg-slate-50 dark:bg-black px-5 py-3 rounded-2xl border border-slate-100 dark:border-zinc-800 w-full md:w-auto shadow-inner">
-                <Calendar size={20} className="text-slate-400" />
-                <input 
-                    type="date" 
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                    className="bg-transparent outline-none text-sm font-bold text-slate-700 dark:text-zinc-200 uppercase w-full cursor-pointer"
-                />
+            {/* Date Navigator */}
+            <div className={`flex items-center gap-2 px-2 py-2 rounded-2xl border w-full md:w-auto transition-colors ${isPastDate ? 'bg-orange-50 border-orange-200 dark:bg-orange-900/10 dark:border-orange-800' : 'bg-slate-50 border-slate-100 dark:bg-black dark:border-zinc-800'}`}>
+                <button 
+                  onClick={() => changeDate(-1)}
+                  className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition"
+                >
+                  <ChevronLeft size={20} />
+                </button>
+                
+                <div className="flex items-center gap-2 px-2">
+                    <Calendar size={18} className={isPastDate ? "text-orange-500" : "text-slate-400"} />
+                    <input 
+                        type="date" 
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        className="bg-transparent outline-none text-sm font-bold text-slate-700 dark:text-zinc-200 uppercase cursor-pointer"
+                    />
+                </div>
+
+                <button 
+                  onClick={() => changeDate(1)}
+                  className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition"
+                >
+                  <ChevronRight size={20} />
+                </button>
             </div>
 
+            {/* Batch Selector */}
             <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto custom-scrollbar no-scrollbar items-center">
                 {batches.length > 0 ? batches.map(batch => (
                     <motion.button 
@@ -165,7 +231,7 @@ export default function AttendancePage() {
                         {batch.name}
                     </motion.button>
                 )) : (
-                    <span className="text-sm text-slate-400 italic px-4">No batches found. Create one in Dashboard.</span>
+                    <span className="text-sm text-slate-400 italic px-4">No batches found.</span>
                 )}
             </div>
         </motion.div>
@@ -182,14 +248,29 @@ export default function AttendancePage() {
                 <div className="p-6 border-b border-slate-100 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 dark:bg-black/20 gap-4">
                     <div>
                         <h2 className="text-2xl font-black tracking-tight">{selectedBatch.name}</h2>
-                        <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mt-1">{new Date(selectedDate).toDateString()}</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <p className={`text-xs font-bold uppercase tracking-wider ${isPastDate ? "text-orange-500" : "text-slate-400"}`}>
+                            {new Date(selectedDate).toDateString()}
+                          </p>
+                          {isPastDate && <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">HISTORY MODE</span>}
+                        </div>
                     </div>
-                    <div className="flex gap-3 w-full md:w-auto">
+                    
+                    <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                        {/* Bulk Action: Mark All Present */}
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            onClick={() => markAll("present")}
+                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 transition"
+                        >
+                            <CheckCircle2 size={16} /> Mark All Present
+                        </motion.button>
+
                         <div className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 px-5 py-3 rounded-2xl text-sm font-bold">
-                            <Check size={16} strokeWidth={3}/> {stats.present} <span className="hidden md:inline">Present</span>
+                            <Check size={16} strokeWidth={3}/> {stats.present}
                         </div>
                         <div className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400 px-5 py-3 rounded-2xl text-sm font-bold">
-                            <X size={16} strokeWidth={3}/> {stats.absent} <span className="hidden md:inline">Absent</span>
+                            <X size={16} strokeWidth={3}/> {stats.absent}
                         </div>
                     </div>
                 </div>
