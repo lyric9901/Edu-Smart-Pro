@@ -195,13 +195,13 @@ function StudentContent() {
     }
   };
 
-  // --- ANALYTICS CALCULATIONS (FIXED) ---
+  // --- ANALYTICS CALCULATIONS (ROBUST) ---
   const stats = useMemo(() => {
-    if (!currentStudent) return {};
+    if (!currentStudent) return { attPercent: 0, feePaid: 0, streak: 0, monthlyData: [], monthLabels: [] };
     
-    // 1. Calculate Attendance Percentage (Ignoring 'not-marked' or 'holiday')
+    // 1. Calculate Attendance Percentage
     const allAttendanceValues = Object.values(currentStudent.attendance || {});
-    // Only count days that are explicitly 'present' or 'absent'
+    // Only count VALID days (present/absent), ignore 'not-marked' or 'holiday'
     const validDays = allAttendanceValues.filter(v => v === "present" || v === "absent");
     const attTotal = validDays.length;
     const attPresent = validDays.filter(v => v === "present").length;
@@ -217,15 +217,14 @@ function StudentContent() {
     for (let date of sortedDates) {
         const status = currentStudent.attendance[date];
         if (status === 'present') streak++;
-        else if (status === 'absent') break; // Break streak on absent
-        // If 'not-marked', we generally ignore it for streak or break it depending on logic. 
-        // Usually, we ignore weekends/holidays so we don't break, but if it's undefined, we stop counting.
-        else continue; 
+        else if (status === 'absent') break; 
+        // Ignore other statuses
     }
 
     // 4. Monthly Data (Last 6 Months)
-    const monthlyData = [0,0,0,0,0,0];
+    const monthlyData = [];
     const monthLabels = [];
+    
     for(let i=5; i>=0; i--) {
         const d = new Date();
         d.setMonth(d.getMonth() - i);
@@ -234,7 +233,6 @@ function StudentContent() {
         
         const daysInMonth = Object.entries(currentStudent.attendance || {}).filter(([k, v]) => {
             const kDate = new Date(k);
-            // Must be same month/year AND must be a valid status (present/absent)
             return kDate.getMonth() === d.getMonth() && 
                    kDate.getFullYear() === d.getFullYear() &&
                    (v === 'present' || v === 'absent');
@@ -242,7 +240,7 @@ function StudentContent() {
         
         const p = daysInMonth.filter(([,v]) => v === 'present').length;
         const t = daysInMonth.length;
-        monthlyData[5-i] = t ? Math.round((p/t)*100) : 0;
+        monthlyData.push(t ? Math.round((p/t)*100) : 0);
     }
 
     return { attPercent, feePaid, streak, monthlyData, monthLabels };
@@ -250,23 +248,22 @@ function StudentContent() {
 
   // --- LOADING UI ---
   if (!mounted || loading) return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black p-6 space-y-6">
+    <div className="min-h-screen bg-slate-50 dark:bg-black p-4 space-y-4">
         <div className="flex justify-between items-center">
             <div className="flex items-center gap-3">
-                <Skeleton className="w-12 h-12 rounded-full" />
-                <div className="space-y-2">
-                    <Skeleton className="w-32 h-4" />
-                    <Skeleton className="w-20 h-3" />
+                <Skeleton className="w-10 h-10 rounded-full" />
+                <div className="space-y-1">
+                    <Skeleton className="w-24 h-4" />
+                    <Skeleton className="w-16 h-3" />
                 </div>
             </div>
-            <Skeleton className="w-10 h-10 rounded-full" />
+            <Skeleton className="w-8 h-8 rounded-full" />
         </div>
-        <Skeleton className="w-full h-48 rounded-[2rem]" />
-        <div className="grid grid-cols-2 gap-4">
-            <Skeleton className="h-32 rounded-[2rem]" />
-            <Skeleton className="h-32 rounded-[2rem]" />
+        <Skeleton className="w-full h-40 rounded-[1.5rem]" />
+        <div className="grid grid-cols-2 gap-3">
+            <Skeleton className="h-28 rounded-[1.5rem]" />
+            <Skeleton className="h-28 rounded-[1.5rem]" />
         </div>
-        <Skeleton className="w-full h-24 rounded-[2rem]" />
     </div>
   );
 
@@ -303,19 +300,19 @@ function StudentContent() {
       {/* MAIN CONTENT */}
       <main className="flex-1 md:ml-72 relative">
         
-        {/* MOBILE HEADER */}
-        <header className="md:hidden sticky top-0 z-40 bg-slate-50/80 dark:bg-black/80 backdrop-blur-xl px-6 py-4 flex justify-between items-center border-b border-slate-200/50 dark:border-white/10">
+        {/* MOBILE HEADER (Smaller) */}
+        <header className="md:hidden sticky top-0 z-40 bg-slate-50/80 dark:bg-black/80 backdrop-blur-xl px-4 py-3 flex justify-between items-center border-b border-slate-200/50 dark:border-white/10">
             <div className="flex items-center gap-3" onClick={() => setShowSettings(true)}>
-                <motion.div whileTap={{ scale: 0.9 }} className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-500/20">
+                <motion.div whileTap={{ scale: 0.9 }} className="w-9 h-9 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center font-bold shadow-lg shadow-blue-500/20 text-sm">
                     {currentStudent.name.charAt(0)}
                 </motion.div>
                 <div>
-                    <h1 className="text-lg font-bold leading-none">{currentStudent.name}</h1>
-                    <p className="text-xs text-slate-500 dark:text-zinc-500 font-medium">{currentStudent.batchName}</p>
+                    <h1 className="text-base font-bold leading-none">{currentStudent.name}</h1>
+                    <p className="text-[10px] text-slate-500 dark:text-zinc-500 font-medium">{currentStudent.batchName}</p>
                 </div>
             </div>
-            <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowSettings(true)} className="w-10 h-10 rounded-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center shadow-sm">
-                <Settings size={20} className="text-slate-600 dark:text-zinc-400" />
+            <motion.button whileTap={{ scale: 0.9 }} onClick={() => setShowSettings(true)} className="w-9 h-9 rounded-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 flex items-center justify-center shadow-sm">
+                <Settings size={18} className="text-slate-600 dark:text-zinc-400" />
             </motion.button>
         </header>
 
@@ -328,64 +325,64 @@ function StudentContent() {
         </header>
 
         {/* BODY */}
-        <div className="px-4 md:px-10 pb-32 md:pb-10 max-w-5xl mx-auto">
+        <div className="px-4 md:px-10 pb-28 md:pb-10 max-w-5xl mx-auto pt-4 md:pt-0">
             <AnimatePresence mode="wait">
             
             {/* 1. DASHBOARD */}
             {activeTab === 'dashboard' && (
-                <motion.div key="dash" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="space-y-6">
-                    {/* Hero */}
-                    <div className="relative overflow-hidden rounded-[2rem] bg-black dark:bg-zinc-900 text-white p-8 shadow-2xl">
-                        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-64 h-64 bg-blue-600 rounded-full blur-[80px] opacity-40"></div>
-                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-end gap-6">
+                <motion.div key="dash" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4 md:space-y-6">
+                    {/* Hero (Compacted for Mobile) */}
+                    <div className="relative overflow-hidden rounded-[1.5rem] md:rounded-[2rem] bg-black dark:bg-zinc-900 text-white p-6 md:p-8 shadow-2xl">
+                        <div className="absolute top-0 right-0 -mt-10 -mr-10 w-48 md:w-64 h-48 md:h-64 bg-blue-600 rounded-full blur-[60px] md:blur-[80px] opacity-40"></div>
+                        <div className="relative z-10 flex flex-col md:flex-row justify-between items-end gap-4 md:gap-6">
                             <div>
                                 <div className="flex items-center gap-2 mb-2">
-                                    <span className="bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold">PERFORMANCE SCORE</span>
-                                    {stats.streak > 3 && <span className="bg-orange-500 px-3 py-1 rounded-full text-xs font-bold flex items-center gap-1"><Flame size={12}/> {stats.streak} Day Streak</span>}
+                                    <span className="bg-white/20 backdrop-blur-md px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold">PERFORMANCE</span>
+                                    {stats.streak > 3 && <span className="bg-orange-500 px-2 py-0.5 rounded-full text-[10px] md:text-xs font-bold flex items-center gap-1"><Flame size={10}/> {stats.streak} Day Streak</span>}
                                 </div>
-                                <div className="text-6xl md:text-8xl font-black tracking-tighter">
+                                <div className="text-5xl md:text-8xl font-black tracking-tighter">
                                     {currentStudent.performance || 0}<span className="text-2xl md:text-4xl text-white/40 font-bold">%</span>
                                 </div>
-                                <p className="text-white/60 mt-2 font-medium">Keep pushing! You're doing great.</p>
+                                <p className="text-white/60 mt-1 md:mt-2 font-medium text-xs md:text-base">Keep pushing! You're doing great.</p>
                             </div>
-                            <div className="w-24 h-24 rounded-full border-4 border-white/10 flex items-center justify-center relative">
+                            <div className="hidden md:flex w-24 h-24 rounded-full border-4 border-white/10 items-center justify-center relative">
                                 <div className="absolute inset-0 border-t-4 border-r-4 border-blue-500 rounded-full rotate-45"></div>
                                 <TrendingUp size={32} className="text-blue-400"/>
                             </div>
                         </div>
                     </div>
 
-                    {/* Quick Access Buttons */}
-                    <div className="grid grid-cols-2 gap-4">
-                        <motion.div whileTap={{ scale: 0.98 }} onClick={() => setActiveTab('attendance')} className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm cursor-pointer relative overflow-hidden group">
-                            <div className="absolute top-4 right-4 w-8 h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 group-hover:scale-110 transition"><CheckCircle size={16}/></div>
-                            <div className="mt-8">
-                                <div className="text-4xl font-bold tracking-tight">{stats.attPercent}%</div>
-                                <div className="text-sm text-slate-500 font-medium">Attendance</div>
+                    {/* Quick Access Buttons (Compact) */}
+                    <div className="grid grid-cols-2 gap-3 md:gap-4">
+                        <motion.div whileTap={{ scale: 0.98 }} onClick={() => setActiveTab('attendance')} className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm cursor-pointer relative overflow-hidden group">
+                            <div className="absolute top-4 right-4 w-6 h-6 md:w-8 md:h-8 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center text-green-600 group-hover:scale-110 transition"><CheckCircle size={14} className="md:w-4 md:h-4"/></div>
+                            <div className="mt-6 md:mt-8">
+                                <div className="text-3xl md:text-4xl font-bold tracking-tight">{stats.attPercent}%</div>
+                                <div className="text-xs md:text-sm text-slate-500 font-medium">Attendance</div>
                             </div>
                         </motion.div>
-                        <motion.div whileTap={{ scale: 0.98 }} onClick={() => setActiveTab('fees')} className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm cursor-pointer relative overflow-hidden group">
-                            <div className="absolute top-4 right-4 w-8 h-8 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center text-orange-600 group-hover:scale-110 transition"><IndianRupee size={16}/></div>
-                            <div className="mt-8">
-                                <div className="text-4xl font-bold tracking-tight">{stats.feePaid}</div>
-                                <div className="text-sm text-slate-500 font-medium">Months Paid</div>
+                        <motion.div whileTap={{ scale: 0.98 }} onClick={() => setActiveTab('fees')} className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm cursor-pointer relative overflow-hidden group">
+                            <div className="absolute top-4 right-4 w-6 h-6 md:w-8 md:h-8 bg-orange-100 dark:bg-orange-900/30 rounded-full flex items-center justify-center text-orange-600 group-hover:scale-110 transition"><IndianRupee size={14} className="md:w-4 md:h-4"/></div>
+                            <div className="mt-6 md:mt-8">
+                                <div className="text-3xl md:text-4xl font-bold tracking-tight">{stats.feePaid}</div>
+                                <div className="text-xs md:text-sm text-slate-500 font-medium">Months Paid</div>
                             </div>
                         </motion.div>
                     </div>
 
                     {/* Notices Preview */}
-                    <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm">
-                        <div className="flex justify-between items-center mb-4">
-                            <h3 className="font-bold text-lg flex items-center gap-2"><Bell size={18} className="text-blue-500"/> Latest Notice</h3>
-                            <button onClick={() => setActiveTab('notices')} className="text-xs font-bold text-slate-400 hover:text-blue-600">View All</button>
+                    <div className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm">
+                        <div className="flex justify-between items-center mb-3 md:mb-4">
+                            <h3 className="font-bold text-base md:text-lg flex items-center gap-2"><Bell size={16} className="text-blue-500"/> Latest Notice</h3>
+                            <button onClick={() => setActiveTab('notices')} className="text-[10px] md:text-xs font-bold text-slate-400 hover:text-blue-600">View All</button>
                         </div>
                         {notices.length > 0 ? (
                             <div className="p-4 bg-slate-50 dark:bg-black rounded-2xl">
-                                <p className="text-sm font-medium line-clamp-2">{notices[0].text}</p>
+                                <p className="text-xs md:text-sm font-medium line-clamp-2">{notices[0].text}</p>
                                 <p className="text-[10px] text-slate-400 mt-2">{new Date(notices[0].date).toLocaleDateString()}</p>
                             </div>
                         ) : (
-                            <p className="text-slate-400 text-sm text-center">No new notices.</p>
+                            <p className="text-slate-400 text-xs text-center">No new notices.</p>
                         )}
                     </div>
                 </motion.div>
@@ -394,17 +391,17 @@ function StudentContent() {
             {/* 2. ATTENDANCE (Calendar) */}
             {activeTab === 'attendance' && (
                 <motion.div key="att" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
-                    <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm">
-                         <div className="flex justify-between items-center mb-8">
-                             <h3 className="font-bold text-xl">{viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
+                    <div className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm">
+                         <div className="flex justify-between items-center mb-6 md:mb-8">
+                             <h3 className="font-bold text-lg md:text-xl">{viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
                              <div className="flex gap-2">
-                                 <button onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))} className="p-3 bg-slate-100 dark:bg-zinc-800 rounded-full hover:scale-110 transition"><ChevronLeft size={20}/></button>
-                                 <button onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))} className="p-3 bg-slate-100 dark:bg-zinc-800 rounded-full hover:scale-110 transition"><ChevronRight size={20}/></button>
+                                 <button onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() - 1)))} className="p-2 md:p-3 bg-slate-100 dark:bg-zinc-800 rounded-full hover:scale-110 transition"><ChevronLeft size={18}/></button>
+                                 <button onClick={() => setViewDate(new Date(viewDate.setMonth(viewDate.getMonth() + 1)))} className="p-2 md:p-3 bg-slate-100 dark:bg-zinc-800 rounded-full hover:scale-110 transition"><ChevronRight size={18}/></button>
                              </div>
                          </div>
                          
                          <div className="grid grid-cols-7 gap-y-6 text-center">
-                            {['S','M','T','W','T','F','S'].map((d, i) => <span key={i} className="text-xs font-bold text-slate-400">{d}</span>)}
+                            {['S','M','T','W','T','F','S'].map((d, i) => <span key={i} className="text-[10px] md:text-xs font-bold text-slate-400">{d}</span>)}
                             
                             {Array.from({ length: new Date(viewDate.getFullYear(), viewDate.getMonth(), 1).getDay() }).map((_, i) => <div key={`e-${i}`} />)}
                             
@@ -416,21 +413,18 @@ function StudentContent() {
                                 const dateKey = `${y}-${m}-${dStr}`;
                                 
                                 const status = currentStudent.attendance?.[dateKey];
-                                
-                                // LOGIC FIX: Explicitly check for 'present' and 'absent'.
-                                // Everything else (null, 'not-marked', 'holiday') renders as neutral.
                                 const isPresent = status === 'present';
                                 const isAbsent = status === 'absent';
                                 
                                 return (
                                     <div key={day} className="flex flex-col items-center gap-1">
-                                        <span className={`text-sm font-bold ${isPresent || isAbsent ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>{day}</span>
+                                        <span className={`text-xs md:text-sm font-bold ${isPresent || isAbsent ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>{day}</span>
                                         
                                         {isPresent && (
-                                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
                                         )}
                                         {isAbsent && (
-                                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-2 h-2 rounded-full bg-red-500" />
+                                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-1.5 h-1.5 md:w-2 md:h-2 rounded-full bg-red-500" />
                                         )}
                                     </div>
                                 );
@@ -443,18 +437,18 @@ function StudentContent() {
             {/* 3. FEES */}
             {activeTab === 'fees' && (
                 <motion.div key="fees" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
-                    <div className="bg-white dark:bg-zinc-900 rounded-[2rem] border border-slate-100 dark:border-zinc-800 overflow-hidden shadow-sm">
-                       <div className="p-6 border-b border-slate-100 dark:border-zinc-800"><h2 className="text-xl font-bold">Academic Fee {new Date().getFullYear()}</h2></div>
-                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6">
+                    <div className="bg-white dark:bg-zinc-900 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-zinc-800 overflow-hidden shadow-sm">
+                       <div className="p-5 md:p-6 border-b border-slate-100 dark:border-zinc-800"><h2 className="text-lg md:text-xl font-bold">Academic Fee {new Date().getFullYear()}</h2></div>
+                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 p-5 md:p-6">
                            {["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].map((m, i) => {
                                const status = currentStudent.fees?.[new Date().getFullYear()]?.[m] || "pending";
                                return (
                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }} key={m} className={`p-4 rounded-2xl border flex justify-between items-center ${status === 'paid' ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/30' : 'bg-slate-50 dark:bg-black border-slate-100 dark:border-zinc-800'}`}>
                                        <div className="flex items-center gap-3">
-                                           <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs font-bold uppercase ${status === 'paid' ? 'bg-green-200 text-green-800' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500'}`}>{m.substring(0,3)}</div>
-                                           <span className="capitalize font-bold text-slate-700 dark:text-slate-200">{m}</span>
+                                           <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold uppercase ${status === 'paid' ? 'bg-green-200 text-green-800' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500'}`}>{m.substring(0,3)}</div>
+                                           <span className="capitalize font-bold text-sm md:text-base text-slate-700 dark:text-slate-200">{m}</span>
                                        </div>
-                                       {status === 'paid' ? <CheckCircle size={20} className="text-green-500" /> : <div className="text-xs bg-slate-200 dark:bg-zinc-800 px-3 py-1 rounded-full font-bold uppercase text-slate-500">Due</div>}
+                                       {status === 'paid' ? <CheckCircle size={18} className="text-green-500" /> : <div className="text-[10px] md:text-xs bg-slate-200 dark:bg-zinc-800 px-2 md:px-3 py-1 rounded-full font-bold uppercase text-slate-500">Due</div>}
                                    </motion.div>
                                )
                            })}
@@ -466,20 +460,20 @@ function StudentContent() {
             {/* 4. NOTICES */}
             {activeTab === 'notices' && (
                 <motion.div key="notices" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4">
-                    <h2 className="text-2xl font-bold px-2">Inbox</h2>
+                    <h2 className="text-xl md:text-2xl font-bold px-2">Inbox</h2>
                     {notices.length > 0 ? (
                         notices.map((notice, i) => (
                             <motion.div 
                                 initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}
                                 key={notice.id} 
-                                className="bg-white dark:bg-zinc-900 p-6 rounded-[1.5rem] border border-slate-100 dark:border-zinc-800 shadow-sm flex gap-4"
+                                className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] border border-slate-100 dark:border-zinc-800 shadow-sm flex gap-4"
                             >
-                                <div className="flex-shrink-0 w-12 h-12 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-2xl flex items-center justify-center">
-                                    <Bell size={24} />
+                                <div className="flex-shrink-0 w-10 h-10 md:w-12 md:h-12 bg-blue-50 dark:bg-blue-900/20 text-blue-600 rounded-2xl flex items-center justify-center">
+                                    <Bell size={20} className="md:w-6 md:h-6" />
                                 </div>
                                 <div>
-                                    <p className="text-slate-800 dark:text-zinc-100 font-medium leading-relaxed">{notice.text}</p>
-                                    <p className="text-xs font-bold text-slate-400 mt-2">{new Date(notice.date).toLocaleDateString()}</p>
+                                    <p className="text-sm md:text-base text-slate-800 dark:text-zinc-100 font-medium leading-relaxed">{notice.text}</p>
+                                    <p className="text-[10px] md:text-xs font-bold text-slate-400 mt-2">{new Date(notice.date).toLocaleDateString()}</p>
                                 </div>
                             </motion.div>
                         ))
@@ -492,13 +486,13 @@ function StudentContent() {
             {/* 5. ANALYTICS */}
             {activeTab === 'analytics' && (
                 <motion.div key="analytics" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="space-y-6">
-                    <h2 className="text-2xl font-bold px-2">Analytics</h2>
-                    <div className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm">
+                    <h2 className="text-xl md:text-2xl font-bold px-2">Analytics</h2>
+                    <div className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm">
                         <div className="flex justify-between items-end mb-6">
-                            <div><p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Attendance Trend</p><h3 className="text-xl font-bold">Last 6 Months</h3></div>
+                            <div><p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Attendance Trend</p><h3 className="text-lg md:text-xl font-bold">Last 6 Months</h3></div>
                         </div>
-                        <div className="flex items-end justify-between h-40 gap-2">
-                            {stats.monthlyData.map((val, i) => (
+                        <div className="flex items-end justify-between h-32 md:h-40 gap-2">
+                            {stats.monthlyData && stats.monthlyData.length > 0 ? stats.monthlyData.map((val, i) => (
                                 <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
                                     <div className="w-full bg-slate-100 dark:bg-zinc-800 rounded-xl relative h-full overflow-hidden">
                                         <motion.div 
@@ -506,9 +500,11 @@ function StudentContent() {
                                             className="absolute bottom-0 w-full bg-blue-600 rounded-xl"
                                         />
                                     </div>
-                                    <span className="text-[10px] font-bold text-slate-400">{stats.monthLabels[i]}</span>
+                                    <span className="text-[8px] md:text-[10px] font-bold text-slate-400">{stats.monthLabels[i]}</span>
                                 </div>
-                            ))}
+                            )) : (
+                                <p className="w-full text-center text-slate-400 text-xs py-10">No analytics data available yet.</p>
+                            )}
                         </div>
                     </div>
                 </motion.div>
@@ -516,26 +512,26 @@ function StudentContent() {
 
             {/* 6. TIMING VIEW */}
             {activeTab === 'timing' && (
-                <motion.div key="timing" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="flex flex-col items-center justify-center min-h-[50vh]">
-                        <div className="w-32 h-32 bg-white dark:bg-zinc-900 border-4 border-purple-100 dark:border-purple-900/30 text-purple-600 rounded-full flex items-center justify-center mb-8 shadow-xl">
-                            <Clock size={48} />
+                <motion.div key="timing" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="flex flex-col items-center justify-center min-h-[40vh] md:min-h-[50vh]">
+                        <div className="w-24 h-24 md:w-32 md:h-32 bg-white dark:bg-zinc-900 border-4 border-purple-100 dark:border-purple-900/30 text-purple-600 rounded-full flex items-center justify-center mb-6 md:mb-8 shadow-xl">
+                            <Clock size={40} className="md:w-12 md:h-12" />
                         </div>
-                        <h2 className="text-3xl font-bold mb-2">Class Schedule</h2>
-                        <p className="text-slate-500 dark:text-slate-400 mb-8">{currentStudent.batchName} Batch</p>
+                        <h2 className="text-2xl md:text-3xl font-bold mb-2">Class Schedule</h2>
+                        <p className="text-slate-500 dark:text-slate-400 mb-8 text-sm md:text-base">{currentStudent.batchName} Batch</p>
                         
-                        <div className="flex items-center gap-4 md:gap-8">
-                            <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-2xl border border-slate-100 dark:border-zinc-800 text-center w-40 md:w-56 shadow-sm">
-                                <div className="text-xs text-slate-400 uppercase font-bold mb-2">Start</div>
-                                <div className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white">
+                        <div className="flex items-center gap-3 md:gap-8">
+                            <div className="bg-white dark:bg-zinc-900 p-5 md:p-8 rounded-2xl border border-slate-100 dark:border-zinc-800 text-center w-36 md:w-56 shadow-sm">
+                                <div className="text-[10px] md:text-xs text-slate-400 uppercase font-bold mb-2">Start</div>
+                                <div className="text-xl md:text-3xl font-black text-slate-800 dark:text-white">
                                     {currentStudent.batchTiming?.start 
                                         ? new Date(`1970-01-01T${currentStudent.batchTiming.start}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
                                         : "--:--"}
                                 </div>
                             </div>
-                            <div className="h-1 w-8 md:w-16 bg-slate-200 dark:bg-zinc-800 rounded-full"></div>
-                            <div className="bg-white dark:bg-zinc-900 p-6 md:p-8 rounded-2xl border border-slate-100 dark:border-zinc-800 text-center w-40 md:w-56 shadow-sm">
-                                <div className="text-xs text-slate-400 uppercase font-bold mb-2">End</div>
-                                <div className="text-2xl md:text-3xl font-black text-slate-800 dark:text-white">
+                            <div className="h-1 w-4 md:w-16 bg-slate-200 dark:bg-zinc-800 rounded-full"></div>
+                            <div className="bg-white dark:bg-zinc-900 p-5 md:p-8 rounded-2xl border border-slate-100 dark:border-zinc-800 text-center w-36 md:w-56 shadow-sm">
+                                <div className="text-[10px] md:text-xs text-slate-400 uppercase font-bold mb-2">End</div>
+                                <div className="text-xl md:text-3xl font-black text-slate-800 dark:text-white">
                                     {currentStudent.batchTiming?.end 
                                         ? new Date(`1970-01-01T${currentStudent.batchTiming.end}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
                                         : "--:--"}
@@ -549,11 +545,11 @@ function StudentContent() {
         </div>
       </main>
 
-      {/* MOBILE NAV */}
-      <nav className="md:hidden fixed bottom-6 left-4 right-4 bg-black/90 dark:bg-white/10 backdrop-blur-2xl border border-white/10 rounded-[2.5rem] p-2 z-50 shadow-2xl">
-          <div className="flex justify-between items-center px-2">
+      {/* MOBILE NAV (Compact) */}
+      <nav className="md:hidden fixed bottom-4 left-4 right-4 bg-black/90 dark:bg-white/10 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-1.5 z-50 shadow-2xl">
+          <div className="flex justify-between items-center px-1">
               {navItems.map((item) => (
-                  <button key={item.id} onClick={() => setActiveTab(item.id)} className={`p-4 rounded-full transition-all duration-300 relative ${activeTab === item.id ? 'bg-blue-600 text-white shadow-lg scale-110 -translate-y-2' : 'text-white/60 hover:text-white'}`}>
+                  <button key={item.id} onClick={() => setActiveTab(item.id)} className={`p-3.5 rounded-full transition-all duration-300 relative ${activeTab === item.id ? 'bg-blue-600 text-white shadow-lg scale-110 -translate-y-1' : 'text-white/60 hover:text-white'}`}>
                       {item.icon}
                   </button>
               ))}
@@ -564,7 +560,7 @@ function StudentContent() {
       <AnimatePresence>
       {showSettings && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-              <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white dark:bg-zinc-900 w-full sm:w-96 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-8 shadow-2xl">
+              <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white dark:bg-zinc-900 w-full sm:w-96 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 md:p-8 shadow-2xl">
                   <div className="flex justify-between items-center mb-8"><h3 className="text-2xl font-black tracking-tight">Settings</h3><button onClick={() => setShowSettings(false)} className="p-2 bg-slate-100 dark:bg-zinc-800 rounded-full"><X size={20}/></button></div>
                   <div className="space-y-3 mb-8">
                       {students.map((s, idx) => (
