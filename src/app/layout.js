@@ -4,24 +4,25 @@ import "./globals.css";
 
 // --- SEO CONFIGURATION ---
 export const metadata = {
-  metadataBase: new URL('https://github.com/lyric9901'),
+  metadataBase: new URL('https://edusmartpro.in'), // Your actual domain
   title: {
-    default: "EduSmart | Lucknow's #1 Coaching Management App",
-    template: "%s | EduSmart" 
+    default: "EduSmart Pro | #1 Coaching Management App",
+    template: "%s | EduSmart Pro" 
   },
-  description: "Manage attendance, fees, and students with ease. The smartest app for Indian coaching centers. Paisa Vasool Guaranteed.",
-  keywords: ["Coaching App", "Attendance Tracker", "Fee Manager", "Tuition App India", "EduSmart"],
+  description: "Automate attendance, fees, and student management. The smartest app for coaching centers in India.",
+  keywords: ["Coaching App", "Attendance Tracker", "Fee Manager", "Tuition App India", "EduSmart Pro", "Lucknow Coaching"],
   authors: [{ name: "Shah Nawaz Ali" }],
   creator: "Shah Nawaz",
   
+  // Open Graph (WhatsApp/Facebook previews)
   openGraph: {
-    title: "EduSmart - Digital Coaching Management",
-    description: "Ab Coaching Chalegi Digital. Manage fees & attendance in seconds.",
-    url: 'https://edusmart.in',
-    siteName: 'EduSmart',
+    title: "EduSmart Pro - Digital Coaching Management",
+    description: "Manage fees & attendance in seconds. Try it now!",
+    url: 'https://edusmartpro.in',
+    siteName: 'EduSmart Pro',
     images: [
       {
-        url: '/og-image.png', 
+        url: '/favicon.ico', // Using the file you requested
         width: 1200,
         height: 630,
       },
@@ -30,28 +31,30 @@ export const metadata = {
     type: 'website',
   },
 
+  // Twitter Card
   twitter: {
     card: 'summary_large_image',
-    title: "EduSmart | Smart Coaching App",
+    title: "EduSmart Pro | Smart Coaching App",
     description: "Automate your coaching center today.",
-    images: ['/og-image.png'], 
+    images: ['/favicon.ico'], 
   },
 
+  // Icons - The specific request for favicon.ico
   icons: {
-    icon: '/logo.png',
-    apple: '/logo.png', 
+    icon: '/favicon.ico',
+    shortcut: '/favicon.ico',
+    apple: '/favicon.ico',
   },
 };
 
 export const viewport = {
-  themeColor: '#000000', // Changed to black for dark mode mobile bars
+  themeColor: '#000000', 
   width: 'device-width',
   initialScale: 1,
 };
 
 export default function RootLayout({ children }) {
   return (
-    // Added className="dark" here for instant dark mode
     <html lang="en" className="dark">
       <body>
         <ThemeProvider>
