@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { ref, push, onValue, remove } from "firebase/database";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Send, Trash2, Megaphone, Sun, Moon, Sparkles, Loader2 } from "lucide-react";
+import { Bell, Trash2, Megaphone, Sun, Moon, Sparkles, Loader2 } from "lucide-react";
 
 export default function NoticesPage() {
   const { user } = useAuth();
@@ -14,7 +14,7 @@ export default function NoticesPage() {
   const [notices, setNotices] = useState([]);
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false); // New state for loading
+  const [isSubmitting, setIsSubmitting] = useState(false); 
 
   // --- INITIALIZATION ---
   useEffect(() => {
@@ -38,7 +38,6 @@ export default function NoticesPage() {
       const noticeRef = ref(db, `schools/${user.schoolId}/notices`);
       onValue(noticeRef, (snapshot) => {
         const data = snapshot.val();
-        // Updated to handle sorting by createdAt if available, else standard reverse
         const list = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
         list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         setNotices(list);
@@ -46,23 +45,46 @@ export default function NoticesPage() {
     }
   }, [user]);
 
-  // 2. Magic Send Notice (Updated for AI)
+  // 2. Magic Send Notice (Updated)
   const sendNotice = async () => {
     if (!msg.trim() || !user?.schoolId) return;
     setIsSubmitting(true);
 
-    // We now push specific fields that n8n will watch for
-    await push(ref(db, `schools/${user.schoolId}/notices`), {
-      original_text: msg, // The rough draft
-      final_text: "",     // Empty until AI finishes
-      status: "processing", // Triggers the AI workflow
-      sender: user.username || "Admin",
-      createdAt: Date.now(),
-      date: new Date().toISOString()
-    });
+    let finalText = msg; // Default to original if AI fails
 
-    setMsg("");
-    setIsSubmitting(false);
+    try {
+        // Call our internal API route
+        const res = await fetch("/api/generate-notice", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ prompt: msg }),
+        });
+        
+        if (res.ok) {
+            const data = await res.json();
+            if (data.content) finalText = data.content;
+        }
+    } catch (error) {
+        console.error("AI Polish failed, using original text:", error);
+    }
+
+    // Push to Firebase
+    try {
+        await push(ref(db, `schools/${user.schoolId}/notices`), {
+            original_text: msg,
+            final_text: finalText,
+            status: "published", // Completed immediately
+            sender: user.username || "Admin",
+            createdAt: Date.now(),
+            date: new Date().toISOString()
+        });
+        setMsg("");
+    } catch (dbError) {
+        console.error("Firebase error:", dbError);
+        alert("Failed to post notice.");
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   // 3. Delete Notice
@@ -109,6 +131,7 @@ export default function NoticesPage() {
                 onChange={e => setMsg(e.target.value)}
                 placeholder="Draft your thought roughly (e.g. 'school closed tmrw rain')..."
                 className="w-full p-6 bg-transparent outline-none text-lg min-h-[120px] resize-none placeholder:text-slate-300 dark:placeholder:text-zinc-600"
+                disabled={isSubmitting}
             />
             <div className="flex justify-between items-center px-4 pb-4">
                 <div className="flex gap-2 text-slate-400">
@@ -122,7 +145,7 @@ export default function NoticesPage() {
                     className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-blue-500/20"
                 >
                     {isSubmitting ? <Loader2 className="animate-spin" size={18}/> : <Sparkles size={18}/>} 
-                    {isSubmitting ? "Generating..." : "Magic Post"}
+                    {isSubmitting ? "Polishing..." : "Magic Post"}
                 </motion.button>
             </div>
         </motion.div>
@@ -142,34 +165,24 @@ export default function NoticesPage() {
                         key={notice.id} 
                         className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] shadow-sm border border-slate-200 dark:border-zinc-800 flex gap-5 group relative overflow-hidden"
                     >
-                        {/* PROCESSING STATE */}
-                        {notice.status === 'processing' && (
-                            <div className="absolute inset-0 bg-white/80 dark:bg-black/80 z-10 flex items-center justify-center backdrop-blur-[2px]">
-                                <div className="flex flex-col items-center gap-2">
-                                    <Loader2 className="text-blue-500 animate-spin" size={32}/>
-                                    <span className="text-xs font-bold text-blue-500 animate-pulse">AI is writing...</span>
-                                </div>
-                            </div>
-                        )}
-
                         {/* Icon Badge */}
                         <div className="flex-shrink-0">
-                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${notice.status === 'processing' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' : 'bg-orange-50 dark:bg-orange-900/20 text-orange-500'}`}>
+                            <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-orange-50 dark:bg-orange-900/20 text-orange-500">
                                 <Bell size={24} />
                             </div>
                         </div>
 
                         {/* Content */}
                         <div className="flex-1">
-                            {/* Logic: Show Final Text if published, otherwise show Draft or standard text (backward compatibility) */}
+                            {/* Display Final Text */}
                             <p className="text-slate-800 dark:text-zinc-200 text-base md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
-                                {notice.status === 'published' ? notice.final_text : (notice.text || notice.original_text)}
+                                {notice.final_text || notice.original_text}
                             </p>
                             
-                            {/* Show Draft Source if AI was used */}
-                            {notice.status === 'published' && notice.original_text && (
+                            {/* Optional: Show Draft if different */}
+                            {notice.original_text && notice.final_text && notice.original_text !== notice.final_text && (
                                 <p className="mt-2 text-xs text-slate-400 dark:text-zinc-600 border-t border-slate-100 dark:border-zinc-800 pt-2">
-                                    Draft: "{notice.original_text}"
+                                    Original Draft: "{notice.original_text}"
                                 </p>
                             )}
 

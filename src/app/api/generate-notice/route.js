@@ -1,0 +1,44 @@
+import { NextResponse } from "next/server";
+
+export async function POST(request) {
+  try {
+    const { prompt } = await request.json();
+
+    if (!prompt) {
+      return NextResponse.json({ error: "No text provided" }, { status: 400 });
+    }
+
+    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        "Content-Type": "application/json",
+        // Optional: Site URL and Title for OpenRouter rankings
+        "HTTP-Referer": "https://edu-smart-pro.vercel.app", 
+        "X-Title": "Edu Smart Pro",
+      },
+      body: JSON.stringify({
+        model: "openai/gpt-4o-mini", // Fast and cost-effective model
+        messages: [
+          {
+            role: "system",
+            content: "You are a professional school administrator. Rewrite the following rough draft into a clear, polite, and professional school notice. Keep it concise and formal."
+          },
+          {
+            role: "user",
+            content: prompt
+          }
+        ]
+      })
+    });
+
+    const data = await response.json();
+    const refinedText = data.choices?.[0]?.message?.content || prompt;
+
+    return NextResponse.json({ content: refinedText });
+
+  } catch (error) {
+    console.error("AI Generation Error:", error);
+    return NextResponse.json({ error: "Failed to generate notice" }, { status: 500 });
+  }
+}
