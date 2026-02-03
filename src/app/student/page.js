@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo, Suspense } from "react"; // 1. Added Suspense
+import { useState, useEffect, useMemo, Suspense } from "react"; 
 import { useRouter, useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
 import { ref, get, onValue } from "firebase/database";
@@ -22,7 +22,6 @@ const pageVariants = {
   exit: { opacity: 0, y: -10, scale: 0.98, transition: { duration: 0.2 } }
 };
 
-// --- 2. RENAME MAIN FUNCTION TO 'StudentContent' ---
 function StudentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -72,7 +71,7 @@ function StudentContent() {
 
   const currentStudent = students[activeStudentIndex];
 
-  // Extract stable identities for useEffect dependencies to prevent loops
+  // Extract stable identities
   const studentSchoolId = currentStudent?.schoolId;
   const studentName = currentStudent?.name;
   const studentPhone = currentStudent?.phone;
@@ -89,14 +88,13 @@ function StudentContent() {
       setNotices(list);
     });
 
-    // B. Listen for STUDENT DATA UPDATES (Attendance, Fees, etc.)
+    // B. Listen for STUDENT DATA UPDATES
     const batchesRef = ref(db, `schools/${studentSchoolId}/batches`);
     const unsubBatches = onValue(batchesRef, (snapshot) => {
       const data = snapshot.val();
       if (!data) return;
 
       let updatedData = null;
-      // Search for our student in the live data
       Object.values(data).forEach(batch => {
         const batchStudents = batch.students || [];
         const match = batchStudents.find(s => 
@@ -108,7 +106,7 @@ function StudentContent() {
                 ...match, 
                 batchName: batch.name, 
                 schoolId: studentSchoolId,
-                batchTiming: batch.timing // Include timing data
+                batchTiming: batch.timing 
             };
         }
       });
@@ -197,22 +195,35 @@ function StudentContent() {
     }
   };
 
-  // --- ANALYTICS CALCULATIONS ---
+  // --- ANALYTICS CALCULATIONS (FIXED) ---
   const stats = useMemo(() => {
     if (!currentStudent) return {};
-    const attTotal = Object.keys(currentStudent.attendance || {}).length;
-    const attPresent = Object.values(currentStudent.attendance || {}).filter(v => v === "present").length;
+    
+    // 1. Calculate Attendance Percentage (Ignoring 'not-marked' or 'holiday')
+    const allAttendanceValues = Object.values(currentStudent.attendance || {});
+    // Only count days that are explicitly 'present' or 'absent'
+    const validDays = allAttendanceValues.filter(v => v === "present" || v === "absent");
+    const attTotal = validDays.length;
+    const attPresent = validDays.filter(v => v === "present").length;
     const attPercent = attTotal ? Math.round((attPresent / attTotal) * 100) : 0;
+    
+    // 2. Fees
     const currentYear = new Date().getFullYear();
     const feePaid = Object.values(currentStudent.fees?.[currentYear] || {}).filter(v => v === "paid").length;
     
+    // 3. Streak
     let streak = 0;
     const sortedDates = Object.keys(currentStudent.attendance || {}).sort((a,b) => new Date(b) - new Date(a));
     for (let date of sortedDates) {
-        if (currentStudent.attendance[date] === 'present') streak++;
-        else break; 
+        const status = currentStudent.attendance[date];
+        if (status === 'present') streak++;
+        else if (status === 'absent') break; // Break streak on absent
+        // If 'not-marked', we generally ignore it for streak or break it depending on logic. 
+        // Usually, we ignore weekends/holidays so we don't break, but if it's undefined, we stop counting.
+        else continue; 
     }
 
+    // 4. Monthly Data (Last 6 Months)
     const monthlyData = [0,0,0,0,0,0];
     const monthLabels = [];
     for(let i=5; i>=0; i--) {
@@ -221,10 +232,14 @@ function StudentContent() {
         const mStr = d.toLocaleString('default', { month: 'short' });
         monthLabels.push(mStr);
         
-        const daysInMonth = Object.entries(currentStudent.attendance || {}).filter(([k]) => {
+        const daysInMonth = Object.entries(currentStudent.attendance || {}).filter(([k, v]) => {
             const kDate = new Date(k);
-            return kDate.getMonth() === d.getMonth() && kDate.getFullYear() === d.getFullYear();
+            // Must be same month/year AND must be a valid status (present/absent)
+            return kDate.getMonth() === d.getMonth() && 
+                   kDate.getFullYear() === d.getFullYear() &&
+                   (v === 'present' || v === 'absent');
         });
+        
         const p = daysInMonth.filter(([,v]) => v === 'present').length;
         const t = daysInMonth.length;
         monthlyData[5-i] = t ? Math.round((p/t)*100) : 0;
@@ -401,11 +416,21 @@ function StudentContent() {
                                 const dateKey = `${y}-${m}-${dStr}`;
                                 
                                 const status = currentStudent.attendance?.[dateKey];
+                                
+                                // LOGIC FIX: Explicitly check for 'present' and 'absent'.
+                                // Everything else (null, 'not-marked', 'holiday') renders as neutral.
+                                const isPresent = status === 'present';
+                                const isAbsent = status === 'absent';
+                                
                                 return (
                                     <div key={day} className="flex flex-col items-center gap-1">
-                                        <span className={`text-sm font-bold ${status ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>{day}</span>
-                                        {status && (
-                                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className={`w-2 h-2 rounded-full ${status === 'present' ? 'bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]' : 'bg-red-500'}`} />
+                                        <span className={`text-sm font-bold ${isPresent || isAbsent ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>{day}</span>
+                                        
+                                        {isPresent && (
+                                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.6)]" />
+                                        )}
+                                        {isAbsent && (
+                                            <motion.div initial={{ scale: 0 }} animate={{ scale: 1 }} className="w-2 h-2 rounded-full bg-red-500" />
                                         )}
                                     </div>
                                 );
