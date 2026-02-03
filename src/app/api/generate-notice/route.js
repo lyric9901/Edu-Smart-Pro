@@ -13,16 +13,19 @@ export async function POST(request) {
       headers: {
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
-        // Optional: Site URL and Title for OpenRouter rankings
         "HTTP-Referer": "https://edu-smart-pro.vercel.app", 
         "X-Title": "Edu Smart Pro",
       },
       body: JSON.stringify({
-        model: "openai/gpt-4o-mini", // Fast and cost-effective model
+        // CHANGE THIS LINE BELOW:
+        model: "deepseek/deepseek-chat", // DeepSeek V3 (Standard)
+        // OR Use this for the specific free version if available:
+        // model: "deepseek/deepseek-r1:free", 
+        
         messages: [
           {
             role: "system",
-            content: "You are a professional school administrator. Rewrite the following rough draft into a clear, polite, and professional school notice. Keep it concise and formal."
+            content: "You are a professional school administrator. Rewrite the following rough draft into a clear, polite, and professional school notice. Keep it concise."
           },
           {
             role: "user",
