@@ -4,15 +4,20 @@ import { createContext, useContext, useState, useEffect } from "react";
 const ThemeContext = createContext();
 
 export function ThemeProvider({ children }) {
-  const [theme, setTheme] = useState("light");
+  // 1. Change default state to "dark"
+  const [theme, setTheme] = useState("dark");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // Load saved theme on startup
-    const savedTheme = localStorage.getItem("eduSmartTheme") || "light";
+    // 2. Change fallback to "dark" if no saved theme is found
+    const savedTheme = localStorage.getItem("eduSmartTheme") || "dark";
     setTheme(savedTheme);
+    
+    // Apply theme on mount
     if (savedTheme === "dark") {
       document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
     }
     setMounted(true);
   }, []);
@@ -22,7 +27,6 @@ export function ThemeProvider({ children }) {
     setTheme(newTheme);
     localStorage.setItem("eduSmartTheme", newTheme);
     
-    // Apply to HTML tag so Tailwind dark mode works everywhere
     if (newTheme === "dark") {
       document.documentElement.classList.add("dark");
     } else {
