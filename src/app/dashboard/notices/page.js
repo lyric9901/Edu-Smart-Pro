@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { ref, push, onValue, remove } from "firebase/database";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Send, Trash2, Megaphone, Sun, Moon, Sparkles } from "lucide-react";
+import { Bell, Send, Trash2, Megaphone, Sun, Moon, Sparkles, Loader2 } from "lucide-react";
 
 export default function NoticesPage() {
   const { user } = useAuth();
@@ -14,6 +14,7 @@ export default function NoticesPage() {
   const [notices, setNotices] = useState([]);
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // New state for loading
 
   // --- INITIALIZATION ---
   useEffect(() => {
@@ -37,26 +38,37 @@ export default function NoticesPage() {
       const noticeRef = ref(db, `schools/${user.schoolId}/notices`);
       onValue(noticeRef, (snapshot) => {
         const data = snapshot.val();
-        setNotices(data ? Object.entries(data).map(([id, val]) => ({ id, ...val })).reverse() : []);
+        // Updated to handle sorting by createdAt if available, else standard reverse
+        const list = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
+        list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+        setNotices(list);
       });
     }
   }, [user]);
 
-  // 2. Send Notice
-  const sendNotice = () => {
-    if (!msg.trim()) return;
-    push(ref(db, `schools/${user.schoolId}/notices`), {
-      text: msg,
-      date: new Date().toISOString(),
-      sender: user.username
+  // 2. Magic Send Notice (Updated for AI)
+  const sendNotice = async () => {
+    if (!msg.trim() || !user?.schoolId) return;
+    setIsSubmitting(true);
+
+    // We now push specific fields that n8n will watch for
+    await push(ref(db, `schools/${user.schoolId}/notices`), {
+      original_text: msg, // The rough draft
+      final_text: "",     // Empty until AI finishes
+      status: "processing", // Triggers the AI workflow
+      sender: user.username || "Admin",
+      createdAt: Date.now(),
+      date: new Date().toISOString()
     });
+
     setMsg("");
+    setIsSubmitting(false);
   };
 
   // 3. Delete Notice
-  const deleteNotice = (id) => {
+  const deleteNotice = async (id) => {
     if(confirm("Delete this notice?")) {
-        remove(ref(db, `schools/${user.schoolId}/notices/${id}`));
+       await remove(ref(db, `schools/${user.schoolId}/notices/${id}`));
     }
   };
 
@@ -73,9 +85,9 @@ export default function NoticesPage() {
         >
             <div>
                 <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-                    <Megaphone className="text-orange-500" size={32} /> Notice Board
+                    <Megaphone className="text-orange-500" size={32} /> Smart Notice Board
                 </h1>
-                <p className="text-slate-500 dark:text-zinc-400 text-sm font-medium">Broadcast updates to all students</p>
+                <p className="text-slate-500 dark:text-zinc-400 text-sm font-medium">Type a draft, let AI polish it for you.</p>
             </div>
             <motion.button 
                 whileTap={{ scale: 0.95 }}
@@ -95,21 +107,22 @@ export default function NoticesPage() {
             <textarea 
                 value={msg}
                 onChange={e => setMsg(e.target.value)}
-                placeholder="What's the announcement today?"
+                placeholder="Draft your thought roughly (e.g. 'school closed tmrw rain')..."
                 className="w-full p-6 bg-transparent outline-none text-lg min-h-[120px] resize-none placeholder:text-slate-300 dark:placeholder:text-zinc-600"
             />
             <div className="flex justify-between items-center px-4 pb-4">
                 <div className="flex gap-2 text-slate-400">
-                    {/* Placeholder for future attachments button if needed */}
-                    <Sparkles size={20} className="opacity-50" /> 
+                    <Sparkles size={20} className="text-blue-400 animate-pulse" /> 
+                    <span className="text-xs font-bold text-blue-400 pt-1">AI Enabled</span>
                 </div>
                 <motion.button 
                     whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
                     onClick={sendNotice} 
-                    disabled={!msg.trim()}
-                    className="bg-orange-500 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-orange-600 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-orange-500/20"
+                    disabled={!msg.trim() || isSubmitting}
+                    className="bg-blue-600 text-white px-6 py-3 rounded-xl font-bold flex items-center gap-2 hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-blue-500/20"
                 >
-                    <Send size={18}/> Post Notice
+                    {isSubmitting ? <Loader2 className="animate-spin" size={18}/> : <Sparkles size={18}/>} 
+                    {isSubmitting ? "Generating..." : "Magic Post"}
                 </motion.button>
             </div>
         </motion.div>
@@ -127,20 +140,39 @@ export default function NoticesPage() {
                         animate={{ opacity: 1, y: 0 }} 
                         exit={{ opacity: 0, scale: 0.9 }}
                         key={notice.id} 
-                        className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] shadow-sm border border-slate-200 dark:border-zinc-800 flex gap-5 group"
+                        className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] shadow-sm border border-slate-200 dark:border-zinc-800 flex gap-5 group relative overflow-hidden"
                     >
+                        {/* PROCESSING STATE */}
+                        {notice.status === 'processing' && (
+                            <div className="absolute inset-0 bg-white/80 dark:bg-black/80 z-10 flex items-center justify-center backdrop-blur-[2px]">
+                                <div className="flex flex-col items-center gap-2">
+                                    <Loader2 className="text-blue-500 animate-spin" size={32}/>
+                                    <span className="text-xs font-bold text-blue-500 animate-pulse">AI is writing...</span>
+                                </div>
+                            </div>
+                        )}
+
                         {/* Icon Badge */}
                         <div className="flex-shrink-0">
-                            <div className="w-12 h-12 bg-orange-50 dark:bg-orange-900/20 text-orange-500 rounded-2xl flex items-center justify-center">
+                            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${notice.status === 'processing' ? 'bg-zinc-100 dark:bg-zinc-800 text-zinc-400' : 'bg-orange-50 dark:bg-orange-900/20 text-orange-500'}`}>
                                 <Bell size={24} />
                             </div>
                         </div>
 
                         {/* Content */}
                         <div className="flex-1">
-                            <p className="text-slate-800 dark:text-zinc-200 text-base md:text-lg leading-relaxed font-medium">
-                                {notice.text}
+                            {/* Logic: Show Final Text if published, otherwise show Draft or standard text (backward compatibility) */}
+                            <p className="text-slate-800 dark:text-zinc-200 text-base md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
+                                {notice.status === 'published' ? notice.final_text : (notice.text || notice.original_text)}
                             </p>
+                            
+                            {/* Show Draft Source if AI was used */}
+                            {notice.status === 'published' && notice.original_text && (
+                                <p className="mt-2 text-xs text-slate-400 dark:text-zinc-600 border-t border-slate-100 dark:border-zinc-800 pt-2">
+                                    Draft: "{notice.original_text}"
+                                </p>
+                            )}
+
                             <div className="flex items-center gap-3 mt-3">
                                 <span className="text-xs font-bold text-slate-400 dark:text-zinc-500 uppercase">
                                     {new Date(notice.date).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' })}
@@ -169,7 +201,7 @@ export default function NoticesPage() {
                 >
                     <Bell size={48} className="mx-auto mb-4 opacity-20" />
                     <p className="font-bold">No notices posted yet.</p>
-                    <p className="text-sm opacity-60">Announcements will appear here.</p>
+                    <p className="text-sm opacity-60">Try the Magic Post button!</p>
                 </motion.div>
             )}
             </AnimatePresence>
