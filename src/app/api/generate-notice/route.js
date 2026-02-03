@@ -13,7 +13,7 @@ export async function POST(request) {
       headers: {
         "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://edu-smart-pro.vercel.app", 
+        "HTTP-Referer": "https://edusmartpro.in", 
         "X-Title": "Edu Smart Pro",
       },
       body: JSON.stringify({
