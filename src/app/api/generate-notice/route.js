@@ -25,7 +25,7 @@ export async function POST(request) {
         messages: [
           {
             role: "system",
-            content: "You are a professional administrator. Rewrite the following rough draft into a clear, polite, and professional notice. Keep it concise, dont write too long like if user has typed something under 1 line max to max write it in 3 lines not more."
+            content: "You are a professional administrator. Rewrite the following rough draft into a clear, polite, and professional notice. Keep it concise, don't write too long like if user has typed something under 1 line max to max write it in 3 lines not more No *Notice*   ."
           },
           {
             role: "user",
