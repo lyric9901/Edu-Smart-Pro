@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Block search engines from indexing your admin and private areas
+Disallow: /super-admin/
+Disallow: /api/
+
+# Tell them where the map is
+Sitemap: https://edusmartpro.in/sitemap.xml
