@@ -8,7 +8,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { 
   Plus, UserPlus, Users, Trash2, TrendingUp, X, Copy, 
   CheckCircle, PieChart, Sun, Moon, Sparkles, LayoutGrid, Search, ChevronRight,
-  ArrowLeft, Share2, Download, LogOut 
+  ArrowLeft, Share2, Download, LogOut // ADDED LogOut
 } from "lucide-react";
 
 // --- SKELETON COMPONENT ---
@@ -17,7 +17,7 @@ const Skeleton = ({ className }) => (
 );
 
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { user, logout } = useAuth(); // ADDED logout
    
   // --- STATE ---
   const [batches, setBatches] = useState([]);
@@ -126,7 +126,6 @@ export default function AdminDashboard() {
     setPerformanceScore(student.performance || 0);
   };
 
-  // UPDATED: Now points to /login
   const copyLink = () => {
     const link = `${window.location.origin}/login?schoolId=${user.schoolId}`;
     navigator.clipboard.writeText(link);
@@ -172,7 +171,6 @@ export default function AdminDashboard() {
 
   if (!mounted) return null;
 
-  // UPDATED: Magic Link URL points to /login
   const magicLinkUrl = `${typeof window !== 'undefined' ? window.location.origin : ""}/login?schoolId=${user?.schoolId}`;
 
   return (
@@ -214,7 +212,7 @@ export default function AdminDashboard() {
             </div>
         </motion.div>
         
-        {/* MAGIC LINK CARD */}
+        {/* MAGIC LINK CARD - Now with "Share" button */}
         <motion.div 
             initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }}
             className={`bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-6 text-white shadow-xl shadow-blue-500/20 flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden ${selectedBatch ? 'hidden md:flex' : 'flex'}`}
@@ -233,7 +231,6 @@ export default function AdminDashboard() {
           <div className="flex gap-2 relative z-10 w-full md:w-auto">
               <div className="flex-1 md:flex-none flex bg-black/20 backdrop-blur-md rounded-2xl p-1.5 items-center border border-white/10">
                   <code className="flex-1 px-4 py-2 text-xs md:text-sm font-mono text-white/90 truncate max-w-[150px] md:max-w-xs">
-                     {/* UPDATED DISPLAY TEXT */}
                      {typeof window !== 'undefined' ? window.location.host : "..."}/login?schoolId=...
                   </code>
                   <motion.button whileTap={{ scale: 0.9 }} onClick={copyLink} className="bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-50 transition flex items-center gap-2 shadow-sm">
@@ -242,6 +239,7 @@ export default function AdminDashboard() {
                   </motion.button>
               </div>
 
+              {/* SHARE BUTTON - OPENS MODAL */}
               <motion.button 
                 whileTap={{ scale: 0.9 }} 
                 onClick={() => setShowShareModal(true)} 
@@ -451,7 +449,7 @@ export default function AdminDashboard() {
 
         {/* --- MODALS --- */}
 
-        {/* 1. SHARE & QR MODAL */}
+        {/* 1. SHARE & QR MODAL (NEW) */}
         <AnimatePresence>
         {showShareModal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -479,7 +477,6 @@ export default function AdminDashboard() {
                         {/* COPY LINK */}
                         <div className="w-full bg-slate-50 dark:bg-black p-3 rounded-xl border border-slate-200 dark:border-zinc-800 flex items-center gap-2 mb-4">
                              <code className="text-xs flex-1 truncate text-left text-slate-600 dark:text-zinc-400 font-mono">
-                                {/* UPDATED TEXT DISPLAY IN MODAL */}
                                 {magicLinkUrl}
                              </code>
                              <button onClick={copyLink} className="p-2 hover:bg-white dark:hover:bg-zinc-800 rounded-lg transition text-blue-600">
