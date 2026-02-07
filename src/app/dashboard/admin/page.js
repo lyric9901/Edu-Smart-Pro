@@ -4,11 +4,11 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { ref, onValue, set } from "firebase/database";
 import { motion, AnimatePresence } from "framer-motion";
-import { QRCodeSVG } from "qrcode.react"; // IMPORTED QR CODE
+import { QRCodeSVG } from "qrcode.react"; 
 import { 
   Plus, UserPlus, Users, Trash2, TrendingUp, X, Copy, 
   CheckCircle, PieChart, Sun, Moon, Sparkles, LayoutGrid, Search, ChevronRight,
-  ArrowLeft, Share2, Download // ADDED Share2 and Download
+  ArrowLeft, Share2, Download, LogOut 
 } from "lucide-react";
 
 // --- SKELETON COMPONENT ---
@@ -17,7 +17,7 @@ const Skeleton = ({ className }) => (
 );
 
 export default function AdminDashboard() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
    
   // --- STATE ---
   const [batches, setBatches] = useState([]);
@@ -30,7 +30,7 @@ export default function AdminDashboard() {
    
   // Modals & UI
   const [showAllBatches, setShowAllBatches] = useState(false);
-  const [showShareModal, setShowShareModal] = useState(false); // NEW STATE FOR SHARE MODAL
+  const [showShareModal, setShowShareModal] = useState(false); 
   const [newBatchName, setNewBatchName] = useState("");
   const [newStudent, setNewStudent] = useState({ name: "", phone: "" });
   const [performanceScore, setPerformanceScore] = useState("");
@@ -126,8 +126,9 @@ export default function AdminDashboard() {
     setPerformanceScore(student.performance || 0);
   };
 
+  // UPDATED: Now points to /login
   const copyLink = () => {
-    const link = `${window.location.origin}/?schoolId=${user.schoolId}`;
+    const link = `${window.location.origin}/login?schoolId=${user.schoolId}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -171,7 +172,8 @@ export default function AdminDashboard() {
 
   if (!mounted) return null;
 
-  const magicLinkUrl = `${typeof window !== 'undefined' ? window.location.origin : ""}/?schoolId=${user?.schoolId}`;
+  // UPDATED: Magic Link URL points to /login
+  const magicLinkUrl = `${typeof window !== 'undefined' ? window.location.origin : ""}/login?schoolId=${user?.schoolId}`;
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${theme === 'dark' ? 'bg-black text-zinc-100' : 'bg-slate-50 text-slate-900'} font-sans p-4 md:p-8`}>
@@ -188,17 +190,31 @@ export default function AdminDashboard() {
                 </h1>
                 <p className="text-slate-500 dark:text-zinc-400 text-sm font-medium">Manage your institute efficiently</p>
             </div>
-            <motion.button 
-                whileTap={{ scale: 0.95 }}
-                onClick={toggleTheme}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition"
-            >
-                {theme === 'light' ? <Moon size={18} className="text-slate-600"/> : <Sun size={18} className="text-orange-400"/>}
-                <span className="text-xs font-bold uppercase tracking-wider">{theme === 'light' ? 'Dark Mode' : 'Light Mode'}</span>
-            </motion.button>
+            
+            <div className="flex gap-3 items-center">
+                {/* THEME TOGGLE */}
+                <motion.button 
+                    whileTap={{ scale: 0.95 }}
+                    onClick={toggleTheme}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition"
+                >
+                    {theme === 'light' ? <Moon size={18} className="text-slate-600"/> : <Sun size={18} className="text-orange-400"/>}
+                    <span className="text-xs font-bold uppercase tracking-wider">{theme === 'light' ? 'Dark' : 'Light'}</span>
+                </motion.button>
+
+                {/* LOGOUT BUTTON */}
+                <motion.button 
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => logout(user?.schoolId)} 
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-red-50 dark:bg-red-900/20 text-red-600 border border-red-100 dark:border-red-800/50 shadow-sm hover:shadow-md transition"
+                >
+                    <LogOut size={18} />
+                    <span className="text-xs font-bold uppercase tracking-wider">Logout</span>
+                </motion.button>
+            </div>
         </motion.div>
         
-        {/* MAGIC LINK CARD - Now with "Share" button */}
+        {/* MAGIC LINK CARD */}
         <motion.div 
             initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }}
             className={`bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-6 text-white shadow-xl shadow-blue-500/20 flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden ${selectedBatch ? 'hidden md:flex' : 'flex'}`}
@@ -217,7 +233,8 @@ export default function AdminDashboard() {
           <div className="flex gap-2 relative z-10 w-full md:w-auto">
               <div className="flex-1 md:flex-none flex bg-black/20 backdrop-blur-md rounded-2xl p-1.5 items-center border border-white/10">
                   <code className="flex-1 px-4 py-2 text-xs md:text-sm font-mono text-white/90 truncate max-w-[150px] md:max-w-xs">
-                     {typeof window !== 'undefined' ? window.location.host : "..."}/?schoolId=...
+                     {/* UPDATED DISPLAY TEXT */}
+                     {typeof window !== 'undefined' ? window.location.host : "..."}/login?schoolId=...
                   </code>
                   <motion.button whileTap={{ scale: 0.9 }} onClick={copyLink} className="bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-50 transition flex items-center gap-2 shadow-sm">
                       {copied ? <CheckCircle size={14}/> : <Copy size={14}/>} 
@@ -225,7 +242,6 @@ export default function AdminDashboard() {
                   </motion.button>
               </div>
 
-              {/* SHARE BUTTON - OPENS MODAL */}
               <motion.button 
                 whileTap={{ scale: 0.9 }} 
                 onClick={() => setShowShareModal(true)} 
@@ -435,7 +451,7 @@ export default function AdminDashboard() {
 
         {/* --- MODALS --- */}
 
-        {/* 1. SHARE & QR MODAL (NEW) */}
+        {/* 1. SHARE & QR MODAL */}
         <AnimatePresence>
         {showShareModal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -463,6 +479,7 @@ export default function AdminDashboard() {
                         {/* COPY LINK */}
                         <div className="w-full bg-slate-50 dark:bg-black p-3 rounded-xl border border-slate-200 dark:border-zinc-800 flex items-center gap-2 mb-4">
                              <code className="text-xs flex-1 truncate text-left text-slate-600 dark:text-zinc-400 font-mono">
+                                {/* UPDATED TEXT DISPLAY IN MODAL */}
                                 {magicLinkUrl}
                              </code>
                              <button onClick={copyLink} className="p-2 hover:bg-white dark:hover:bg-zinc-800 rounded-lg transition text-blue-600">
