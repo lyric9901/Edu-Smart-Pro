@@ -11,9 +11,9 @@ import {
   ArrowLeft, Share2, Download, LogOut 
 } from "lucide-react";
 
-// --- SKELETON COMPONENT ---
+// --- SKELETON COMPONENT (Dark Mode) ---
 const Skeleton = ({ className }) => (
-  <div className={`animate-pulse bg-slate-200 rounded-xl ${className}`} />
+  <div className={`animate-pulse bg-zinc-800/50 rounded-xl ${className}`} />
 );
 
 export default function AdminDashboard() {
@@ -162,7 +162,7 @@ export default function AdminDashboard() {
   const magicLinkUrl = `${typeof window !== 'undefined' ? window.location.origin : ""}/login?schoolId=${user?.schoolId}`;
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans p-4 md:p-8">
+    <div className="min-h-screen bg-black text-zinc-100 font-sans p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* HEADER */}
@@ -172,9 +172,9 @@ export default function AdminDashboard() {
         >
             <div>
                 <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-                    <LayoutGrid className="text-blue-600" /> Admin Dashboard
+                    <LayoutGrid className="text-blue-500" /> Admin Dashboard
                 </h1>
-                <p className="text-slate-500 text-sm font-medium">Manage your institute efficiently</p>
+                <p className="text-zinc-400 text-sm font-medium">Manage your institute efficiently</p>
             </div>
             
             <div className="flex gap-3 items-center">
@@ -182,7 +182,7 @@ export default function AdminDashboard() {
                 <motion.button 
                     whileTap={{ scale: 0.95 }}
                     onClick={() => logout(user?.schoolId)} 
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-red-50 text-red-600 border border-red-100 shadow-sm hover:shadow-md transition"
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-red-900/20 text-red-500 border border-red-800/50 shadow-sm hover:shadow-md transition"
                 >
                     <LogOut size={18} />
                     <span className="text-xs font-bold uppercase tracking-wider">Logout</span>
@@ -193,7 +193,7 @@ export default function AdminDashboard() {
         {/* MAGIC LINK CARD */}
         <motion.div 
             initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }}
-            className={`bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-6 text-white shadow-xl shadow-blue-500/20 flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden ${selectedBatch ? 'hidden md:flex' : 'flex'}`}
+            className={`bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-6 text-white shadow-xl shadow-blue-500/10 flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden ${selectedBatch ? 'hidden md:flex' : 'flex'}`}
         >
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
           
@@ -207,7 +207,7 @@ export default function AdminDashboard() {
           </div>
 
           <div className="flex gap-2 relative z-10 w-full md:w-auto">
-              <div className="flex-1 md:flex-none flex bg-black/20 backdrop-blur-md rounded-2xl p-1.5 items-center border border-white/10">
+              <div className="flex-1 md:flex-none flex bg-black/30 backdrop-blur-md rounded-2xl p-1.5 items-center border border-white/10">
                   <code className="flex-1 px-4 py-2 text-xs md:text-sm font-mono text-white/90 truncate max-w-[150px] md:max-w-xs">
                      {typeof window !== 'undefined' ? window.location.host : "..."}/login?schoolId=...
                   </code>
@@ -234,9 +234,9 @@ export default function AdminDashboard() {
           {/* LEFT SIDEBAR: BATCHES */}
           <motion.div 
             initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2 }} 
-            className={`bg-white p-5 rounded-[2rem] shadow-sm border border-slate-200 h-fit ${selectedBatch ? 'hidden lg:block' : 'block'}`}
+            className={`bg-zinc-900 p-5 rounded-[2rem] shadow-sm border border-zinc-800 h-fit ${selectedBatch ? 'hidden lg:block' : 'block'}`}
           >
-            <h2 className="font-bold text-slate-700 mb-4 text-lg flex items-center gap-2">
+            <h2 className="font-bold text-zinc-300 mb-4 text-lg flex items-center gap-2">
                 <Users size={20}/> Batches
             </h2>
             
@@ -245,7 +245,7 @@ export default function AdminDashboard() {
                 value={newBatchName} 
                 onChange={e => setNewBatchName(e.target.value)}
                 placeholder="New Batch..." 
-                className="flex-1 bg-slate-50 border border-slate-200 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium"
+                className="flex-1 bg-black border border-zinc-800 p-3 rounded-xl text-sm outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-zinc-200"
               />
               <motion.button whileTap={{ scale: 0.9 }} onClick={createBatch} className="bg-blue-600 text-white p-3 rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-500/30">
                 <Plus size={20} />
@@ -255,8 +255,8 @@ export default function AdminDashboard() {
             <div className="space-y-2">
               {loading ? (
                   <>
-                    <div className="flex items-center justify-between p-4 border border-slate-100 rounded-2xl"><Skeleton className="h-4 w-24"/><Skeleton className="h-6 w-8 rounded-full"/></div>
-                    <div className="flex items-center justify-between p-4 border border-slate-100 rounded-2xl"><Skeleton className="h-4 w-32"/><Skeleton className="h-6 w-8 rounded-full"/></div>
+                    <div className="flex items-center justify-between p-4 border border-zinc-800 rounded-2xl"><Skeleton className="h-4 w-24"/><Skeleton className="h-6 w-8 rounded-full"/></div>
+                    <div className="flex items-center justify-between p-4 border border-zinc-800 rounded-2xl"><Skeleton className="h-4 w-32"/><Skeleton className="h-6 w-8 rounded-full"/></div>
                   </>
               ) : batches.length > 0 ? (
                   <>
@@ -267,12 +267,12 @@ export default function AdminDashboard() {
                         onClick={() => setSelectedBatch(batch)}
                         className={`p-4 rounded-2xl cursor-pointer flex justify-between items-center transition-all duration-200 ${
                             selectedBatch?.id === batch.id 
-                            ? "bg-blue-50 border-blue-200 text-blue-700 border shadow-sm" 
-                            : "hover:bg-slate-50 text-slate-600 border border-transparent"
+                            ? "bg-blue-900/20 border-blue-800/50 text-blue-400 border shadow-sm" 
+                            : "hover:bg-zinc-800 text-zinc-400 border border-transparent"
                         }`}
                         >
                         <span className="font-bold text-sm">{batch.name}</span>
-                        <span className="text-xs bg-white px-2.5 py-1 rounded-full border border-slate-100 text-slate-400 font-bold shadow-sm">
+                        <span className="text-xs bg-black px-2.5 py-1 rounded-full border border-zinc-800 text-zinc-500 font-bold shadow-sm">
                             {batch.students.length}
                         </span>
                         </motion.div>
@@ -281,15 +281,15 @@ export default function AdminDashboard() {
                         <motion.button 
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setShowAllBatches(true)}
-                            className="w-full py-3 mt-2 text-sm font-bold text-blue-600 hover:bg-blue-50 rounded-2xl transition flex items-center justify-center gap-1"
+                            className="w-full py-3 mt-2 text-sm font-bold text-blue-400 hover:bg-blue-900/10 rounded-2xl transition flex items-center justify-center gap-1"
                         >
                             View All {batches.length} Batches <ChevronRight size={16}/>
                         </motion.button>
                     )}
                   </>
               ) : (
-                  <div className="text-center py-10 border-2 border-dashed border-slate-100 rounded-2xl">
-                      <p className="text-slate-400 text-sm font-medium">No batches yet.</p>
+                  <div className="text-center py-10 border-2 border-dashed border-zinc-800 rounded-2xl">
+                      <p className="text-zinc-600 text-sm font-medium">No batches yet.</p>
                   </div>
               )}
             </div>
@@ -301,63 +301,63 @@ export default function AdminDashboard() {
             className={`lg:col-span-2 ${selectedBatch ? 'block' : 'hidden lg:block'}`}
           >
             {selectedBatch ? (
-              <div className="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-200 min-h-[500px] flex flex-col">
-                <div className="flex flex-col md:flex-row justify-between md:items-center mb-6 pb-4 border-b border-slate-100 gap-4">
+              <div className="bg-zinc-900 p-6 rounded-[2rem] shadow-sm border border-zinc-800 min-h-[500px] flex flex-col">
+                <div className="flex flex-col md:flex-row justify-between md:items-center mb-6 pb-4 border-b border-zinc-800 gap-4">
                   <div className="flex items-center">
                     <button 
                         onClick={() => setSelectedBatch(null)} 
-                        className="lg:hidden mr-3 p-2 -ml-2 text-slate-500 hover:bg-slate-100 rounded-full transition"
+                        className="lg:hidden mr-3 p-2 -ml-2 text-zinc-500 hover:bg-zinc-800 rounded-full transition"
                     >
                         <ArrowLeft size={24} />
                     </button>
                     <div>
-                        <h2 className="text-2xl font-black text-slate-800 flex items-center gap-2">
+                        <h2 className="text-2xl font-black text-white flex items-center gap-2">
                             {selectedBatch.name}
                         </h2>
-                        <p className="text-sm text-slate-500 font-medium">Manage students details & scores</p>
+                        <p className="text-sm text-zinc-500 font-medium">Manage students details & scores</p>
                     </div>
                   </div>
                   
                   <div className="flex gap-2">
                       <div className="relative flex-1 md:flex-none">
-                          <Search size={16} className="absolute left-3 top-3 text-slate-400"/>
+                          <Search size={16} className="absolute left-3 top-3 text-zinc-500"/>
                           <input 
                             placeholder="Search..." 
-                            className="pl-9 pr-4 py-2 w-full md:w-32 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors"
+                            className="pl-9 pr-4 py-2 w-full md:w-32 bg-black border border-zinc-800 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors text-zinc-200"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                           />
                       </div>
-                      <div className="bg-green-100 text-green-700 px-4 py-2 rounded-xl text-xs font-bold uppercase flex items-center">
+                      <div className="bg-green-900/30 text-green-400 px-4 py-2 rounded-xl text-xs font-bold uppercase flex items-center">
                           Active
                       </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-3 mb-6 bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                <div className="flex flex-col md:flex-row gap-3 mb-6 bg-black p-4 rounded-2xl border border-zinc-800">
                   <div className="relative flex-1">
-                      <UserPlus size={18} className="absolute left-3 top-3.5 text-slate-400"/>
+                      <UserPlus size={18} className="absolute left-3 top-3.5 text-zinc-500"/>
                       <input 
                         placeholder="Student Name" 
-                        className="w-full pl-10 bg-white border border-slate-200 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors font-medium"
+                        className="w-full pl-10 bg-zinc-900 border border-zinc-800 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors font-medium text-zinc-200"
                         value={newStudent.name}
                         onChange={e => setNewStudent({...newStudent, name: e.target.value})}
                       />
                   </div>
                   <input 
                     placeholder="Phone Number" 
-                    className="w-full md:w-40 bg-white border border-slate-200 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors font-medium"
+                    className="w-full md:w-40 bg-zinc-900 border border-zinc-800 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors font-medium text-zinc-200"
                     value={newStudent.phone}
                     onChange={e => setNewStudent({...newStudent, phone: e.target.value})}
                   />
-                  <motion.button whileTap={{ scale: 0.95 }} onClick={addStudent} className="bg-slate-900 text-white px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition shadow-lg">
+                  <motion.button whileTap={{ scale: 0.95 }} onClick={addStudent} className="bg-white text-black px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition shadow-lg">
                     Add
                   </motion.button>
                 </div>
 
-                <div className="overflow-x-auto rounded-xl border border-slate-100">
+                <div className="overflow-x-auto rounded-xl border border-zinc-800">
                   <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-50 text-slate-500 font-bold uppercase text-xs">
+                    <thead className="bg-zinc-950 text-zinc-500 font-bold uppercase text-xs">
                       <tr>
                         <th className="p-4 whitespace-nowrap">Student Name</th>
                         <th className="p-4 whitespace-nowrap hidden sm:table-cell">Contact</th>
@@ -365,40 +365,40 @@ export default function AdminDashboard() {
                         <th className="p-4 text-right whitespace-nowrap">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-zinc-800">
                       <AnimatePresence>
                       {filteredStudents.map((student, i) => (
                         <motion.tr 
                             initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ delay: i * 0.05 }}
                             key={student.id} 
-                            className="hover:bg-slate-50 transition"
+                            className="hover:bg-zinc-800/50 transition"
                         >
-                          <td className="p-4 font-bold text-slate-800 flex items-center gap-3">
-                              <div className="w-9 h-9 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xs font-black shadow-sm shrink-0">
+                          <td className="p-4 font-bold text-zinc-200 flex items-center gap-3">
+                              <div className="w-9 h-9 rounded-full bg-blue-900/30 text-blue-400 flex items-center justify-center text-xs font-black shadow-sm shrink-0">
                                   {student.name.charAt(0)}
                               </div>
                               <div className="flex flex-col">
                                 <span>{student.name}</span>
-                                <span className="sm:hidden text-xs text-slate-400 font-normal">{student.phone}</span>
+                                <span className="sm:hidden text-xs text-zinc-500 font-normal">{student.phone}</span>
                               </div>
                           </td>
-                          <td className="p-4 text-slate-500 font-mono font-medium hidden sm:table-cell">{student.phone}</td>
+                          <td className="p-4 text-zinc-500 font-mono font-medium hidden sm:table-cell">{student.phone}</td>
                           <td className="p-4">
                               <span className={`px-2.5 py-1 rounded-lg text-xs font-bold ${
-                                !student.performance ? "bg-slate-100 text-slate-400" 
-                                : student.performance >= 80 ? "bg-green-100 text-green-700" 
-                                : student.performance >= 50 ? "bg-yellow-100 text-yellow-700" 
-                                : "bg-red-100 text-red-700"
+                                !student.performance ? "bg-zinc-800 text-zinc-500" 
+                                : student.performance >= 80 ? "bg-green-900/30 text-green-400" 
+                                : student.performance >= 50 ? "bg-yellow-900/30 text-yellow-400" 
+                                : "bg-red-900/30 text-red-400"
                               }`}>
                                   {student.performance || 0}%
                               </span>
                           </td>
                           <td className="p-4 text-right">
                              <div className="flex justify-end gap-2">
-                               <button onClick={() => openAnalytics(student)} className="text-blue-600 bg-blue-50 hover:bg-blue-100 p-2 rounded-xl transition" title="Analytics">
+                               <button onClick={() => openAnalytics(student)} className="text-blue-400 bg-blue-900/20 hover:bg-blue-900/40 p-2 rounded-xl transition" title="Analytics">
                                     <TrendingUp size={18}/>
                                </button>
-                               <button onClick={() => deleteStudent(student.id)} className="text-red-400 hover:text-red-600 bg-red-50 hover:bg-red-100 p-2 rounded-xl transition" title="Remove">
+                               <button onClick={() => deleteStudent(student.id)} className="text-red-400 hover:text-red-300 bg-red-900/20 hover:bg-red-900/40 p-2 rounded-xl transition" title="Remove">
                                     <Trash2 size={18}/>
                                </button>
                              </div>
@@ -407,15 +407,15 @@ export default function AdminDashboard() {
                       ))}
                       </AnimatePresence>
                       {filteredStudents.length === 0 && (
-                        <tr><td colSpan="4" className="p-12 text-center text-slate-400 font-medium">No students found.</td></tr>
+                        <tr><td colSpan="4" className="p-12 text-center text-zinc-600 font-medium">No students found.</td></tr>
                       )}
                     </tbody>
                   </table>
                 </div>
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center bg-white rounded-[2rem] border-2 border-dashed border-slate-200 text-slate-400 p-10">
-                <div className="bg-slate-50 p-6 rounded-full mb-4">
+              <div className="h-full flex flex-col items-center justify-center bg-zinc-900 rounded-[2rem] border-2 border-dashed border-zinc-800 text-zinc-600 p-10">
+                <div className="bg-zinc-800 p-6 rounded-full mb-4">
                   <LayoutGrid size={48} className="opacity-20"/>
                 </div>
                 <p className="font-bold text-lg">Select a batch to manage</p>
@@ -427,22 +427,22 @@ export default function AdminDashboard() {
 
         {/* --- MODALS --- */}
 
-        {/* 1. SHARE & QR MODAL (NEW) */}
+        {/* 1. SHARE & QR MODAL */}
         <AnimatePresence>
         {showShareModal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl relative">
-                    <button onClick={() => setShowShareModal(false)} className="absolute top-4 right-4 p-2 bg-slate-100 rounded-full hover:bg-red-50 hover:text-red-500 transition z-10"><X size={20}/></button>
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-zinc-900 rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl relative border border-zinc-800">
+                    <button onClick={() => setShowShareModal(false)} className="absolute top-4 right-4 p-2 bg-zinc-800 rounded-full hover:bg-red-900/20 hover:text-red-500 transition z-10"><X size={20}/></button>
                     
                     <div className="p-8 flex flex-col items-center text-center">
-                        <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center mb-4">
+                        <div className="w-16 h-16 bg-blue-900/20 text-blue-500 rounded-full flex items-center justify-center mb-4">
                             <Share2 size={32} />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-900 mb-2">Share Access</h3>
-                        <p className="text-slate-500 text-sm mb-6">Scan to join <strong>{user?.username}</strong>'s classroom.</p>
+                        <h3 className="text-2xl font-black text-white mb-2">Share Access</h3>
+                        <p className="text-zinc-500 text-sm mb-6">Scan to join <strong>{user?.username}</strong>'s classroom.</p>
                         
                         {/* QR CODE DISPLAY */}
-                        <div className="bg-white p-4 rounded-2xl border-2 border-slate-100 shadow-sm mb-6">
+                        <div className="bg-white p-4 rounded-2xl border-2 border-zinc-700 shadow-sm mb-6">
                              <QRCodeSVG 
                                 id="magic-qr"
                                 value={magicLinkUrl} 
@@ -453,11 +453,11 @@ export default function AdminDashboard() {
                         </div>
 
                         {/* COPY LINK */}
-                        <div className="w-full bg-slate-50 p-3 rounded-xl border border-slate-200 flex items-center gap-2 mb-4">
-                             <code className="text-xs flex-1 truncate text-left text-slate-600 font-mono">
+                        <div className="w-full bg-black p-3 rounded-xl border border-zinc-800 flex items-center gap-2 mb-4">
+                             <code className="text-xs flex-1 truncate text-left text-zinc-400 font-mono">
                                 {magicLinkUrl}
                              </code>
-                             <button onClick={copyLink} className="p-2 hover:bg-white rounded-lg transition text-blue-600">
+                             <button onClick={copyLink} className="p-2 hover:bg-zinc-800 rounded-lg transition text-blue-500">
                                 {copied ? <CheckCircle size={16}/> : <Copy size={16}/>}
                              </button>
                         </div>
@@ -479,10 +479,10 @@ export default function AdminDashboard() {
         <AnimatePresence>
         {showAllBatches && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
-                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-[2rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh]">
-                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
-                        <h3 className="text-xl font-black">All Batches ({batches.length})</h3>
-                        <button onClick={() => setShowAllBatches(false)} className="p-2 bg-slate-100 rounded-full hover:rotate-90 transition"><X size={20}/></button>
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-zinc-900 rounded-[2rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh] border border-zinc-800">
+                    <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
+                        <h3 className="text-xl font-black text-white">All Batches ({batches.length})</h3>
+                        <button onClick={() => setShowAllBatches(false)} className="p-2 bg-zinc-800 rounded-full hover:rotate-90 transition text-zinc-400"><X size={20}/></button>
                     </div>
                     <div className="p-4 overflow-y-auto flex-1 space-y-2 custom-scrollbar">
                         {batches.map(batch => (
@@ -492,12 +492,12 @@ export default function AdminDashboard() {
                                 onClick={() => { setSelectedBatch(batch); setShowAllBatches(false); }}
                                 className={`w-full p-4 rounded-2xl flex justify-between items-center transition-all ${
                                     selectedBatch?.id === batch.id 
-                                    ? "bg-blue-50 border border-blue-200 text-blue-700" 
-                                    : "bg-slate-50 hover:bg-slate-100 text-slate-700 border border-transparent"
+                                    ? "bg-blue-900/20 border border-blue-800/50 text-blue-400" 
+                                    : "bg-black hover:bg-zinc-800 text-zinc-300 border border-transparent"
                                 }`}
                             >
                                 <span className="font-bold">{batch.name}</span>
-                                <span className="text-xs bg-white px-3 py-1 rounded-full text-slate-500 font-bold shadow-sm">{batch.students.length} Students</span>
+                                <span className="text-xs bg-zinc-900 px-3 py-1 rounded-full text-zinc-500 font-bold shadow-sm">{batch.students.length} Students</span>
                             </motion.button>
                         ))}
                     </div>
@@ -510,7 +510,7 @@ export default function AdminDashboard() {
         <AnimatePresence>
         {selectedStudent && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
-              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white rounded-[2rem] w-full max-w-md overflow-hidden shadow-2xl">
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-zinc-900 rounded-[2rem] w-full max-w-md overflow-hidden shadow-2xl border border-zinc-800">
                   <div className="bg-blue-600 p-6 text-white flex justify-between items-start">
                       <div>
                           <h3 className="text-2xl font-black">{selectedStudent.name}</h3>
@@ -521,18 +521,18 @@ export default function AdminDashboard() {
                    
                   <div className="p-6 space-y-6">
                       <div className="grid grid-cols-2 gap-4">
-                          <div className="bg-green-50 p-5 rounded-2xl border border-green-100 text-center">
-                              <div className="text-3xl font-black text-slate-800">{getStats(selectedStudent).attPercent}%</div>
-                              <div className="text-xs text-green-700 font-bold uppercase mt-1">Attendance</div>
+                          <div className="bg-green-900/20 p-5 rounded-2xl border border-green-800 text-center">
+                              <div className="text-3xl font-black text-white">{getStats(selectedStudent).attPercent}%</div>
+                              <div className="text-xs text-green-400 font-bold uppercase mt-1">Attendance</div>
                           </div>
-                          <div className="bg-orange-50 p-5 rounded-2xl border border-orange-100 text-center">
-                              <div className="text-3xl font-black text-slate-800">{getStats(selectedStudent).paidMonths}</div>
-                              <div className="text-xs text-orange-700 font-bold uppercase mt-1">Months Paid</div>
+                          <div className="bg-orange-900/20 p-5 rounded-2xl border border-orange-800 text-center">
+                              <div className="text-3xl font-black text-white">{getStats(selectedStudent).paidMonths}</div>
+                              <div className="text-xs text-orange-400 font-bold uppercase mt-1">Months Paid</div>
                           </div>
                       </div>
 
-                      <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
-                          <label className="block text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                      <div className="bg-black p-6 rounded-2xl border border-zinc-800">
+                          <label className="block text-sm font-bold text-zinc-300 mb-4 flex items-center gap-2">
                               <PieChart size={18} className="text-blue-500"/> Update Score
                           </label>
                           <div className="flex gap-4 items-center mb-4">
@@ -541,19 +541,19 @@ export default function AdminDashboard() {
                                   min="0" max="100"
                                   value={performanceScore}
                                   onChange={e => setPerformanceScore(e.target.value)}
-                                  className="w-full bg-white border-2 border-slate-200 p-3 rounded-xl text-2xl font-black text-center focus:border-blue-500 outline-none transition-all"
+                                  className="w-full bg-zinc-900 border-2 border-zinc-700 p-3 rounded-xl text-2xl font-black text-center focus:border-blue-500 outline-none transition-all text-white"
                               />
-                              <span className="text-2xl font-black text-slate-300">%</span>
+                              <span className="text-2xl font-black text-zinc-700">%</span>
                           </div>
                           <input 
                               type="range" min="0" max="100" 
                               value={performanceScore} 
                               onChange={e => setPerformanceScore(e.target.value)}
-                              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+                              className="w-full h-2 bg-zinc-800 rounded-lg appearance-none cursor-pointer accent-blue-600"
                           />
                       </div>
 
-                      <motion.button whileTap={{ scale: 0.98 }} onClick={savePerformance} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:opacity-90 transition shadow-lg text-lg">
+                      <motion.button whileTap={{ scale: 0.98 }} onClick={savePerformance} className="w-full bg-white text-black py-4 rounded-xl font-bold hover:opacity-90 transition shadow-lg text-lg">
                           Save Updates
                       </motion.button>
                   </div>
