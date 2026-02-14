@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { ref, onValue, set } from "firebase/database";
 import { motion, AnimatePresence } from "framer-motion";
-import { IndianRupee, CheckCircle, Clock, Users, CalendarDays, Filter } from "lucide-react";
+import { IndianRupee, CheckCircle, Clock, Users, CalendarDays, Filter, Download } from "lucide-react"; // Added Download
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
@@ -62,6 +62,36 @@ export default function FeesPage() {
     set(ref(db, `schools/${user.schoolId}/batches/${selectedBatch.id}/students/${studentIndex}/fees/${year}/${monthKey}`), newStatus);
   };
 
+  // --- NEW: EXPORT CSV LOGIC ---
+  const downloadCSV = () => {
+     if (!selectedBatch) return;
+     
+     // Headers
+     const headers = ["Student Name", "Phone", ...MONTHS];
+     let csv = headers.join(",") + "\n";
+     
+     // Rows
+     selectedBatch.students.forEach(student => {
+         const row = [
+             `"${student.name}"`,
+             `"${student.phone}"`,
+             ...MONTHS.map(m => {
+                 const status = student.fees?.[year]?.[m.toLowerCase()];
+                 return status === "paid" ? "PAID" : "PENDING";
+             })
+         ];
+         csv += row.join(",") + "\n";
+     });
+     
+     // Download
+     const blob = new Blob([csv], { type: "text/csv" });
+     const url = window.URL.createObjectURL(blob);
+     const a = document.createElement("a");
+     a.href = url;
+     a.download = `Fees_${selectedBatch.name}_${year}.csv`;
+     a.click();
+  };
+
   if (!mounted) return null;
 
   return (
@@ -79,6 +109,17 @@ export default function FeesPage() {
                 </h1>
                 <p className="text-slate-500 dark:text-zinc-400 text-sm font-medium">Manage student payments</p>
             </div>
+            
+            {/* EXPORT BUTTON */}
+            {selectedBatch && (
+                <motion.button 
+                    whileTap={{ scale: 0.95 }}
+                    onClick={downloadCSV}
+                    className="flex items-center gap-2 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 px-5 py-2.5 rounded-2xl text-sm font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-zinc-700 transition"
+                >
+                    <Download size={18} /> Export Excel/CSV
+                </motion.button>
+            )}
         </motion.div>
 
         {/* CONTROLS CARD */}

@@ -2,11 +2,11 @@
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
-import { ref, onValue, set, update, push } from "firebase/database"; // Added push
+import { ref, onValue, set, update, push } from "firebase/database";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Calendar, Check, X, Minus, Users, CheckCircle2, 
-  ChevronLeft, ChevronRight 
+  ChevronLeft, ChevronRight, Download // Added Download
 } from "lucide-react";
 
 // --- SKELETON COMPONENT ---
@@ -107,14 +107,12 @@ export default function AttendancePage() {
     const path = `schools/${user.schoolId}/batches/${selectedBatch.id}/students/${studentIndex}/attendance/${selectedDate}`;
     set(ref(db, path), newStatus);
 
-    // --- SEND PRIVATE NOTIFICATION IF ABSENT ---
-    // This sends "1 message" to the specific student's personal notification list
     if (newStatus === "absent") {
       const notifPath = `schools/${user.schoolId}/batches/${selectedBatch.id}/students/${studentIndex}/notifications`;
       push(ref(db, notifPath), {
         text: `You were marked absent for ${new Date(selectedDate).toDateString()}.`,
         date: new Date().toISOString(),
-        type: "alert", // 'alert' helps us style it red in the student view
+        type: "alert",
         read: false
       });
     }
@@ -140,6 +138,55 @@ export default function AttendancePage() {
     const offset = d.getTimezoneOffset() * 60000;
     const newDate = new Date(d.getTime() - offset).toISOString().split('T')[0];
     setSelectedDate(newDate);
+  };
+
+  // --- NEW: CSV EXPORT LOGIC ---
+  const downloadCSV = () => {
+    if (!selectedBatch) return;
+
+    // 1. Calculate Month Details from selectedDate
+    const dateObj = new Date(selectedDate);
+    const year = dateObj.getFullYear();
+    const month = dateObj.getMonth(); // 0-11
+    const monthName = dateObj.toLocaleString('default', { month: 'long' });
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+    // 2. Headers
+    let csv = "Student Name,Phone";
+    for(let d=1; d<=daysInMonth; d++) {
+        csv += `,${d} ${monthName.slice(0,3)}`;
+    }
+    csv += ",Total Present\n";
+
+    // 3. Rows
+    selectedBatch.students.forEach(student => {
+        let row = `"${student.name}","${student.phone}"`;
+        let presentCount = 0;
+        
+        for(let d=1; d<=daysInMonth; d++) {
+             // Construct YYYY-MM-DD manually to match key format
+             const dayStr = String(d).padStart(2, '0');
+             const monthStr = String(month + 1).padStart(2, '0');
+             const dateKey = `${year}-${monthStr}-${dayStr}`;
+             
+             const status = student.attendance?.[dateKey];
+             let code = "-";
+             if (status === "present") { code = "P"; presentCount++; }
+             else if (status === "absent") code = "A";
+             
+             row += `,${code}`;
+        }
+        row += `,${presentCount}`;
+        csv += `${row}\n`;
+    });
+
+    // 4. Download
+    const blob = new Blob([csv], { type: "text/csv" });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `Attendance_${selectedBatch.name}_${monthName}_${year}.csv`;
+    a.click();
   };
 
   const getStatus = (student) => student.attendance?.[selectedDate] || "not-marked";
@@ -236,6 +283,16 @@ export default function AttendancePage() {
                     </div>
                     
                     <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                        {/* CSV BUTTON */}
+                        <motion.button 
+                            whileTap={{ scale: 0.95 }}
+                            onClick={downloadCSV}
+                            className="flex items-center justify-center gap-2 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 px-4 py-3 rounded-2xl text-sm font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-zinc-700 transition"
+                            title="Download Monthly Report"
+                        >
+                            <Download size={18} /> <span className="hidden sm:inline">Export CSV</span>
+                        </motion.button>
+
                         <motion.button
                             whileTap={{ scale: 0.95 }}
                             onClick={() => markAll("present")}
