@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { db } from "@/lib/firebase";
 import { ref, onValue, set } from "firebase/database";
@@ -8,16 +8,34 @@ import { QRCodeSVG } from "qrcode.react";
 import { 
   Plus, UserPlus, Users, Trash2, TrendingUp, X, Copy, 
   CheckCircle, PieChart, Sparkles, LayoutGrid, Search, ChevronRight,
-  ArrowLeft, Share2, Download, LogOut 
+  ArrowLeft, Share2, Download, LogOut, Upload, FileText, Bell
 } from "lucide-react";
 
-// --- SKELETON COMPONENT (Dark Mode) ---
+// --- TOAST COMPONENT ---
+const Toast = ({ message, type, onClose }) => (
+  <motion.div 
+    initial={{ opacity: 0, y: 50, scale: 0.9 }} 
+    animate={{ opacity: 1, y: 0, scale: 1 }} 
+    exit={{ opacity: 0, scale: 0.9 }}
+    className={`fixed bottom-6 right-6 px-6 py-4 rounded-2xl shadow-2xl flex items-center gap-3 z-[100] border backdrop-blur-md ${
+      type === "error" 
+      ? "bg-red-900/90 text-red-100 border-red-800" 
+      : "bg-zinc-900/90 text-white border-zinc-800"
+    }`}
+  >
+    {type === "error" ? <X size={20} className="text-red-400"/> : <CheckCircle size={20} className="text-green-400"/>}
+    <span className="font-bold text-sm">{message}</span>
+  </motion.div>
+);
+
+// --- SKELETON COMPONENT ---
 const Skeleton = ({ className }) => (
   <div className={`animate-pulse bg-zinc-800/50 rounded-xl ${className}`} />
 );
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
+  const fileInputRef = useRef(null);
    
   // --- STATE ---
   const [batches, setBatches] = useState([]);
@@ -26,6 +44,7 @@ export default function AdminDashboard() {
    
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
+  const [toast, setToast] = useState(null); // { msg, type }
    
   // Modals & UI
   const [showAllBatches, setShowAllBatches] = useState(false);
@@ -40,6 +59,12 @@ export default function AdminDashboard() {
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Show Toast Helper
+  const showToast = (msg, type = "success") => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // --- FETCH DATA ---
   useEffect(() => {
@@ -58,11 +83,13 @@ export default function AdminDashboard() {
 
           setBatches(list);
            
+          // Keep selected batch synced
           if (selectedBatch) {
             const updated = list.find(b => b.id === selectedBatch.id);
             if (updated) setSelectedBatch(updated);
+            // Keep selected student synced
             if (selectedStudent) {
-                const updatedStudent = updated.students.find(s => s.id === selectedStudent.id);
+                const updatedStudent = updated?.students?.find(s => s.id === selectedStudent.id);
                 if (updatedStudent) setSelectedStudent(updatedStudent);
             }
           }
@@ -84,20 +111,80 @@ export default function AdminDashboard() {
       students: []
     });
     setNewBatchName("");
+    showToast("New batch created!");
   };
 
   const addStudent = () => {
-    if (!selectedBatch || !newStudent.name) return;
+    if (!selectedBatch) return;
+    if (!newStudent.name) {
+        showToast("Enter a name!", "error");
+        return;
+    }
     const updatedStudents = [...(selectedBatch.students || []), {
       id: Date.now(),
       name: newStudent.name,
-      phone: newStudent.phone,
+      phone: newStudent.phone || "N/A",
       fees: {},
       attendance: {},
       performance: 0 
     }];
     set(ref(db, `schools/${user.schoolId}/batches/${selectedBatch.id}/students`), updatedStudents);
     setNewStudent({ name: "", phone: "" });
+    showToast("Student added successfully");
+  };
+
+  // --- BULK IMPORT (CSV) ---
+  const handleCSVImport = (e) => {
+    const file = e.target.files[0];
+    if (!file || !selectedBatch) return;
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+        try {
+            const text = event.target.result;
+            const rows = text.split("\n").slice(1); // Skip header
+            const newEntries = [];
+
+            rows.forEach(row => {
+                const [name, phone] = row.split(",");
+                if (name && name.trim() !== "") {
+                    newEntries.push({
+                        id: Date.now() + Math.random(), // Unique ID
+                        name: name.trim().replace(/"/g, ""), // Remove quotes
+                        phone: phone ? phone.trim().replace(/"/g, "") : "N/A",
+                        fees: {},
+                        attendance: {},
+                        performance: 0
+                    });
+                }
+            });
+
+            if (newEntries.length === 0) {
+                showToast("No valid data found in CSV", "error");
+                return;
+            }
+
+            const updatedStudents = [...(selectedBatch.students || []), ...newEntries];
+            set(ref(db, `schools/${user.schoolId}/batches/${selectedBatch.id}/students`), updatedStudents);
+            showToast(`Imported ${newEntries.length} students!`);
+        } catch (err) {
+            showToast("Failed to parse CSV", "error");
+            console.error(err);
+        }
+    };
+    reader.readAsText(file);
+    // Reset input
+    e.target.value = null;
+  };
+
+  const downloadSampleCSV = () => {
+    const csvContent = "data:text/csv;charset=utf-8,Name,Phone\nRahul Sharma,9876543210\nPriya Verma,9123456789";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "student_template.csv");
+    document.body.appendChild(link);
+    link.click();
   };
 
   const savePerformance = () => {
@@ -107,6 +194,7 @@ export default function AdminDashboard() {
     const path = `schools/${user.schoolId}/batches/${selectedBatch.id}/students/${studentIndex}/performance`;
     set(ref(db, path), Number(performanceScore));
     setSelectedStudent(null);
+    showToast("Performance updated");
   };
 
   const openAnalytics = (student) => {
@@ -118,16 +206,17 @@ export default function AdminDashboard() {
     const link = `${window.location.origin}/login?schoolId=${user.schoolId}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
+    showToast("Magic Link Copied!");
     setTimeout(() => setCopied(false), 2000);
   };
 
   const deleteStudent = (studentId) => {
-    if(!confirm("Remove this student?")) return;
+    if(!confirm("Are you sure you want to remove this student?")) return;
     const updatedList = selectedBatch.students.filter(s => s.id !== studentId);
     set(ref(db, `schools/${user.schoolId}/batches/${selectedBatch.id}/students`), updatedList);
+    showToast("Student removed");
   };
 
-  // --- DOWNLOAD QR FUNCTION ---
   const downloadQR = () => {
     const svg = document.getElementById("magic-qr");
     if (!svg) return;
@@ -140,9 +229,10 @@ export default function AdminDashboard() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+    showToast("QR Code Downloaded");
   };
 
-  // --- CALCULATIONS ---
+  // --- STATS ---
   const getStats = (student) => {
     const totalDays = Object.keys(student.attendance || {}).length;
     const present = Object.values(student.attendance || {}).filter(v => v === "present").length;
@@ -163,6 +253,10 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans p-4 md:p-8">
+      <AnimatePresence>
+        {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
+      </AnimatePresence>
+
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* HEADER */}
@@ -178,7 +272,6 @@ export default function AdminDashboard() {
             </div>
             
             <div className="flex gap-3 items-center">
-                {/* LOGOUT BUTTON */}
                 <motion.button 
                     whileTap={{ scale: 0.95 }}
                     onClick={() => logout(user?.schoolId)} 
@@ -217,13 +310,12 @@ export default function AdminDashboard() {
                   </motion.button>
               </div>
 
-              {/* SHARE BUTTON - OPENS MODAL */}
               <motion.button 
                 whileTap={{ scale: 0.9 }} 
                 onClick={() => setShowShareModal(true)} 
                 className="bg-yellow-400 text-yellow-900 px-4 py-2 rounded-2xl font-bold text-sm hover:bg-yellow-300 transition flex items-center gap-2 shadow-lg shadow-yellow-500/20"
               >
-                  <Share2 size={18}/> <span className="hidden sm:inline">Share & QR</span>
+                  <Share2 size={18}/> <span className="hidden sm:inline">Share</span>
               </motion.button>
           </div>
         </motion.div>
@@ -260,7 +352,7 @@ export default function AdminDashboard() {
                   </>
               ) : batches.length > 0 ? (
                   <>
-                    {batches.slice(0, 3).map(batch => (
+                    {batches.slice(0, 5).map(batch => (
                         <motion.div 
                         whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
                         key={batch.id} 
@@ -277,7 +369,7 @@ export default function AdminDashboard() {
                         </span>
                         </motion.div>
                     ))}
-                    {batches.length > 3 && (
+                    {batches.length > 5 && (
                         <motion.button 
                             whileTap={{ scale: 0.95 }}
                             onClick={() => setShowAllBatches(true)}
@@ -314,45 +406,63 @@ export default function AdminDashboard() {
                         <h2 className="text-2xl font-black text-white flex items-center gap-2">
                             {selectedBatch.name}
                         </h2>
-                        <p className="text-sm text-zinc-500 font-medium">Manage students details & scores</p>
+                        <div className="flex items-center gap-2 mt-1">
+                          <span className="text-xs text-zinc-500 font-medium bg-black px-2 py-0.5 rounded-md border border-zinc-800">
+                             ID: {selectedBatch.id.slice(-6)}
+                          </span>
+                        </div>
                     </div>
                   </div>
                   
-                  <div className="flex gap-2">
-                      <div className="relative flex-1 md:flex-none">
+                  <div className="flex gap-2 w-full md:w-auto">
+                      <div className="relative flex-1">
                           <Search size={16} className="absolute left-3 top-3 text-zinc-500"/>
                           <input 
-                            placeholder="Search..." 
-                            className="pl-9 pr-4 py-2 w-full md:w-32 bg-black border border-zinc-800 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors text-zinc-200"
+                            placeholder="Search student..." 
+                            className="pl-9 pr-4 py-2.5 w-full bg-black border border-zinc-800 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors text-zinc-200"
                             value={searchQuery}
                             onChange={e => setSearchQuery(e.target.value)}
                           />
                       </div>
-                      <div className="bg-green-900/30 text-green-400 px-4 py-2 rounded-xl text-xs font-bold uppercase flex items-center">
-                          Active
-                      </div>
                   </div>
                 </div>
 
-                <div className="flex flex-col md:flex-row gap-3 mb-6 bg-black p-4 rounded-2xl border border-zinc-800">
-                  <div className="relative flex-1">
-                      <UserPlus size={18} className="absolute left-3 top-3.5 text-zinc-500"/>
+                {/* ADD STUDENT / IMPORT ROW */}
+                <div className="flex flex-col gap-3 mb-6 bg-black p-4 rounded-2xl border border-zinc-800">
+                  <div className="flex flex-col md:flex-row gap-2">
+                      <div className="relative flex-1">
+                          <UserPlus size={18} className="absolute left-3 top-3.5 text-zinc-500"/>
+                          <input 
+                            placeholder="Student Name" 
+                            className="w-full pl-10 bg-zinc-900 border border-zinc-800 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors font-medium text-zinc-200"
+                            value={newStudent.name}
+                            onChange={e => setNewStudent({...newStudent, name: e.target.value})}
+                          />
+                      </div>
                       <input 
-                        placeholder="Student Name" 
-                        className="w-full pl-10 bg-zinc-900 border border-zinc-800 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors font-medium text-zinc-200"
-                        value={newStudent.name}
-                        onChange={e => setNewStudent({...newStudent, name: e.target.value})}
+                        placeholder="Phone Number" 
+                        className="w-full md:w-40 bg-zinc-900 border border-zinc-800 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors font-medium text-zinc-200"
+                        value={newStudent.phone}
+                        onChange={e => setNewStudent({...newStudent, phone: e.target.value})}
                       />
+                      <motion.button whileTap={{ scale: 0.95 }} onClick={addStudent} className="bg-white text-black px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition shadow-lg">
+                        Add
+                      </motion.button>
                   </div>
-                  <input 
-                    placeholder="Phone Number" 
-                    className="w-full md:w-40 bg-zinc-900 border border-zinc-800 p-3 rounded-xl text-sm outline-none focus:border-blue-500 transition-colors font-medium text-zinc-200"
-                    value={newStudent.phone}
-                    onChange={e => setNewStudent({...newStudent, phone: e.target.value})}
-                  />
-                  <motion.button whileTap={{ scale: 0.95 }} onClick={addStudent} className="bg-white text-black px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition shadow-lg">
-                    Add
-                  </motion.button>
+                  
+                  {/* CSV IMPORT AREA */}
+                  <div className="flex items-center justify-between pt-2 border-t border-zinc-800 mt-1">
+                     <p className="text-xs text-zinc-500 font-medium flex items-center gap-1">
+                       <FileText size={12}/> Bulk Import
+                     </p>
+                     <div className="flex gap-2">
+                        <button onClick={downloadSampleCSV} className="text-xs text-blue-400 hover:underline px-2 py-1">Download Template</button>
+                        <input type="file" ref={fileInputRef} hidden accept=".csv" onChange={handleCSVImport} />
+                        <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-zinc-700 transition border border-zinc-700">
+                           <Upload size={12}/> Import CSV
+                        </button>
+                     </div>
+                  </div>
                 </div>
 
                 <div className="overflow-x-auto rounded-xl border border-zinc-800">
@@ -441,7 +551,6 @@ export default function AdminDashboard() {
                         <h3 className="text-2xl font-black text-white mb-2">Share Access</h3>
                         <p className="text-zinc-500 text-sm mb-6">Scan to join <strong>{user?.username}</strong>'s classroom.</p>
                         
-                        {/* QR CODE DISPLAY */}
                         <div className="bg-white p-4 rounded-2xl border-2 border-zinc-700 shadow-sm mb-6">
                              <QRCodeSVG 
                                 id="magic-qr"
@@ -452,7 +561,6 @@ export default function AdminDashboard() {
                              />
                         </div>
 
-                        {/* COPY LINK */}
                         <div className="w-full bg-black p-3 rounded-xl border border-zinc-800 flex items-center gap-2 mb-4">
                              <code className="text-xs flex-1 truncate text-left text-zinc-400 font-mono">
                                 {magicLinkUrl}
@@ -462,7 +570,6 @@ export default function AdminDashboard() {
                              </button>
                         </div>
 
-                        {/* DOWNLOAD BUTTON */}
                         <button 
                             onClick={downloadQR}
                             className="w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 transition flex items-center justify-center gap-2 shadow-lg shadow-blue-500/30"
