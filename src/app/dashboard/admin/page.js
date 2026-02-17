@@ -8,7 +8,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { 
   Plus, UserPlus, Users, Trash2, TrendingUp, X, Copy, 
   CheckCircle, PieChart, Sparkles, LayoutGrid, Search, ChevronRight,
-  ArrowLeft, Share2, Download, LogOut, Upload, FileText, Bell
+  ArrowLeft, Share2, Download, LogOut, Upload, FileText, FileDown
 } from "lucide-react";
 
 // --- TOAST COMPONENT ---
@@ -177,14 +177,43 @@ export default function AdminDashboard() {
     e.target.value = null;
   };
 
-  const downloadSampleCSV = () => {
+  // --- DOWNLOAD TEMPLATE (For Importing) ---
+  const downloadTemplate = () => {
     const csvContent = "data:text/csv;charset=utf-8,Name,Phone\nRahul Sharma,9876543210\nPriya Verma,9123456789";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "student_template.csv");
+    link.setAttribute("download", "student_import_template.csv");
     document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+  };
+
+  // --- EXPORT REAL DATA (New Feature) ---
+  const exportRealData = () => {
+    if (!selectedBatch || !selectedBatch.students || selectedBatch.students.length === 0) {
+        showToast("No students to export!", "error");
+        return;
+    }
+
+    // 1. Headers
+    let csvContent = "data:text/csv;charset=utf-8,ID,Name,Phone,Performance Score\n";
+
+    // 2. Rows
+    selectedBatch.students.forEach(s => {
+        const row = `${s.id},"${s.name}","${s.phone}",${s.performance || 0}`;
+        csvContent += row + "\n";
+    });
+
+    // 3. Download
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `${selectedBatch.name}_Students.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    showToast("Student list downloaded!");
   };
 
   const savePerformance = () => {
@@ -424,6 +453,14 @@ export default function AdminDashboard() {
                             onChange={e => setSearchQuery(e.target.value)}
                           />
                       </div>
+                      
+                      {/* EXPORT BUTTON */}
+                      <button 
+                        onClick={exportRealData}
+                        className="bg-zinc-800 text-zinc-200 px-4 py-2 rounded-xl text-xs font-bold hover:bg-zinc-700 transition flex items-center gap-2 border border-zinc-700"
+                      >
+                         <FileDown size={16}/> Export List
+                      </button>
                   </div>
                 </div>
 
@@ -456,7 +493,7 @@ export default function AdminDashboard() {
                        <FileText size={12}/> Bulk Import
                      </p>
                      <div className="flex gap-2">
-                        <button onClick={downloadSampleCSV} className="text-xs text-blue-400 hover:underline px-2 py-1">Download Template</button>
+                        <button onClick={downloadTemplate} className="text-xs text-blue-400 hover:underline px-2 py-1">Download Template</button>
                         <input type="file" ref={fileInputRef} hidden accept=".csv" onChange={handleCSVImport} />
                         <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1 bg-zinc-800 text-zinc-300 px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-zinc-700 transition border border-zinc-700">
                            <Upload size={12}/> Import CSV
