@@ -136,7 +136,7 @@ function LoginContent() {
                         </div>
                         <div className="relative group">
                             <Lock size={18} className="absolute left-4 top-4 text-slate-400 group-focus-within:text-blue-500 transition"/>
-                            <input required type="password" placeholder="Phone No. or Password" 
+                            <input required type="password" placeholder="Password" 
                                 className="w-full pl-12 p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition font-medium text-slate-700"
                                 onChange={e => setStudentForm({...studentForm, passwordInput: e.target.value})}
                             />
