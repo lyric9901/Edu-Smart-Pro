@@ -1,5 +1,5 @@
 "use client";
-export const dynamic = "force-dynamic"; // CRITICAL FOR VERCEL BUILD
+export const dynamic = "force-dynamic"; 
 
 import { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -17,14 +17,12 @@ function LoginContent() {
   const [schoolName, setSchoolName] = useState("");
   const [activeTab, setActiveTab] = useState("student"); 
   
-  // Forms
   const [adminForm, setAdminForm] = useState({ username: "", password: "" });
-  const [studentForm, setStudentForm] = useState({ name: "", phone: "" });
+  const [studentForm, setStudentForm] = useState({ name: "", passwordInput: "" }); // Updated to handle both phone/password
   
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // 1. Auto-Load School Name
   useEffect(() => {
     if (schoolId) {
       get(ref(db, `schools/${schoolId}/info`)).then((snapshot) => {
@@ -35,7 +33,6 @@ function LoginContent() {
     }
   }, [schoolId]);
 
-  // 2. Handle Admin Login
   const handleAdminLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -47,7 +44,6 @@ function LoginContent() {
     }
   };
 
-  // 3. Handle Student Login
   const handleStudentLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -66,10 +62,16 @@ function LoginContent() {
     if (snapshot.exists()) {
         snapshot.forEach(batch => {
             const students = batch.val().students || [];
-            const match = students.find(s => 
-                s.name.trim().toLowerCase() === studentForm.name.trim().toLowerCase() && 
-                s.phone.trim() === studentForm.phone.trim()
-            );
+            
+            // Checking logic: If they have a custom 'password', use it. Otherwise, use 'phone'
+            const match = students.find(s => {
+                const nameMatch = s.name.trim().toLowerCase() === studentForm.name.trim().toLowerCase();
+                const inputMatchesPass = s.password 
+                    ? s.password === studentForm.passwordInput 
+                    : s.phone.trim() === studentForm.passwordInput.trim();
+                return nameMatch && inputMatchesPass;
+            });
+
             if (match) foundStudent = { ...match, batchName: batch.val().name };
         });
     }
@@ -78,7 +80,7 @@ function LoginContent() {
         localStorage.setItem("eduSmartStudent", JSON.stringify({ ...foundStudent, schoolId }));
         router.push("/student"); 
     } else {
-        setError("Student not found. Please check Name and Phone.");
+        setError("Invalid Credentials. Please check Name and Password/Phone.");
         setLoading(false);
     }
   };
@@ -87,7 +89,6 @@ function LoginContent() {
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-100 to-blue-50 font-sans p-4">
       <div className="bg-white rounded-3xl shadow-2xl w-full max-w-md overflow-hidden border border-white/50">
         
-        {/* Header */}
         <div className="bg-slate-900 p-8 text-center relative overflow-hidden">
             <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500 rounded-full blur-3xl -mr-10 -mt-10 opacity-20"></div>
             <div className="relative z-10">
@@ -103,14 +104,11 @@ function LoginContent() {
             </div>
         </div>
 
-        {/* Tabs */}
         <div className="flex border-b border-slate-100 p-2 gap-2 bg-slate-50">
             <button 
                 onClick={() => setActiveTab("student")}
                 className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                    activeTab === "student" 
-                    ? "bg-white text-blue-600 shadow-sm border border-slate-200" 
-                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                    activeTab === "student" ? "bg-white text-blue-600 shadow-sm border border-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
                 }`}
             >
                 <GraduationCap size={18}/> Student
@@ -118,9 +116,7 @@ function LoginContent() {
             <button 
                 onClick={() => setActiveTab("admin")}
                 className={`flex-1 py-3 rounded-xl text-sm font-bold flex items-center justify-center gap-2 transition-all ${
-                    activeTab === "admin" 
-                    ? "bg-white text-blue-600 shadow-sm border border-slate-200" 
-                    : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+                    activeTab === "admin" ? "bg-white text-blue-600 shadow-sm border border-slate-200" : "text-slate-400 hover:text-slate-600 hover:bg-slate-100"
                 }`}
             >
                 <ShieldCheck size={18}/> Admin
@@ -128,7 +124,6 @@ function LoginContent() {
         </div>
 
         <div className="p-8">
-            {/* STUDENT FORM */}
             {activeTab === "student" && (
                 <form onSubmit={handleStudentLogin} className="space-y-5">
                     <div className="space-y-4">
@@ -141,9 +136,9 @@ function LoginContent() {
                         </div>
                         <div className="relative group">
                             <Lock size={18} className="absolute left-4 top-4 text-slate-400 group-focus-within:text-blue-500 transition"/>
-                            <input required placeholder="Phone Number" 
+                            <input required type="password" placeholder="Phone No. or Password" 
                                 className="w-full pl-12 p-3.5 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 transition font-medium text-slate-700"
-                                onChange={e => setStudentForm({...studentForm, phone: e.target.value})}
+                                onChange={e => setStudentForm({...studentForm, passwordInput: e.target.value})}
                             />
                         </div>
                     </div>
@@ -154,7 +149,6 @@ function LoginContent() {
                 </form>
             )}
 
-            {/* ADMIN FORM */}
             {activeTab === "admin" && (
                 <form onSubmit={handleAdminLogin} className="space-y-5">
                     <div className="space-y-4">
@@ -194,7 +188,6 @@ function LoginContent() {
   );
 }
 
-// Suspense Wrapper
 export default function HomePage() {
   return (
     <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-400 font-bold">Loading Portal...</div>}>
