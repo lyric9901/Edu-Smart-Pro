@@ -49,8 +49,9 @@ function StudentContent() {
   const [addError, setAddError] = useState("");
 
   // Password State
-  const [newPassword, setNewPassword] = useState("");
-  const [passMsg, setPassMsg] = useState("");
+  const [showPassForm, setShowPassForm] = useState(false);
+  const [passForm, setPassForm] = useState({ current: "", new: "", confirm: "" });
+  const [passMsg, setPassMsg] = useState({ text: "", type: "" });
 
   // --- 1. INITIALIZATION ---
   useEffect(() => {
@@ -237,14 +238,41 @@ function StudentContent() {
   };
 
   // --- SAVE PASSWORD ---
-  const savePassword = async () => {
-    if (!newPassword) return;
+  const handlePasswordChange = async () => {
+    setPassMsg({ text: "", type: "" });
+    
+    if (!passForm.current || !passForm.new || !passForm.confirm) {
+        setPassMsg({ text: "All fields are required.", type: "error" });
+        return;
+    }
+    if (passForm.new !== passForm.confirm) {
+        setPassMsg({ text: "New passwords do not match.", type: "error" });
+        return;
+    }
+
+    // Check if the current password is correct (either custom password or phone number)
+    const actualCurrentPass = currentStudent?.password || currentStudent?.phone;
+    if (passForm.current !== actualCurrentPass) {
+        setPassMsg({ text: "Incorrect current password.", type: "error" });
+        return;
+    }
+
+    // Save to Firebase
     if (currentStudent?.schoolId && currentStudent?.batchId && currentStudent?.studentIndex !== undefined) {
         const path = `schools/${currentStudent.schoolId}/batches/${currentStudent.batchId}/students/${currentStudent.studentIndex}/password`;
-        await set(ref(db, path), newPassword);
-        setPassMsg("Password saved successfully!");
-        setNewPassword("");
-        setTimeout(() => setPassMsg(""), 3000);
+        try {
+            await set(ref(db, path), passForm.new);
+            setPassMsg({ text: "Password changed successfully!", type: "success" });
+            
+            // Clear inputs and hide form after success
+            setTimeout(() => {
+                setPassMsg({ text: "", type: "" });
+                setPassForm({ current: "", new: "", confirm: "" });
+                setShowPassForm(false);
+            }, 2000);
+        } catch (error) {
+            setPassMsg({ text: "Failed to update password.", type: "error" });
+        }
     }
   };
 
@@ -695,27 +723,68 @@ function StudentContent() {
                       </button>
                   </div>
 
-                  {/* Security / Change Password */}
+                  {/* Security / Change Password Toggle Area */}
                   <div className="mb-6 bg-slate-50 dark:bg-black p-5 rounded-2xl border border-slate-100 dark:border-zinc-800">
                       <h4 className="font-bold text-xs text-slate-500 mb-3 uppercase tracking-wider flex items-center gap-2">
                           <Lock size={14}/> Security
                       </h4>
-                      <div className="flex gap-2">
-                          <input 
-                              type="text" 
-                              placeholder="Set Custom Password" 
-                              value={newPassword}
-                              onChange={e => setNewPassword(e.target.value)}
-                              className="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-500 font-medium"
-                          />
-                          <button onClick={savePassword} className="bg-slate-900 dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl text-sm font-bold hover:scale-105 transition shadow-sm">
-                              Save
+                      
+                      {!showPassForm ? (
+                          <button 
+                              onClick={() => setShowPassForm(true)} 
+                              className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 py-3 rounded-xl text-sm font-bold hover:bg-slate-50 dark:hover:bg-zinc-800 transition"
+                          >
+                              Change Password
                           </button>
-                      </div>
-                      {passMsg && (
-                          <p className="text-green-500 text-xs font-bold mt-2 flex items-center gap-1">
-                              <CheckCircle size={12}/> {passMsg}
-                          </p>
+                      ) : (
+                          <div className="space-y-3 mt-4">
+                              <input 
+                                  type="password" 
+                                  placeholder="Current Password" 
+                                  value={passForm.current} 
+                                  onChange={e => setPassForm({...passForm, current: e.target.value})}
+                                  className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 font-medium"
+                              />
+                              <input 
+                                  type="password" 
+                                  placeholder="New Password" 
+                                  value={passForm.new} 
+                                  onChange={e => setPassForm({...passForm, new: e.target.value})}
+                                  className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 font-medium"
+                              />
+                              <input 
+                                  type="password" 
+                                  placeholder="Confirm New Password" 
+                                  value={passForm.confirm} 
+                                  onChange={e => setPassForm({...passForm, confirm: e.target.value})}
+                                  className="w-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 font-medium"
+                              />
+                              
+                              {passMsg.text && (
+                                  <p className={`text-xs font-bold mt-2 flex items-center gap-1 ${passMsg.type === 'error' ? 'text-red-500' : 'text-green-500'}`}>
+                                      {passMsg.type === 'error' ? <AlertCircle size={12}/> : <CheckCircle size={12}/>} {passMsg.text}
+                                  </p>
+                              )}
+
+                              <div className="flex gap-2 pt-2">
+                                  <button 
+                                      onClick={() => { 
+                                          setShowPassForm(false); 
+                                          setPassMsg({text:"", type:""}); 
+                                          setPassForm({current:"", new:"", confirm:""}); 
+                                      }} 
+                                      className="flex-1 bg-slate-200 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 py-3 rounded-xl text-sm font-bold hover:opacity-80 transition"
+                                  >
+                                      Cancel
+                                  </button>
+                                  <button 
+                                      onClick={handlePasswordChange} 
+                                      className="flex-1 bg-blue-600 text-white py-3 rounded-xl text-sm font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-500/30"
+                                  >
+                                      Save Updates
+                                  </button>
+                              </div>
+                          </div>
                       )}
                   </div>
 
