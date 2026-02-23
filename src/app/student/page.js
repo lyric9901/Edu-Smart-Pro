@@ -2,11 +2,11 @@
 import { useState, useEffect, useMemo, Suspense } from "react"; 
 import { useRouter, useSearchParams } from "next/navigation";
 import { db } from "@/lib/firebase";
-import { ref, get, onValue } from "firebase/database";
+import { ref, get, onValue, set } from "firebase/database";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   CheckCircle, IndianRupee, Bell, PieChart, Clock, 
-  Settings, Plus, LogOut, Moon, Sun, X,
+  Settings, Plus, LogOut, Moon, Sun, X, Lock,
   ChevronRight, ChevronLeft, LayoutDashboard, User, Flame, TrendingUp, AlertCircle,
   Maximize, Minimize, Home // Imported Icons
 } from "lucide-react";
@@ -47,6 +47,10 @@ function StudentContent() {
   const [showSettings, setShowSettings] = useState(false);
   const [addForm, setAddForm] = useState({ name: "", phone: "" });
   const [addError, setAddError] = useState("");
+
+  // Password State
+  const [newPassword, setNewPassword] = useState("");
+  const [passMsg, setPassMsg] = useState("");
 
   // --- 1. INITIALIZATION ---
   useEffect(() => {
@@ -106,16 +110,16 @@ function StudentContent() {
       if (!data) return;
 
       let updatedData = null;
-      Object.values(data).forEach(batch => {
+      Object.entries(data).forEach(([bId, batch]) => {
         const batchStudents = batch.students || [];
-        const match = batchStudents.find(s => 
-            s.name === studentName && 
-            s.phone === studentPhone
-        );
-        if (match) {
+        const index = batchStudents.findIndex(s => s.name === studentName && s.phone === studentPhone);
+        
+        if (index !== -1) {
             updatedData = { 
-                ...match, 
+                ...batchStudents[index], 
                 batchName: batch.name, 
+                batchId: bId, // Save batch ID to update password later
+                studentIndex: index, // Save index to update password later
                 schoolId: studentSchoolId,
                 batchTiming: batch.timing 
             };
@@ -232,6 +236,18 @@ function StudentContent() {
     }
   };
 
+  // --- SAVE PASSWORD ---
+  const savePassword = async () => {
+    if (!newPassword) return;
+    if (currentStudent?.schoolId && currentStudent?.batchId && currentStudent?.studentIndex !== undefined) {
+        const path = `schools/${currentStudent.schoolId}/batches/${currentStudent.batchId}/students/${currentStudent.studentIndex}/password`;
+        await set(ref(db, path), newPassword);
+        setPassMsg("Password saved successfully!");
+        setNewPassword("");
+        setTimeout(() => setPassMsg(""), 3000);
+    }
+  };
+
   // --- ANALYTICS CALCULATIONS ---
   const stats = useMemo(() => {
     if (!currentStudent) return { attPercent: 0, feePaid: 0, streak: 0, monthlyData: [], monthLabels: [] };
@@ -321,15 +337,24 @@ function StudentContent() {
         </div>
         <div className="flex-1 space-y-2">
             {navItems.map(item => (
-                <button key={item.id} onClick={() => setActiveTab(item.id)} className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-200 font-medium ${activeTab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 dark:text-zinc-400'}`}>
+                <button 
+                    key={item.id} 
+                    onClick={() => setActiveTab(item.id)} 
+                    className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl transition-all duration-200 font-medium ${activeTab === item.id ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-500 hover:bg-slate-100 dark:hover:bg-zinc-800 dark:text-zinc-400'}`}
+                >
                     {item.id === 'dashboard' ? <Home size={20}/> : item.icon} 
                     {item.label}
                 </button>
             ))}
         </div>
         <div onClick={() => setShowSettings(true)} className="mt-auto flex items-center gap-3 p-3 rounded-2xl bg-slate-50 dark:bg-zinc-800 cursor-pointer hover:bg-slate-100 dark:hover:bg-zinc-700 transition">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center font-bold">{currentStudent.name.charAt(0)}</div>
-            <div className="flex-1 overflow-hidden"><p className="text-sm font-bold truncate">{currentStudent.name}</p><p className="text-xs text-slate-500">Settings</p></div>
+            <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-purple-500 text-white flex items-center justify-center font-bold">
+                {currentStudent.name.charAt(0)}
+            </div>
+            <div className="flex-1 overflow-hidden">
+                <p className="text-sm font-bold truncate">{currentStudent.name}</p>
+                <p className="text-xs text-slate-500">Settings</p>
+            </div>
         </div>
       </aside>
 
@@ -415,6 +440,21 @@ function StudentContent() {
                                 <span className="font-bold text-lg text-slate-700 dark:text-zinc-200">{item.label}</span>
                             </motion.button>
                         ))}
+                        
+                        {/* SETTINGS BUTTON ON HOME PAGE */}
+                        <motion.button
+                            whileTap={{ scale: 0.95 }}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.3 }}
+                            onClick={() => setShowSettings(true)}
+                            className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm flex flex-col items-center justify-center gap-4 aspect-square md:aspect-auto md:py-10 group"
+                        >
+                            <div className="w-14 h-14 md:w-16 md:h-16 rounded-full flex items-center justify-center bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 transition-transform group-hover:scale-110">
+                                <Settings size={28} />
+                            </div>
+                            <span className="font-bold text-lg text-slate-700 dark:text-zinc-200">Settings</span>
+                        </motion.button>
                     </div>
                 </motion.div>
             )}
@@ -459,14 +499,22 @@ function StudentContent() {
             {activeTab === 'fees' && (
                 <motion.div key="fees" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
                     <div className="bg-white dark:bg-zinc-900 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-zinc-800 overflow-hidden shadow-sm">
-                       <div className="p-5 md:p-6 border-b border-slate-100 dark:border-zinc-800"><h2 className="text-lg md:text-xl font-bold">Academic Fee {new Date().getFullYear()}</h2></div>
+                       <div className="p-5 md:p-6 border-b border-slate-100 dark:border-zinc-800">
+                           <h2 className="text-lg md:text-xl font-bold">Academic Fee {new Date().getFullYear()}</h2>
+                       </div>
                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-4 p-5 md:p-6">
                            {["jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec"].map((m, i) => {
                                const status = currentStudent.fees?.[new Date().getFullYear()]?.[m] || "pending";
                                return (
-                                   <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }} key={m} className={`p-4 rounded-2xl border flex justify-between items-center ${status === 'paid' ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/30' : 'bg-slate-50 dark:bg-black border-slate-100 dark:border-zinc-800'}`}>
+                                   <motion.div 
+                                       initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: i * 0.05 }} 
+                                       key={m} 
+                                       className={`p-4 rounded-2xl border flex justify-between items-center ${status === 'paid' ? 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-800/30' : 'bg-slate-50 dark:bg-black border-slate-100 dark:border-zinc-800'}`}
+                                   >
                                        <div className="flex items-center gap-3">
-                                           <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold uppercase ${status === 'paid' ? 'bg-green-200 text-green-800' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500'}`}>{m.substring(0,3)}</div>
+                                           <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center text-[10px] md:text-xs font-bold uppercase ${status === 'paid' ? 'bg-green-200 text-green-800' : 'bg-slate-200 dark:bg-zinc-800 text-slate-500'}`}>
+                                               {m.substring(0,3)}
+                                           </div>
                                            <span className="capitalize font-bold text-sm md:text-base text-slate-700 dark:text-slate-200">{m}</span>
                                        </div>
                                        {status === 'paid' ? <CheckCircle size={18} className="text-green-500" /> : <div className="text-[10px] md:text-xs bg-slate-200 dark:bg-zinc-800 px-2 md:px-3 py-1 rounded-full font-bold uppercase text-slate-500">Due</div>}
@@ -557,7 +605,10 @@ function StudentContent() {
                     {/* Existing Trend Graph */}
                     <div className="bg-white dark:bg-zinc-900 p-5 md:p-6 rounded-[1.5rem] md:rounded-[2rem] border border-slate-100 dark:border-zinc-800 shadow-sm">
                         <div className="flex justify-between items-end mb-6">
-                            <div><p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Attendance Trend</p><h3 className="text-lg md:text-xl font-bold">Last 6 Months</h3></div>
+                            <div>
+                                <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-wider">Attendance Trend</p>
+                                <h3 className="text-lg md:text-xl font-bold">Last 6 Months</h3>
+                            </div>
                         </div>
                         <div className="flex items-end justify-between h-32 md:h-40 gap-2">
                             {stats.monthlyData && stats.monthlyData.length > 0 ? stats.monthlyData.map((val, i) => (
@@ -617,20 +668,71 @@ function StudentContent() {
       <AnimatePresence>
       {showSettings && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-50 bg-black/60 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-              <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white dark:bg-zinc-900 w-full sm:w-96 rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 md:p-8 shadow-2xl">
-                  <div className="flex justify-between items-center mb-8"><h3 className="text-2xl font-black tracking-tight">Settings</h3><button onClick={() => setShowSettings(false)} className="p-2 bg-slate-100 dark:bg-zinc-800 rounded-full"><X size={20}/></button></div>
+              <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} className="bg-white dark:bg-zinc-900 w-full sm:w-[28rem] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 md:p-8 shadow-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+                  <div className="flex justify-between items-center mb-8">
+                      <h3 className="text-2xl font-black tracking-tight">Settings</h3>
+                      <button onClick={() => setShowSettings(false)} className="p-2 bg-slate-100 dark:bg-zinc-800 rounded-full">
+                          <X size={20}/>
+                      </button>
+                  </div>
+                  
+                  {/* Account Switcher */}
                   <div className="space-y-3 mb-8">
                       {students.map((s, idx) => (
                           <button key={idx} onClick={() => switchStudent(idx)} className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all ${idx === activeStudentIndex ? 'border-blue-500 bg-blue-50 dark:bg-blue-900/20 text-blue-600' : 'border-slate-100 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800'}`}>
-                              <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-zinc-700 flex items-center justify-center font-bold">{s.name.charAt(0)}</div>
+                              <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-zinc-700 flex items-center justify-center font-bold">
+                                  {s.name.charAt(0)}
+                              </div>
                               <span className="font-bold flex-1 text-left">{s.name}</span>
                               {idx === activeStudentIndex && <CheckCircle size={20}/>}
                           </button>
                       ))}
-                      <button onClick={() => { setShowSettings(false); setShowAddModal(true); }} className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-700 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-zinc-800 transition"><div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center"><Plus size={20}/></div>Add Another Child</button>
+                      <button onClick={() => { setShowSettings(false); setShowAddModal(true); }} className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed border-slate-200 dark:border-zinc-700 text-slate-500 font-bold hover:bg-slate-50 dark:hover:bg-zinc-800 transition">
+                          <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-zinc-800 flex items-center justify-center">
+                              <Plus size={20}/>
+                          </div>
+                          Add Another Child
+                      </button>
                   </div>
-                  <div className="flex items-center justify-between p-5 bg-slate-50 dark:bg-zinc-800 rounded-2xl mb-6"><div className="flex items-center gap-3 font-bold">{theme === 'light' ? <Sun size={20}/> : <Moon size={20}/>} {theme === 'light' ? 'Light Mode' : 'Dark Mode'}</div><button onClick={toggleTheme} className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${theme === 'dark' ? 'bg-blue-600' : 'bg-slate-300'}`}><motion.div layout className={`w-5 h-5 bg-white rounded-full shadow-md ${theme === 'dark' ? 'translate-x-5' : ''}`} /></button></div>
-                  <button onClick={handleLogout} className="w-full py-4 text-red-500 font-black bg-red-50 dark:bg-red-900/10 rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] transition"><LogOut size={20} /> Logout</button>
+
+                  {/* Security / Change Password */}
+                  <div className="mb-6 bg-slate-50 dark:bg-black p-5 rounded-2xl border border-slate-100 dark:border-zinc-800">
+                      <h4 className="font-bold text-xs text-slate-500 mb-3 uppercase tracking-wider flex items-center gap-2">
+                          <Lock size={14}/> Security
+                      </h4>
+                      <div className="flex gap-2">
+                          <input 
+                              type="text" 
+                              placeholder="Set Custom Password" 
+                              value={newPassword}
+                              onChange={e => setNewPassword(e.target.value)}
+                              className="flex-1 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2 text-sm outline-none focus:border-blue-500 font-medium"
+                          />
+                          <button onClick={savePassword} className="bg-slate-900 dark:bg-white text-white dark:text-black px-4 py-2 rounded-xl text-sm font-bold hover:scale-105 transition shadow-sm">
+                              Save
+                          </button>
+                      </div>
+                      {passMsg && (
+                          <p className="text-green-500 text-xs font-bold mt-2 flex items-center gap-1">
+                              <CheckCircle size={12}/> {passMsg}
+                          </p>
+                      )}
+                  </div>
+
+                  {/* Theme Switcher */}
+                  <div className="flex items-center justify-between p-5 bg-slate-50 dark:bg-zinc-800 rounded-2xl mb-6">
+                      <div className="flex items-center gap-3 font-bold">
+                          {theme === 'light' ? <Sun size={20}/> : <Moon size={20}/>} 
+                          {theme === 'light' ? 'Light Mode' : 'Dark Mode'}
+                      </div>
+                      <button onClick={toggleTheme} className={`w-12 h-7 rounded-full p-1 transition-colors duration-300 ${theme === 'dark' ? 'bg-blue-600' : 'bg-slate-300'}`}>
+                          <motion.div layout className={`w-5 h-5 bg-white rounded-full shadow-md ${theme === 'dark' ? 'translate-x-5' : ''}`} />
+                      </button>
+                  </div>
+                  
+                  <button onClick={handleLogout} className="w-full py-4 text-red-500 font-black bg-red-50 dark:bg-red-900/10 rounded-2xl flex items-center justify-center gap-2 hover:scale-[1.02] transition">
+                      <LogOut size={20} /> Logout
+                  </button>
               </motion.div>
           </motion.div>
       )}
@@ -644,10 +746,21 @@ function StudentContent() {
                   <h3 className="text-2xl font-black mb-2">Add Child</h3>
                   <p className="text-slate-500 text-sm mb-6">Enter details to add sibling from <strong>{currentStudent.batchName}</strong>.</p>
                   <form onSubmit={addNewChild} className="space-y-4">
-                      <div className="bg-slate-50 dark:bg-black p-1 rounded-2xl border border-slate-100 dark:border-zinc-800 focus-within:ring-2 ring-blue-500 transition"><input required placeholder="Student Name" className="w-full p-3 bg-transparent outline-none font-bold placeholder:font-medium" onChange={e => setAddForm({...addForm, name: e.target.value})} /></div>
-                      <div className="bg-slate-50 dark:bg-black p-1 rounded-2xl border border-slate-100 dark:border-zinc-800 focus-within:ring-2 ring-blue-500 transition"><input required placeholder="Phone Number" className="w-full p-3 bg-transparent outline-none font-bold placeholder:font-medium" onChange={e => setAddForm({...addForm, phone: e.target.value})} /></div>
+                      <div className="bg-slate-50 dark:bg-black p-1 rounded-2xl border border-slate-100 dark:border-zinc-800 focus-within:ring-2 ring-blue-500 transition">
+                          <input required placeholder="Student Name" className="w-full p-3 bg-transparent outline-none font-bold placeholder:font-medium" onChange={e => setAddForm({...addForm, name: e.target.value})} />
+                      </div>
+                      <div className="bg-slate-50 dark:bg-black p-1 rounded-2xl border border-slate-100 dark:border-zinc-800 focus-within:ring-2 ring-blue-500 transition">
+                          <input required placeholder="Phone Number" className="w-full p-3 bg-transparent outline-none font-bold placeholder:font-medium" onChange={e => setAddForm({...addForm, phone: e.target.value})} />
+                      </div>
                       {addError && <p className="text-red-500 text-center font-bold text-sm bg-red-50 p-2 rounded-xl">{addError}</p>}
-                      <div className="flex gap-3 pt-2"><button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-4 font-bold text-slate-500 hover:bg-slate-50 rounded-2xl transition">Cancel</button><button className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold hover:scale-105 transition shadow-lg shadow-blue-500/30">Add</button></div>
+                      <div className="flex gap-3 pt-2">
+                          <button type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-4 font-bold text-slate-500 hover:bg-slate-50 rounded-2xl transition">
+                              Cancel
+                          </button>
+                          <button className="flex-1 bg-blue-600 text-white py-4 rounded-2xl font-bold hover:scale-105 transition shadow-lg shadow-blue-500/30">
+                              Add
+                          </button>
+                      </div>
                   </form>
               </motion.div>
           </motion.div>
