@@ -28,13 +28,17 @@ export default function RefundPolicy() {
                 <ul className="list-disc pl-5 mt-2 space-y-1 text-slate-600">
                     <li>You simply change your mind after 7 days.</li>
                     <li>The service was used to send bulk spam messages.</li>
+                    <li>You have violated the terms of service.</li>
+                    <li>Refund requests made after 30 days of purchase.</li>
                     <li>Discounted or promotional plans (like the ₹199 Offer) are generally non-refundable unless a service failure occurs.</li>
+                    <li>Refunds will not be issued for issues arising from user error, such as incorrect data entry or failure to follow setup instructions.</li>
+                    <li>If our DataBase has more that 10 entries of your institution, refunds will not be issued.</li>
                 </ul>
             </section>
 
             <section>
                 <h2 className="text-xl font-bold mb-2 text-slate-900">3. Processing Time</h2>
-                <p className="text-slate-600">Approved refunds are processed within 5-7 business days to the original payment method.</p>
+                <p className="text-slate-600">Approved refunds are processed within 7-14 business days to the original payment method.</p>
             </section>
         </div>
       </div>

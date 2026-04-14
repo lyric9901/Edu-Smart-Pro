@@ -41,7 +41,7 @@ export default function PrivacyPolicy() {
 
             <section>
                 <h2 className="text-xl font-bold mb-2 text-slate-900">4. Contact Us</h2>
-                <p className="text-slate-600">For privacy concerns, email us at <span className="font-medium text-blue-600">support@edusmart.in</span>.</p>
+                <p className="text-slate-600">For privacy concerns, email us at <span className="font-medium text-blue-600">shanibroo@gmail.com</span>.</p>
             </section>
         </div>
       </div>
