@@ -1,22 +1,20 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
-import { ref, push, onValue, remove } from "firebase/database";
+import { firestore } from "@/lib/firebase";
+import { collection, doc, onSnapshot, addDoc, deleteDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, Trash2, Megaphone, Sun, Moon, Send, Loader2 } from "lucide-react";
 
 export default function NoticesPage() {
   const { user } = useAuth();
   
-  // State
   const [msg, setMsg] = useState("");
   const [notices, setNotices] = useState([]);
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); 
 
-  // --- INITIALIZATION ---
   useEffect(() => {
     setMounted(true);
     const savedTheme = localStorage.getItem("eduSmartTheme") || "light";
@@ -32,33 +30,33 @@ export default function NoticesPage() {
     else document.documentElement.classList.remove("dark");
   };
 
-  // 1. Fetch Notices
   useEffect(() => {
-    if (user?.schoolId) {
-      const noticeRef = ref(db, `schools/${user.schoolId}/notices`);
-      onValue(noticeRef, (snapshot) => {
-        const data = snapshot.val();
-        const list = data ? Object.entries(data).map(([id, val]) => ({ id, ...val })) : [];
+    if (user?.institutionCode) {
+      const unsub = onSnapshot(collection(firestore, `institutions/${user.institutionCode}/notices`), (snapshot) => {
+        const list = [];
+        snapshot.forEach((doc) => {
+            list.push({ id: doc.id, ...doc.data() });
+        });
         list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         setNotices(list);
       });
+      return () => unsub();
     }
   }, [user]);
 
-  // 2. Simple Send Notice (Direct)
   const sendNotice = async () => {
-    if (!msg.trim() || !user?.schoolId) return;
+    if (!msg.trim() || !user?.institutionCode) return;
     setIsSubmitting(true);
 
     try {
-        await push(ref(db, `schools/${user.schoolId}/notices`), {
+        await addDoc(collection(firestore, `institutions/${user.institutionCode}/notices`), {
             text: msg, 
             sender: user.username || "Admin",
             createdAt: Date.now(),
             date: new Date().toISOString(),
-            type: "notice" // Explicit type for better client-side handling
+            type: "notice" 
         });
-        setMsg(""); // Clear input
+        setMsg(""); 
     } catch (dbError) {
         console.error("Firebase error:", dbError);
         alert("Failed to post notice.");
@@ -67,10 +65,9 @@ export default function NoticesPage() {
     }
   };
 
-  // 3. Delete Notice
   const deleteNotice = async (id) => {
     if(confirm("Delete this notice?")) {
-       await remove(ref(db, `schools/${user.schoolId}/notices/${id}`));
+       await deleteDoc(doc(firestore, `institutions/${user.institutionCode}/notices`, id));
     }
   };
 
@@ -80,7 +77,6 @@ export default function NoticesPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-zinc-100 transition-colors duration-300 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
@@ -96,7 +92,6 @@ export default function NoticesPage() {
             </button>
         </div>
 
-        {/* INPUT AREA */}
         <div className="bg-white dark:bg-zinc-900 p-1 rounded-[2rem] shadow-lg border border-slate-200 dark:border-zinc-800">
             <textarea 
                 value={msg}
@@ -117,7 +112,6 @@ export default function NoticesPage() {
             </div>
         </div>
 
-        {/* NOTICE LIST */}
         <div className="space-y-4">
             <h2 className="text-sm font-bold text-slate-400 uppercase tracking-widest ml-2">Recent Posts</h2>
             
@@ -132,17 +126,14 @@ export default function NoticesPage() {
                         key={notice.id} 
                         className="bg-white dark:bg-zinc-900 p-6 rounded-[2rem] shadow-sm border border-slate-200 dark:border-zinc-800 flex gap-5 group relative overflow-hidden"
                     >
-                        {/* Icon Badge */}
                         <div className="flex-shrink-0">
                             <div className="w-12 h-12 rounded-2xl flex items-center justify-center bg-orange-50 dark:bg-orange-900/20 text-orange-500">
                                 <Bell size={24} />
                             </div>
                         </div>
 
-                        {/* Content */}
                         <div className="flex-1">
                             <p className="text-slate-800 dark:text-zinc-200 text-base md:text-lg leading-relaxed font-medium whitespace-pre-wrap">
-                                {/* Fallback support for old data */}
                                 {notice.text || notice.final_text || notice.original_text}
                             </p>
                             
@@ -157,7 +148,6 @@ export default function NoticesPage() {
                             </div>
                         </div>
 
-                        {/* Delete Button */}
                         <button 
                             onClick={() => deleteNotice(notice.id)} 
                             className="text-slate-300 dark:text-zinc-700 p-2 self-start transition-colors hover:text-red-500"

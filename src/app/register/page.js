@@ -1,15 +1,14 @@
 "use client";
 import { useState } from "react";
-import { db } from "@/lib/firebase";
-import { ref, update } from "firebase/database";
+import { firestore } from "@/lib/firebase"; // <-- Firestore Import
+import { doc, setDoc } from "firebase/firestore"; // <-- Firestore Functions
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
   Building2, User, Phone, Lock, CheckCircle2, Copy, 
-  TrendingUp, ShieldCheck, Clock, IndianRupee, Star, ChevronRight, FileText, LockKeyhole
+  TrendingUp, ShieldCheck, Clock, IndianRupee, Star, ChevronRight, FileText, LockKeyhole, Plus, MapPin, X
 } from "lucide-react";
 
-// --- ANIMATIONS ---
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } }
@@ -22,39 +21,68 @@ const stagger = {
 export default function Register() {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", owner: "", phone: "", username: "", password: "" });
+  
+  // --- NEW: DYNAMIC BRANCHES STATE ---
+  const [branches, setBranches] = useState(["Main Branch"]); 
   const [loading, setLoading] = useState(false);
   const [magicLink, setMagicLink] = useState("");
+
+  const handleAddBranch = () => setBranches([...branches, ""]);
+  
+  const handleUpdateBranch = (index, value) => {
+      const newBranches = [...branches];
+      newBranches[index] = value;
+      setBranches(newBranches);
+  };
+
+  const handleRemoveBranch = (index) => {
+      const newBranches = branches.filter((_, i) => i !== index);
+      setBranches(newBranches);
+  };
 
   const handleRegister = async (e) => {
     e.preventDefault();
     setLoading(true);
 
-    const schoolId = Date.now().toString(); // Simple Unique ID
-    const updates = {};
-    
-    // Create Admin
-    updates[`admins/${form.username}`] = { 
-        password: form.password, 
-        schoolId: schoolId,
-        role: "admin"
-    };
-    
-    // Create School Profile
-    updates[`schools/${schoolId}/info`] = {
-        name: form.name,
-        owner: form.owner,
-        phone: form.phone,
-        plan: "premium", 
-        createdAt: Date.now()
-    };
-
     try {
-        await update(ref(db), updates);
+        // 1. Generate Institution Code (e.g., TOP8291)
+        const cleanName = form.name.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || "EDU";
+        const randomNum = Math.floor(1000 + Math.random() * 9000);
+        const institutionCode = `${cleanName}${randomNum}`;
+
+        // 2. Create Institution Document
+        await setDoc(doc(firestore, "institutions", institutionCode), {
+            name: form.name,
+            owner: form.owner,
+            phone: form.phone,
+            plan: "premium", 
+            createdAt: Date.now()
+        });
+
+        // 3. Save Admin Credentials
+        await setDoc(doc(firestore, "admins", form.username), {
+            password: form.password, 
+            institutionCode: institutionCode,
+            role: "admin"
+        });
+
+        // 4. Save Branches to Sub-collection
+        const validBranches = branches.filter(b => b.trim() !== "");
+        // If they deleted all inputs, default to Main Branch
+        if (validBranches.length === 0) validBranches.push("Main Branch");
+
+        for (const branchName of validBranches) {
+            const branchId = branchName.toLowerCase().replace(/\s+/g, '-');
+            await setDoc(doc(firestore, `institutions/${institutionCode}/branches`, branchId), {
+                name: branchName,
+                createdAt: Date.now()
+            });
+        }
         
-        // --- UPDATED LINK GENERATION ---
-        // Now points to /login as requested
-        const link = `${window.location.origin}/login?schoolId=${schoolId}`;
+        // 5. Generate Link
+        const link = `${window.location.origin}/login?code=${institutionCode}`;
         setMagicLink(link);
+        
     } catch (error) {
         alert("Registration Failed: " + error.message);
     }
@@ -66,7 +94,6 @@ export default function Register() {
     alert("Magic Link Copied! Send this to your students.");
   };
 
-  // --- SUCCESS VIEW ---
   if (magicLink) {
     return (
         <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-green-50 to-emerald-100 p-6">
@@ -96,8 +123,7 @@ export default function Register() {
                     </p>
                 </div>
 
-                {/* Updated navigation logic to handle the new path correctly */}
-                <button onClick={() => router.push(magicLink.replace(window.location.origin, ""))} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:scale-[1.02] transition shadow-xl">
+                <button onClick={() => router.push(`/login?code=${magicLink.split('code=')[1]}`)} className="w-full bg-slate-900 text-white py-4 rounded-xl font-bold hover:scale-[1.02] transition shadow-xl">
                     Go to Login Portal
                 </button>
             </motion.div>
@@ -105,14 +131,13 @@ export default function Register() {
     );
   }
 
-  // --- REGISTRATION VIEW ---
   return (
     <div className="min-h-screen bg-slate-50 lg:flex overflow-hidden">
       
       {/* LEFT SIDE: SALES PITCH */}
       <motion.div 
         initial="hidden" animate="visible" variants={stagger}
-        className="lg:w-1/2 p-8 lg:p-16 bg-blue-600 text-white flex flex-col justify-center relative overflow-hidden"
+        className="hidden lg:flex lg:w-1/2 p-8 lg:p-16 bg-blue-600 text-white flex-col justify-center relative overflow-hidden"
       >
         <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
         <div className="absolute bottom-0 left-0 w-64 h-64 bg-indigo-900/30 rounded-full blur-3xl -ml-10 -mb-10"></div>
@@ -125,14 +150,13 @@ export default function Register() {
                 Ab Coaching Chalegi <br/> <span className="text-yellow-300">Digital.</span>
             </h1>
             <p className="text-blue-100 text-lg mb-10 max-w-md leading-relaxed">
-                Attendance register aur fees ki notebook ko bolo bye-bye. Manage everything from your phone. **Bas 2 min mein setup.**
+                Attendance register aur fees ki notebook ko bolo bye-bye. Manage everything from your phone.
             </p>
 
             <div className="grid gap-6 mb-12">
                 {[
                     { icon: <Clock size={24}/>, title: "Save 10+ Hours/Week", desc: "Auto-attendance & instant reports." },
                     { icon: <IndianRupee size={24}/>, title: "100% Fees Recovery", desc: "Auto-reminders on WhatsApp." },
-                    { icon: <TrendingUp size={24}/>, title: "Grow Your Brand", desc: "Professional app for students & parents." }
                 ].map((item, i) => (
                     <div key={i} className="flex gap-4 items-start">
                         <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm flex-shrink-0">
@@ -145,49 +169,28 @@ export default function Register() {
                     </div>
                 ))}
             </div>
-
-            <div className="bg-white/10 backdrop-blur-md rounded-3xl p-6 border border-white/20 relative">
-                <div className="absolute -top-3 -right-3 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-md animate-bounce">
-                    70% OFF TILL FEB 31
-                </div>
-                <div className="flex justify-between items-end">
-                    <div>
-                        <p className="text-blue-200 text-sm font-medium mb-1">Lifetime Premium Access</p>
-                        <div className="flex items-center gap-3">
-                            <span className="text-4xl font-black text-white">₹199</span>
-                            <span className="text-lg text-blue-300 line-through decoration-red-400 decoration-2">₹599</span>
-                        </div>
-                    </div>
-                    <div className="text-right">
-                        <div className="flex text-yellow-400 mb-1">
-                            {[1,2,3,4,5].map(s => <Star key={s} size={14} fill="currentColor"/>)}
-                        </div>
-                        <p className="text-xs text-blue-200">20+ Happy Tutors in UP - 2025</p>
-                    </div>
-                </div>
-            </div>
         </motion.div>
       </motion.div>
 
       {/* RIGHT SIDE: FORM */}
-      <div className="lg:w-1/2 p-4 lg:p-12 flex flex-col items-center justify-center bg-white h-full overflow-y-auto">
+      <div className="w-full lg:w-1/2 p-4 lg:p-12 flex flex-col items-center justify-center bg-white h-full overflow-y-auto">
         <motion.div 
             initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-            className="w-full max-w-md space-y-8 my-auto"
+            className="w-full max-w-md space-y-8 my-auto py-8"
         >
             <div className="text-center lg:text-left">
                 <h2 className="text-3xl font-black text-slate-900">Get Started</h2>
                 <p className="text-slate-500 mt-2">Join the digital revolution. Create your account.</p>
             </div>
 
-            <form onSubmit={handleRegister} className="space-y-5">
+            <form onSubmit={handleRegister} className="space-y-6">
                 
                 {/* Coaching Details */}
                 <div className="space-y-4">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Institute Details</p>
                     <div className="bg-slate-50 border border-slate-200 rounded-2xl p-1 flex items-center focus-within:ring-2 ring-blue-500 transition-all">
                         <div className="p-3 text-slate-400"><Building2 size={20}/></div>
-                        <input required placeholder="Coaching Name (e.g. Toppers Academy)" className="bg-transparent w-full outline-none text-slate-800 font-medium placeholder:font-normal" onChange={e => setForm({...form, name: e.target.value})} />
+                        <input required placeholder="Coaching Name" className="bg-transparent w-full outline-none text-slate-800 font-medium" onChange={e => setForm({...form, name: e.target.value})} />
                     </div>
                     <div className="flex gap-4">
                         <div className="bg-slate-50 border border-slate-200 rounded-2xl p-1 flex items-center focus-within:ring-2 ring-blue-500 transition-all w-1/2">
@@ -201,55 +204,55 @@ export default function Register() {
                     </div>
                 </div>
 
+                {/* --- BRANCHES SECTION --- */}
+                <div className="space-y-3 bg-slate-50 p-4 rounded-2xl border border-slate-200">
+                    <p className="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center gap-1">
+                        <MapPin size={14}/> Campuses / Branches
+                    </p>
+                    {branches.map((branch, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                            <input 
+                                required
+                                placeholder={`Branch ${index + 1} (e.g. Main Branch)`}
+                                value={branch}
+                                onChange={(e) => handleUpdateBranch(index, e.target.value)}
+                                className="w-full p-3 bg-white border border-slate-200 rounded-xl outline-none focus:border-blue-500 transition font-medium"
+                            />
+                            {branches.length > 1 && (
+                                <button type="button" onClick={() => handleRemoveBranch(index)} className="p-3 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-xl transition">
+                                    <X size={18}/>
+                                </button>
+                            )}
+                        </div>
+                    ))}
+                    <button 
+                        type="button" 
+                        onClick={handleAddBranch}
+                        className="text-sm font-bold text-blue-600 flex items-center gap-1 hover:text-blue-700 transition pt-2"
+                    >
+                        <Plus size={16}/> Add Another Branch
+                    </button>
+                </div>
+
                 {/* Login Credentials */}
                 <div className="space-y-4 pt-2">
                     <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Create Login</p>
                     <div className="bg-blue-50 border border-blue-100 rounded-2xl p-1 flex items-center focus-within:ring-2 ring-blue-500 transition-all">
                         <div className="p-3 text-blue-500"><User size={20}/></div>
-                        <input required placeholder="Choose Username (e.g. shani123)" className="bg-transparent w-full outline-none text-slate-800 font-bold placeholder:font-normal placeholder:text-blue-300" onChange={e => setForm({...form, username: e.target.value})} />
+                        <input required placeholder="Choose Username" className="bg-transparent w-full outline-none text-slate-800 font-bold" onChange={e => setForm({...form, username: e.target.value})} />
                     </div>
                     <div className="bg-blue-50 border border-blue-100 rounded-2xl p-1 flex items-center focus-within:ring-2 ring-blue-500 transition-all">
                         <div className="p-3 text-blue-500"><Lock size={20}/></div>
-                        <input required type="password" placeholder="Set Password" className="bg-transparent w-full outline-none text-slate-800 font-bold placeholder:font-normal placeholder:text-blue-300" onChange={e => setForm({...form, password: e.target.value})} />
+                        <input required type="password" placeholder="Set Password" className="bg-transparent w-full outline-none text-slate-800 font-bold" onChange={e => setForm({...form, password: e.target.value})} />
                     </div>
                 </div>
 
                 <div className="pt-4">
                     <button disabled={loading} className="w-full bg-slate-900 text-white py-4 rounded-2xl font-bold text-lg shadow-xl shadow-slate-200 hover:scale-[1.02] active:scale-95 transition-all flex justify-center items-center gap-2">
-                        {loading ? (
-                            <span className="animate-pulse">Creating Account...</span>
-                        ) : (
-                            <>Claim Offer & Register <ChevronRight size={20} strokeWidth={3}/></>
-                        )}
+                        {loading ? "Creating Account..." : "Register"}
                     </button>
-                    <p className="text-center text-xs text-slate-400 mt-4">
-                        By registering, you agree to our Terms & "Paisa Vasool" Policy.
-                    </p>
                 </div>
             </form>
-
-            <footer className="mt-10 border-t border-slate-100 pt-6">
-                <div className="flex flex-wrap justify-center gap-4 text-xs font-medium text-slate-400 mb-4">
-                    <a href="/legal/privacy" className="flex items-center gap-1 hover:text-slate-600 transition">
-                        <ShieldCheck size={14}/> Privacy Policy
-                    </a>
-                    <span>•</span>
-                    <a href="/legal/refund" className="flex items-center gap-1 hover:text-slate-600 transition">
-                        <IndianRupee size={14}/> Refund Policy
-                    </a>
-                    <span>•</span>
-                    <a href="/legal/terms" className="flex items-center gap-1 hover:text-slate-600 transition">
-                        <FileText size={14}/> Terms of Service
-                    </a>
-                </div>
-                <div className="text-center">
-                    <p className="text-[10px] text-slate-300 uppercase tracking-widest flex items-center justify-center gap-1">
-                        <LockKeyhole size={10}/> 100% Secure & Encrypted
-                    </p>
-                    <p className="text-[10px] text-slate-300 mt-1">© 2026 EduSmart India.</p>
-                </div>
-            </footer>
-
         </motion.div>
       </div>
 

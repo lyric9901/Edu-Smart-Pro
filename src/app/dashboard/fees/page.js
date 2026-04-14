@@ -1,51 +1,48 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
-import { ref, onValue, set } from "firebase/database";
+import { firestore } from "@/lib/firebase";
+import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
-import { IndianRupee, CheckCircle, Clock, Users, CalendarDays, Filter, Download } from "lucide-react"; // Added Download
+import { IndianRupee, CheckCircle, Clock, Users, CalendarDays, Filter, Download } from "lucide-react";
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
 export default function FeesPage() {
   const { user } = useAuth();
   
-  // Data State
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [year, setYear] = useState(new Date().getFullYear());
   const [mounted, setMounted] = useState(false);
 
-  // --- INITIALIZATION ---
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 1. Fetch Batches
   useEffect(() => {
-    if (user?.schoolId) {
-      const batchRef = ref(db, `schools/${user.schoolId}/batches`);
-      onValue(batchRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const list = Object.entries(data).map(([id, val]) => ({
-            id,
-            ...val,
-            students: val.students || []
-          }));
-          setBatches(list);
-          if (selectedBatch) {
+    if (user?.institutionCode) {
+      const unsub = onSnapshot(collection(firestore, `institutions/${user.institutionCode}/batches`), (snapshot) => {
+        const list = [];
+        snapshot.forEach((doc) => {
+            list.push({
+                id: doc.id,
+                ...doc.data(),
+                students: doc.data().students || []
+            });
+        });
+        setBatches(list);
+        
+        if (selectedBatch) {
              const updated = list.find(b => b.id === selectedBatch.id);
              if (updated) setSelectedBatch(updated);
-          }
         }
       });
+      return () => unsub();
     }
   }, [user, selectedBatch?.id]);
 
-  // 2. Logic
-  const toggleFee = (studentIndex, monthIndex) => {
+  const toggleFee = async (studentIndex, monthIndex) => {
     if (!selectedBatch) return;
     
     const student = selectedBatch.students[studentIndex];
@@ -59,18 +56,19 @@ export default function FeesPage() {
     updatedBatch.students[studentIndex].fees[year][monthKey] = newStatus;
     
     setSelectedBatch(updatedBatch);
-    set(ref(db, `schools/${user.schoolId}/batches/${selectedBatch.id}/students/${studentIndex}/fees/${year}/${monthKey}`), newStatus);
+    
+    // Save updated students array to Firestore
+    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+        students: updatedBatch.students
+    });
   };
 
-  // --- NEW: EXPORT CSV LOGIC ---
   const downloadCSV = () => {
      if (!selectedBatch) return;
      
-     // Headers
      const headers = ["Student Name", "Phone", ...MONTHS];
      let csv = headers.join(",") + "\n";
      
-     // Rows
      selectedBatch.students.forEach(student => {
          const row = [
              `"${student.name}"`,
@@ -83,7 +81,6 @@ export default function FeesPage() {
          csv += row.join(",") + "\n";
      });
      
-     // Download
      const blob = new Blob([csv], { type: "text/csv" });
      const url = window.URL.createObjectURL(blob);
      const a = document.createElement("a");
@@ -98,7 +95,6 @@ export default function FeesPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-zinc-100 transition-colors duration-300 p-4 md:p-8">
       <div className="max-w-6xl mx-auto space-y-6">
         
-        {/* HEADER */}
         <motion.div 
             initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
             className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4"
@@ -110,7 +106,6 @@ export default function FeesPage() {
                 <p className="text-slate-500 dark:text-zinc-400 text-sm font-medium">Manage student payments</p>
             </div>
             
-            {/* EXPORT BUTTON */}
             {selectedBatch && (
                 <motion.button 
                     whileTap={{ scale: 0.95 }}
@@ -122,7 +117,6 @@ export default function FeesPage() {
             )}
         </motion.div>
 
-        {/* CONTROLS CARD */}
         <motion.div 
             initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.1 }}
             className="bg-white dark:bg-zinc-900 p-5 rounded-[2rem] shadow-sm border border-slate-200 dark:border-zinc-800 flex flex-col md:flex-row gap-4 justify-between items-center"
@@ -160,7 +154,6 @@ export default function FeesPage() {
             </div>
         </motion.div>
 
-        {/* FEE TABLE */}
         <AnimatePresence mode="wait">
         {selectedBatch ? (
             <motion.div 

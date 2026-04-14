@@ -1,13 +1,13 @@
 "use client";
 import { createContext, useContext, useState, useEffect } from "react";
-import { db } from "@/lib/firebase";
-import { ref, get, child } from "firebase/database";
+import { firestore } from "@/lib/firebase";
+import { doc, getDoc } from "firebase/firestore";
 import { useRouter } from "next/navigation";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null); // { role: 'admin' | 'student', name: '...', schoolId: '...' }
+  const [user, setUser] = useState(null); // { role: 'admin' | 'student', name: '...', institutionCode: '...' }
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
@@ -20,28 +20,29 @@ export function AuthProvider({ children }) {
     setLoading(false);
   }, []);
 
-  // 2. ADMIN LOGIN
-  const loginAdmin = async (username, password, schoolIdFromLink) => {
+  // 2. ADMIN LOGIN (Updated for Firestore)
+  const loginAdmin = async (username, password, institutionCodeFromLogin) => {
     try {
-      // Check if admin exists in Firebase
-      const snapshot = await get(child(ref(db), `admins/${username}`));
+      // Check if admin exists in Firestore
+      const adminRef = doc(firestore, "admins", username);
+      const snapshot = await getDoc(adminRef);
       
       if (snapshot.exists()) {
-        const data = snapshot.val();
+        const data = snapshot.data();
         
         // Verify Password
         if (data.password !== password) throw new Error("Wrong Password");
         
-        // Verify School ID (Security Check)
-        // If they used a magic link for School A, but try to login as Admin of School B, block it.
-        if (schoolIdFromLink && data.schoolId !== schoolIdFromLink) {
-           throw new Error("This admin does not belong to this coaching center link.");
+        // Verify Institution Code (Security Check)
+        // If they registered for LPS, but try to login to a different code, block it.
+        if (institutionCodeFromLogin && data.institutionCode !== institutionCodeFromLogin) {
+           throw new Error("This admin does not belong to this institution code.");
         }
 
         const userData = {
           role: "admin",
           username: username,
-          schoolId: data.schoolId
+          institutionCode: data.institutionCode
         };
 
         // Save & Redirect

@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
-import { ref, onValue, update } from "firebase/database";
+import { firestore } from "@/lib/firebase";
+import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Save, X, Edit2, CheckCircle2, Sun, Moon } from "lucide-react";
 
@@ -15,7 +15,6 @@ export default function TimingPage() {
   const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
 
-  // --- INITIALIZATION ---
   useEffect(() => {
     setMounted(true);
     const savedTheme = localStorage.getItem("eduSmartTheme") || "light";
@@ -31,25 +30,20 @@ export default function TimingPage() {
     else document.documentElement.classList.remove("dark");
   };
 
-  // --- FETCH BATCHES ---
   useEffect(() => {
-    if (user?.schoolId) {
-      const batchRef = ref(db, `schools/${user.schoolId}/batches`);
-      onValue(batchRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const list = Object.entries(data).map(([id, val]) => ({
-            id,
-            ...val,
-          }));
-          setBatches(list);
-        }
+    if (user?.institutionCode) {
+      const unsub = onSnapshot(collection(firestore, `institutions/${user.institutionCode}/batches`), (snapshot) => {
+        const list = [];
+        snapshot.forEach((doc) => {
+          list.push({ id: doc.id, ...doc.data() });
+        });
+        setBatches(list);
         setLoading(false);
       });
+      return () => unsub();
     }
   }, [user]);
 
-  // --- HANDLERS ---
   const startEditing = (batch) => {
     setEditingId(batch.id);
     setTimeForm({
@@ -61,14 +55,12 @@ export default function TimingPage() {
   const saveTiming = async (batchId) => {
     if (!timeForm.start || !timeForm.end) return;
     
-    await update(ref(db, `schools/${user.schoolId}/batches/${batchId}/timing`), {
-      start: timeForm.start,
-      end: timeForm.end
+    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, batchId), {
+      timing: { start: timeForm.start, end: timeForm.end }
     });
     setEditingId(null);
   };
 
-  // Helper to format 24h time to 12h AM/PM
   const formatTime = (time) => {
     if (!time) return "Not Set";
     const [h, m] = time.split(':');
@@ -84,7 +76,6 @@ export default function TimingPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-zinc-100 transition-colors duration-300 p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-8">
         
-        {/* HEADER */}
         <div className="flex justify-between items-center">
             <div>
                 <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
@@ -100,7 +91,6 @@ export default function TimingPage() {
             </button>
         </div>
 
-        {/* BATCH GRID */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <AnimatePresence>
             {batches.map((batch) => (
@@ -115,7 +105,6 @@ export default function TimingPage() {
                         : "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-md"
                     }`}
                 >
-                    {/* Header */}
                     <div className="flex justify-between items-start mb-6">
                         <div>
                             <h2 className="text-xl font-bold">{batch.name}</h2>
@@ -128,7 +117,6 @@ export default function TimingPage() {
                         )}
                     </div>
 
-                    {/* Content */}
                     {editingId === batch.id ? (
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
                             <div className="grid grid-cols-2 gap-3">

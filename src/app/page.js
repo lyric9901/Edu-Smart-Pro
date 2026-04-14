@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { 
   CheckCircle2, 
@@ -13,7 +14,6 @@ import {
   X,
   Star
 } from "lucide-react";
-import { useState } from "react";
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -85,11 +85,11 @@ export default function LandingPage() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className="md:hidden bg-white border-t border-slate-100 p-4 space-y-4">
-            <Link href="/login" className="block w-full text-center py-3 font-bold text-slate-700 border border-slate-200 rounded-xl">
+          <div className="md:hidden bg-white border-t border-slate-100 p-4 space-y-4 shadow-xl">
+            <Link href="/login" className="block w-full text-center py-3 font-bold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50">
               Login
             </Link>
-            <Link href="/register" className="block w-full text-center py-3 font-bold bg-blue-600 text-white rounded-xl">
+            <Link href="/register" className="block w-full text-center py-3 font-bold bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20">
               Register Now
             </Link>
           </div>
@@ -240,7 +240,6 @@ export default function LandingPage() {
   );
 }
 
-// Helper Component for Features
 function FeatureCard({ icon, title, desc, delay }) {
   return (
     <motion.div 

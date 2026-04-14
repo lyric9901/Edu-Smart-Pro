@@ -1,15 +1,14 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
-import { ref, onValue, set, update, push } from "firebase/database";
+import { firestore } from "@/lib/firebase";
+import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Calendar, Check, X, Minus, Users, CheckCircle2, 
-  ChevronLeft, ChevronRight, Download // Added Download
+  ChevronLeft, ChevronRight, Download 
 } from "lucide-react";
 
-// --- SKELETON COMPONENT ---
 const Skeleton = ({ className }) => (
   <div className={`animate-pulse bg-slate-200 dark:bg-zinc-800 rounded-xl ${className}`} />
 );
@@ -33,7 +32,6 @@ export default function AttendancePage() {
     return new Date(d.getTime() - offset).toISOString().split('T')[0];
   };
 
-  // State
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [selectedDate, setSelectedDate] = useState(getLocalToday()); 
@@ -50,31 +48,30 @@ export default function AttendancePage() {
     setIsPastDate(selectedDate !== getLocalToday());
   }, [selectedDate]);
 
-  // Fetch Batches
   useEffect(() => {
-    if (user?.schoolId) {
+    if (user?.institutionCode) {
       setLoading(true);
-      const batchRef = ref(db, `schools/${user.schoolId}/batches`);
-      onValue(batchRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
-          const list = Object.entries(data).map(([id, val]) => ({
-            id,
-            ...val,
-            students: val.students || []
-          }));
-          setBatches(list);
-          if (selectedBatch) {
+      const unsub = onSnapshot(collection(firestore, `institutions/${user.institutionCode}/batches`), (snapshot) => {
+        const list = [];
+        snapshot.forEach((doc) => {
+            list.push({
+                id: doc.id,
+                ...doc.data(),
+                students: doc.data().students || []
+            });
+        });
+        setBatches(list);
+        
+        if (selectedBatch) {
              const updated = list.find(b => b.id === selectedBatch.id);
              if (updated) setSelectedBatch(updated);
-          }
         }
         setLoading(false); 
       });
+      return () => unsub();
     }
-  }, [user]);
+  }, [user, selectedBatch?.id]);
 
-  // Stats Calculation
   useEffect(() => {
     if (selectedBatch && selectedBatch.students) {
       let p = 0, a = 0;
@@ -87,7 +84,7 @@ export default function AttendancePage() {
     }
   }, [selectedBatch, selectedDate]);
 
-  const toggleAttendance = (studentIndex) => {
+  const toggleAttendance = async (studentIndex) => {
     if (!selectedBatch) return;
 
     const student = selectedBatch.students[studentIndex];
@@ -102,34 +99,42 @@ export default function AttendancePage() {
         updatedBatch.students[studentIndex].attendance = {};
     }
     updatedBatch.students[studentIndex].attendance[selectedDate] = newStatus;
+
+    // Send Alert to Student when absent
+    if (newStatus === "absent") {
+        if (!updatedBatch.students[studentIndex].notifications) {
+            updatedBatch.students[studentIndex].notifications = [];
+        }
+        updatedBatch.students[studentIndex].notifications.push({
+            id: Date.now().toString(),
+            text: `You were marked absent for ${new Date(selectedDate).toDateString()}.`,
+            date: new Date().toISOString(),
+            type: "alert",
+            read: false
+        });
+    }
+
     setSelectedBatch(updatedBatch);
 
-    const path = `schools/${user.schoolId}/batches/${selectedBatch.id}/students/${studentIndex}/attendance/${selectedDate}`;
-    set(ref(db, path), newStatus);
-
-    if (newStatus === "absent") {
-      const notifPath = `schools/${user.schoolId}/batches/${selectedBatch.id}/students/${studentIndex}/notifications`;
-      push(ref(db, notifPath), {
-        text: `You were marked absent for ${new Date(selectedDate).toDateString()}.`,
-        date: new Date().toISOString(),
-        type: "alert",
-        read: false
-      });
-    }
+    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+        students: updatedBatch.students
+    });
   };
 
-  const markAll = (status) => {
+  const markAll = async (status) => {
     if (!selectedBatch) return;
-    const updates = {};
+    
     const updatedBatch = { ...selectedBatch };
     updatedBatch.students.forEach((student, index) => {
         if (!updatedBatch.students[index].attendance) updatedBatch.students[index].attendance = {};
         updatedBatch.students[index].attendance[selectedDate] = status;
-        const path = `schools/${user.schoolId}/batches/${selectedBatch.id}/students/${index}/attendance/${selectedDate}`;
-        updates[path] = status;
     });
+    
     setSelectedBatch(updatedBatch);
-    update(ref(db), updates);
+
+    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+        students: updatedBatch.students
+    });
   };
 
   const changeDate = (days) => {
@@ -140,31 +145,26 @@ export default function AttendancePage() {
     setSelectedDate(newDate);
   };
 
-  // --- NEW: CSV EXPORT LOGIC ---
   const downloadCSV = () => {
     if (!selectedBatch) return;
 
-    // 1. Calculate Month Details from selectedDate
     const dateObj = new Date(selectedDate);
     const year = dateObj.getFullYear();
-    const month = dateObj.getMonth(); // 0-11
+    const month = dateObj.getMonth(); 
     const monthName = dateObj.toLocaleString('default', { month: 'long' });
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // 2. Headers
     let csv = "Student Name,Phone";
     for(let d=1; d<=daysInMonth; d++) {
         csv += `,${d} ${monthName.slice(0,3)}`;
     }
     csv += ",Total Present\n";
 
-    // 3. Rows
     selectedBatch.students.forEach(student => {
         let row = `"${student.name}","${student.phone}"`;
         let presentCount = 0;
         
         for(let d=1; d<=daysInMonth; d++) {
-             // Construct YYYY-MM-DD manually to match key format
              const dayStr = String(d).padStart(2, '0');
              const monthStr = String(month + 1).padStart(2, '0');
              const dateKey = `${year}-${monthStr}-${dayStr}`;
@@ -180,7 +180,6 @@ export default function AttendancePage() {
         csv += `${row}\n`;
     });
 
-    // 4. Download
     const blob = new Blob([csv], { type: "text/csv" });
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -205,7 +204,6 @@ export default function AttendancePage() {
     <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-zinc-100 transition-colors duration-300 p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-6">
         
-        {/* HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
@@ -217,9 +215,7 @@ export default function AttendancePage() {
             </div>
         </div>
 
-        {/* CONTROLS CARD */}
         <div className="bg-white dark:bg-zinc-900 p-5 rounded-[2rem] shadow-sm border border-slate-200 dark:border-zinc-800 flex flex-col md:flex-row gap-4 justify-between items-center">
-            {/* Date Navigator */}
             <div className={`flex items-center gap-2 px-2 py-2 rounded-2xl border w-full md:w-auto transition-colors ${isPastDate ? 'bg-orange-50 border-orange-200 dark:bg-orange-900/10 dark:border-orange-800' : 'bg-slate-50 border-slate-100 dark:bg-black dark:border-zinc-800'}`}>
                 <button onClick={() => changeDate(-1)} className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition"><ChevronLeft size={20} /></button>
                 <div className="flex items-center gap-2 px-2">
@@ -229,7 +225,6 @@ export default function AttendancePage() {
                 <button onClick={() => changeDate(1)} className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition"><ChevronRight size={20} /></button>
             </div>
 
-            {/* Batch Selector */}
             <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto custom-scrollbar no-scrollbar items-center">
                 {loading ? (
                     <>
@@ -255,7 +250,6 @@ export default function AttendancePage() {
             </div>
         </div>
 
-        {/* STUDENT LIST */}
         <AnimatePresence mode="wait">
         {loading ? (
            <div className="space-y-4">
@@ -270,7 +264,6 @@ export default function AttendancePage() {
                 initial="hidden" animate="visible" exit={{ opacity: 0, y: 20 }} variants={containerVariants}
                 className="bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden"
             >
-                {/* Header Stats */}
                 <div className="p-6 border-b border-slate-100 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 dark:bg-black/20 gap-4">
                     <div>
                         <h2 className="text-2xl font-black tracking-tight">{selectedBatch.name}</h2>
@@ -283,7 +276,6 @@ export default function AttendancePage() {
                     </div>
                     
                     <div className="flex flex-wrap gap-3 w-full md:w-auto">
-                        {/* CSV BUTTON */}
                         <motion.button 
                             whileTap={{ scale: 0.95 }}
                             onClick={downloadCSV}

@@ -2,8 +2,8 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { db } from "@/lib/firebase";
-import { ref, onValue, set, get } from "firebase/database";
+import { firestore } from "@/lib/firebase"; // <-- Updated to Firestore
+import { doc, collection, getDocs, setDoc, updateDoc, onSnapshot } from "firebase/firestore"; // <-- Firestore functions
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react"; 
 import { 
@@ -16,7 +16,6 @@ import {
   Award, AlertTriangle, Activity
 } from "lucide-react";
 
-// --- TOAST COMPONENT ---
 const Toast = ({ message, type, onClose }) => (
   <motion.div 
     initial={{ opacity: 0, y: 50, scale: 0.9 }} 
@@ -44,7 +43,7 @@ export default function AdminDashboard() {
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState(null);
   const [selectedStudent, setSelectedStudent] = useState(null);
-  const [batchTab, setBatchTab] = useState("students"); // "students" | "homework" | "analytics"
+  const [batchTab, setBatchTab] = useState("students"); 
    
   const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
@@ -69,26 +68,26 @@ export default function AdminDashboard() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // --- OPTIMIZATION: FETCH ALL BATCHES ONCE ---
+  // --- 1. FETCH ALL BATCHES FROM FIRESTORE ---
   useEffect(() => {
-    if (!user?.schoolId) return;
+    // Note: We use user.institutionCode now instead of schoolId!
+    if (!user?.institutionCode) return;
     
     const fetchBatches = async () => {
         try {
-            const batchRef = ref(db, `schools/${user.schoolId}/batches`);
-            const snapshot = await get(batchRef);
-            if (snapshot.exists()) {
-                const data = snapshot.val();
-                const list = Object.entries(data)
-                    .map(([id, val]) => ({
-                        id,
-                        ...val,
-                        students: val.students || [],
-                        assignments: val.assignments || {}
-                    }))
-                    .sort((a, b) => a.name.localeCompare(b.name));
-                setBatches(list);
-            }
+            const querySnapshot = await getDocs(collection(firestore, `institutions/${user.institutionCode}/batches`));
+            const list = [];
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                list.push({
+                    id: doc.id,
+                    ...data,
+                    students: data.students || [],
+                    assignments: data.assignments || {}
+                });
+            });
+            list.sort((a, b) => a.name.localeCompare(b.name));
+            setBatches(list);
         } catch (error) {
             console.error("Error fetching batches:", error);
         }
@@ -96,18 +95,18 @@ export default function AdminDashboard() {
     };
 
     fetchBatches();
-  }, [user?.schoolId]);
+  }, [user?.institutionCode]);
 
-  // --- OPTIMIZATION: REAL-TIME LISTEN ONLY TO SELECTED BATCH ---
+  // --- 2. REAL-TIME LISTEN ONLY TO SELECTED BATCH IN FIRESTORE ---
   useEffect(() => {
-    if (!user?.schoolId || !selectedBatch?.id) return;
+    if (!user?.institutionCode || !selectedBatch?.id) return;
     
-    const singleBatchRef = ref(db, `schools/${user.schoolId}/batches/${selectedBatch.id}`);
-    const unsub = onValue(singleBatchRef, (snapshot) => {
-        const data = snapshot.val();
-        if (data) {
+    const batchDocRef = doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id);
+    const unsub = onSnapshot(batchDocRef, (docSnap) => {
+        if (docSnap.exists()) {
+            const data = docSnap.data();
             const updatedBatch = {
-                id: selectedBatch.id,
+                id: docSnap.id,
                 ...data,
                 students: data.students || [],
                 assignments: data.assignments || {}
@@ -124,21 +123,23 @@ export default function AdminDashboard() {
     });
 
     return () => unsub();
-  }, [user?.schoolId, selectedBatch?.id]);
+  }, [user?.institutionCode, selectedBatch?.id, selectedStudent?.id]);
 
-  const createBatch = () => {
-    if (!newBatchName.trim()) return;
+  const createBatch = async () => {
+    if (!newBatchName.trim() || !user?.institutionCode) return;
     const id = Date.now().toString();
-    const newBatchData = { id, name: newBatchName, students: [] };
+    const newBatchData = { name: newBatchName, students: [], assignments: {} };
     
-    set(ref(db, `schools/${user.schoolId}/batches/${id}`), newBatchData);
-    setBatches(prev => [...prev, newBatchData].sort((a, b) => a.name.localeCompare(b.name)));
+    // Save to Firestore
+    await setDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, id), newBatchData);
+    
+    setBatches(prev => [...prev, { id, ...newBatchData }].sort((a, b) => a.name.localeCompare(b.name)));
     setNewBatchName("");
     showToast("New batch created!");
   };
 
-  const addStudent = () => {
-    if (!selectedBatch) return;
+  const addStudent = async () => {
+    if (!selectedBatch || !user?.institutionCode) return;
     if (!newStudent.name) {
         showToast("Enter a name!", "error");
         return;
@@ -152,40 +153,60 @@ export default function AdminDashboard() {
       performance: 0,
       performanceHistory: []
     }];
-    set(ref(db, `schools/${user.schoolId}/batches/${selectedBatch.id}/students`), updatedStudents);
+    
+    // Update Array in Firestore
+    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+        students: updatedStudents
+    });
+
     setNewStudent({ name: "", phone: "" });
     showToast("Student added successfully");
   };
 
-  const createAssignment = () => {
-    if (!selectedBatch || !newAssignment.title) return;
+  const createAssignment = async () => {
+    if (!selectedBatch || !newAssignment.title || !user?.institutionCode) return;
     const id = Date.now().toString();
-    set(ref(db, `schools/${user.schoolId}/batches/${selectedBatch.id}/assignments/${id}`), {
-      id,
-      title: newAssignment.title,
-      description: newAssignment.description,
-      createdAt: new Date().toISOString()
+    
+    const updatedAssignments = {
+        ...(selectedBatch.assignments || {}),
+        [id]: {
+            id,
+            title: newAssignment.title,
+            description: newAssignment.description,
+            createdAt: new Date().toISOString()
+        }
+    };
+
+    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+        assignments: updatedAssignments
     });
+
     setNewAssignment({ title: "", description: "" });
     showToast("Assignment created!");
   };
 
-  const saveTestScore = () => {
-    if (!selectedStudent || !selectedBatch || !newTest.name || !newTest.score) return;
-    const studentIndex = selectedBatch.students.findIndex(s => s.id === selectedStudent.id);
-    const history = selectedStudent.performanceHistory || [];
-    const updatedHistory = [...history, { 
-      id: Date.now(), 
-      name: newTest.name, 
-      score: Number(newTest.score),
-      date: new Date().toISOString() 
-    }];
+  const saveTestScore = async () => {
+    if (!selectedStudent || !selectedBatch || !newTest.name || !newTest.score || !user?.institutionCode) return;
+    
+    const updatedStudents = selectedBatch.students.map(s => {
+        if (s.id === selectedStudent.id) {
+            const history = s.performanceHistory || [];
+            const updatedHistory = [...history, { 
+                id: Date.now(), 
+                name: newTest.name, 
+                score: Number(newTest.score),
+                date: new Date().toISOString() 
+            }];
+            const avg = Math.round(updatedHistory.reduce((acc, curr) => acc + curr.score, 0) / updatedHistory.length);
+            
+            return { ...s, performanceHistory: updatedHistory, performance: avg };
+        }
+        return s;
+    });
 
-    const avg = Math.round(updatedHistory.reduce((acc, curr) => acc + curr.score, 0) / updatedHistory.length);
-
-    const path = `schools/${user.schoolId}/batches/${selectedBatch.id}/students/${studentIndex}`;
-    set(ref(db, `${path}/performanceHistory`), updatedHistory);
-    set(ref(db, `${path}/performance`), avg);
+    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+        students: updatedStudents
+    });
     
     setNewTest({ name: "", score: "" });
     showToast("Test score added!");
@@ -193,10 +214,10 @@ export default function AdminDashboard() {
 
   const handleCSVImport = (e) => {
     const file = e.target.files[0];
-    if (!file || !selectedBatch) return;
+    if (!file || !selectedBatch || !user?.institutionCode) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
         try {
             const text = event.target.result;
             const rows = text.split("\n").slice(1);
@@ -220,7 +241,10 @@ export default function AdminDashboard() {
             if (newEntries.length === 0) return showToast("No valid data found in CSV", "error");
 
             const updatedStudents = [...(selectedBatch.students || []), ...newEntries];
-            set(ref(db, `schools/${user.schoolId}/batches/${selectedBatch.id}/students`), updatedStudents);
+            await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+                students: updatedStudents
+            });
+
             showToast(`Imported ${newEntries.length} students!`);
         } catch (err) {
             showToast("Failed to parse CSV", "error");
@@ -265,17 +289,19 @@ export default function AdminDashboard() {
   };
 
   const copyLink = () => {
-    const link = `${window.location.origin}/login?schoolId=${user.schoolId}`;
+    const link = `${window.location.origin}/login?code=${user?.institutionCode}`;
     navigator.clipboard.writeText(link);
     setCopied(true);
-    showToast("Magic Link Copied!");
+    showToast("Login Link Copied!");
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const deleteStudent = (studentId) => {
+  const deleteStudent = async (studentId) => {
     if(!confirm("Are you sure you want to remove this student?")) return;
     const updatedList = selectedBatch.students.filter(s => s.id !== studentId);
-    set(ref(db, `schools/${user.schoolId}/batches/${selectedBatch.id}/students`), updatedList);
+    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+        students: updatedList
+    });
     showToast("Student removed");
   };
 
@@ -287,7 +313,7 @@ export default function AdminDashboard() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `${user?.schoolId}-qrcode.svg`;
+    link.download = `${user?.institutionCode}-qrcode.svg`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -319,7 +345,7 @@ export default function AdminDashboard() {
       const average = validStudents.length > 0 ? Math.round(totalScore / validStudents.length) : 0;
 
       const chartData = validStudents.map(s => ({
-          name: s.name.split(" ")[0], // Use first name for chart
+          name: s.name.split(" ")[0], 
           score: s.performance || 0,
           fullName: s.name
       }));
@@ -333,7 +359,7 @@ export default function AdminDashboard() {
 
   if (!mounted) return null;
 
-  const magicLinkUrl = `${typeof window !== 'undefined' ? window.location.origin : ""}/login?schoolId=${user?.schoolId}`;
+  const magicLinkUrl = `${typeof window !== 'undefined' ? window.location.origin : ""}/login?code=${user?.institutionCode}`;
 
   return (
     <div className="min-h-screen bg-black text-zinc-100 font-sans p-4 md:p-8">
@@ -356,7 +382,7 @@ export default function AdminDashboard() {
             <div className="flex gap-3 items-center">
                 <motion.button 
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => logout(user?.schoolId)} 
+                    onClick={() => logout()} 
                     className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-red-900/20 text-red-500 border border-red-800/50 shadow-sm hover:shadow-md transition"
                 >
                     <LogOut size={18} />
@@ -373,21 +399,21 @@ export default function AdminDashboard() {
           
           <div className="flex-1 relative z-10">
               <h2 className="text-xl font-bold flex items-center gap-2">
-                  <Sparkles size={20} className="text-yellow-300 fill-yellow-300"/> Magic Access Link
+                  <Sparkles size={20} className="text-yellow-300 fill-yellow-300"/> Institution Code
               </h2>
               <p className="text-blue-100 text-sm mt-1 max-w-lg font-medium">
-                  Use this link to connect students instantly to <strong>{user?.username}'s Coaching</strong>.
+                  Students can join using code: <strong className="bg-black/30 px-2 py-1 rounded text-white">{user?.institutionCode}</strong>
               </p>
           </div>
 
           <div className="flex gap-2 relative z-10 w-full md:w-auto">
               <div className="flex-1 md:flex-none flex bg-black/30 backdrop-blur-md rounded-2xl p-1.5 items-center border border-white/10">
                   <code className="flex-1 px-4 py-2 text-xs md:text-sm font-mono text-white/90 truncate max-w-[150px] md:max-w-xs">
-                     {typeof window !== 'undefined' ? window.location.host : "..."}/login?schoolId=...
+                     {user?.institutionCode}
                   </code>
                   <motion.button whileTap={{ scale: 0.9 }} onClick={copyLink} className="bg-white text-blue-600 px-4 py-2 rounded-xl text-xs font-bold hover:bg-blue-50 transition flex items-center gap-2 shadow-sm">
                       {copied ? <CheckCircle size={14}/> : <Copy size={14}/>} 
-                      <span className="hidden sm:inline">{copied ? "Copied" : "Copy"}</span>
+                      <span className="hidden sm:inline">{copied ? "Copied Link" : "Copy Link"}</span>
                   </motion.button>
               </div>
 
@@ -443,7 +469,7 @@ export default function AdminDashboard() {
                         >
                         <span className="font-bold text-sm">{batch.name}</span>
                         <span className="text-xs bg-black px-2.5 py-1 rounded-full border border-zinc-800 text-zinc-500 font-bold shadow-sm">
-                            {batch.students.length}
+                            {batch.students?.length || 0}
                         </span>
                         </motion.div>
                     ))}
@@ -488,7 +514,7 @@ export default function AdminDashboard() {
                              <LayoutGrid size={12} className="text-blue-500" /> ID: {selectedBatch.id.slice(-6)}
                           </span>
                           <span className="text-xs text-zinc-400 font-medium bg-black px-3 py-1 rounded-lg border border-zinc-800 shadow-inner flex items-center gap-1">
-                             <Users size={12} className="text-green-500" /> {selectedBatch.students.length} Students
+                             <Users size={12} className="text-green-500" /> {selectedBatch.students?.length || 0} Students
                           </span>
                         </div>
                     </div>
@@ -515,7 +541,6 @@ export default function AdminDashboard() {
                   )}
                 </div>
 
-                {/* RICH TAB NAVIGATION */}
                 <div className="flex gap-2 border-b border-zinc-800 mb-8 overflow-x-auto custom-scrollbar pb-1">
                     {[
                         { id: "students", label: "Students List", icon: <Users size={18}/>, color: "text-blue-500", border: "border-blue-500" },
@@ -536,7 +561,6 @@ export default function AdminDashboard() {
                     ))}
                 </div>
 
-                {/* CONTENT: STUDENTS */}
                 {batchTab === "students" && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
                         <div className="flex flex-col gap-3 mb-6 bg-black p-5 rounded-2xl border border-zinc-800 shadow-sm">
@@ -635,7 +659,6 @@ export default function AdminDashboard() {
                     </motion.div>
                 )}
 
-                {/* CONTENT: HOMEWORK */}
                 {batchTab === "homework" && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-8">
                         <div className="bg-black p-5 rounded-[1.5rem] border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-3 items-center">
@@ -667,7 +690,6 @@ export default function AdminDashboard() {
                                         </div>
                                         <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
                                             <span className="text-xs text-zinc-500 font-bold bg-black px-3 py-1 rounded-lg border border-zinc-800">{new Date(assign.createdAt).toLocaleDateString()}</span>
-                                            {/* NOTE: Rule explicitly says admin cannot delete stats and homework. Delete button REMOVED entirely. */}
                                         </div>
                                     </motion.div>
                                 ))
@@ -682,11 +704,9 @@ export default function AdminDashboard() {
                     </motion.div>
                 )}
 
-                {/* CONTENT: BATCH ANALYTICS */}
                 {batchTab === "analytics" && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-6">
                         
-                        {/* High-level Stat Cards */}
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="bg-gradient-to-br from-zinc-900 to-black p-6 rounded-[1.5rem] border border-zinc-800 shadow-sm relative overflow-hidden">
                                 <div className="absolute top-0 right-0 p-4 opacity-20"><Activity size={64}/></div>
@@ -699,7 +719,7 @@ export default function AdminDashboard() {
                                 <div className="absolute top-0 right-0 p-4 opacity-20"><Users size={64}/></div>
                                 <h3 className="text-zinc-500 text-xs font-bold uppercase tracking-widest mb-2">Total Students</h3>
                                 <div className="text-5xl font-black text-white">
-                                    {selectedBatch.students.length}
+                                    {selectedBatch.students?.length || 0}
                                 </div>
                             </div>
                             <div className="bg-gradient-to-br from-red-900/20 to-black p-6 rounded-[1.5rem] border border-red-900/30 shadow-sm relative overflow-hidden">
@@ -712,7 +732,6 @@ export default function AdminDashboard() {
                         </div>
 
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                            {/* Rich Data Visualization Chart */}
                             <div className="lg:col-span-2 bg-zinc-900/80 p-6 rounded-[1.5rem] border border-zinc-800 shadow-sm h-[400px] flex flex-col">
                                 <h3 className="font-bold text-lg text-white mb-6 flex items-center gap-2"><PieChart size={18} className="text-purple-500"/> Performance Distribution</h3>
                                 <div className="flex-1 w-full min-h-0">
@@ -744,7 +763,6 @@ export default function AdminDashboard() {
                                 </div>
                             </div>
 
-                            {/* Leaderboard & Insights */}
                             <div className="space-y-6">
                                 <div className="bg-zinc-900 p-6 rounded-[1.5rem] border border-zinc-800 shadow-sm">
                                     <h3 className="font-bold text-white mb-4 flex items-center gap-2"><Award size={18} className="text-yellow-500"/> Top Performers</h3>
@@ -798,7 +816,6 @@ export default function AdminDashboard() {
           </motion.div>
         </div>
 
-        {/* --- MODALS --- */}
         <AnimatePresence>
         {showShareModal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -810,7 +827,7 @@ export default function AdminDashboard() {
                             <Share2 size={32} />
                         </div>
                         <h3 className="text-2xl font-black text-white mb-2">Share Access</h3>
-                        <p className="text-zinc-500 text-sm mb-6">Scan to join <strong>{user?.username}</strong>'s classroom.</p>
+                        <p className="text-zinc-500 text-sm mb-6">Scan to join using code <strong>{user?.institutionCode}</strong>.</p>
                         
                         <div className="bg-white p-4 rounded-2xl border-2 border-zinc-700 shadow-sm mb-6">
                              <QRCodeSVG value={magicLinkUrl} size={200} level={"H"} includeMargin={true} id="magic-qr" />
@@ -853,7 +870,7 @@ export default function AdminDashboard() {
                                 }`}
                             >
                                 <span className="font-bold">{batch.name}</span>
-                                <span className="text-xs bg-zinc-900 px-3 py-1 rounded-full text-zinc-500 font-bold shadow-sm">{batch.students.length} Students</span>
+                                <span className="text-xs bg-zinc-900 px-3 py-1 rounded-full text-zinc-500 font-bold shadow-sm">{batch.students?.length || 0} Students</span>
                             </motion.button>
                         ))}
                     </div>
@@ -862,7 +879,6 @@ export default function AdminDashboard() {
         )}
         </AnimatePresence>
 
-        {/* INDIVIDUAL STUDENT ANALYTICS MODAL (NO DELETE FUNCTIONALITY) */}
         <AnimatePresence>
         {selectedStudent && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
@@ -912,7 +928,6 @@ export default function AdminDashboard() {
                               Save to Performance History
                           </motion.button>
 
-                          {/* TEST HISTORY LIST (READ ONLY - NO DELETE PER INSTRUCTIONS) */}
                           {selectedStudent.performanceHistory && selectedStudent.performanceHistory.length > 0 && (
                               <div className="mt-8 pt-6 border-t border-zinc-800">
                                   <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Recorded Academic History</h4>

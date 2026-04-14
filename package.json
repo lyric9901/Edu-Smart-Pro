@@ -9,6 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@ducanh2912/next-pwa": "^10.2.9",
     "firebase": "^12.8.0",
     "framer-motion": "^12.33.0",
     "lucide-react": "^0.563.0",
@@ -16,7 +17,10 @@
     "qrcode.react": "^4.2.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
-    "recharts": "^3.8.1"
+    "react-hot-toast": "^2.6.0",
+    "recharts": "^3.8.1",
+    "zod": "^4.3.6",
+    "zustand": "^5.0.12"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

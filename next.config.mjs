@@ -1,22 +1,27 @@
+import withPWAInit from "@ducanh2912/next-pwa";
+
+const withPWA = withPWAInit({
+  dest: "public",
+  // Disables PWA caching in dev mode to prevent caching issues while coding
+  disable: process.env.NODE_ENV === "development", 
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Ignore ESLint errors during build (e.g., unused imports)
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
-  // Ignore TypeScript errors if any
+  // Silences the Next.js 16 Turbopack + Webpack plugin conflict error
+  turbopack: {}, 
+  
   typescript: {
     ignoreBuildErrors: true,
   },
-  // Ensure Firebase images (if any) are allowed
   images: {
     remotePatterns: [
       {
         protocol: 'https',
-        hostname: '**', // Allow all external images for now
+        hostname: '**', 
       },
     ],
   },
 };
 
-export default nextConfig;
+export default withPWA(nextConfig);
