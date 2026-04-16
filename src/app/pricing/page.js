@@ -52,8 +52,8 @@ export default function PricingPage() {
             <div className="p-8 text-center border-b border-slate-50">
               <h3 className="text-slate-500 font-bold tracking-wider uppercase text-sm mb-2">Lifetime Access</h3>
               <div className="flex items-center justify-center gap-1 mb-2">
-                <span className="text-5xl font-black text-slate-900">₹199</span>
-                <span className="text-slate-400 font-medium self-end mb-2">/forever</span>
+                <span className="text-5xl font-black text-slate-900">₹149</span>
+                <span className="text-slate-400 font-medium self-end mb-2">/Monthly</span>
               </div>
               <p className="text-slate-400 text-xs">One-time payment. No renewal needed.</p>
             </div>
