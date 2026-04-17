@@ -1,19 +1,19 @@
 // src/app/dashboard/admin/page.js
 "use client";
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { firestore } from "@/lib/firebase"; 
-import { doc, collection, getDocs, setDoc, updateDoc, onSnapshot, deleteDoc } from "firebase/firestore"; // <-- Added deleteDoc
+import { doc, collection, getDocs, setDoc, updateDoc, onSnapshot, deleteDoc } from "firebase/firestore"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react"; 
 import { 
-  BarChart, Bar, LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Cell
 } from "recharts";
 import { 
   Plus, UserPlus, Users, Trash2, TrendingUp, X, Copy, 
   CheckCircle, PieChart, Sparkles, LayoutGrid, Search, ChevronRight,
-  ArrowLeft, Share2, Download, LogOut, Upload, FileText, FileDown, BookOpen, Calendar,
-  Award, AlertTriangle, Activity, Edit // <-- Added Edit icon
+  ArrowLeft, Share2, Download, LogOut, FileDown,
+  Award, AlertTriangle, Activity, Edit
 } from "lucide-react";
 
 const Toast = ({ message, type, onClose }) => (
@@ -38,7 +38,6 @@ const Skeleton = ({ className }) => (
 
 export default function AdminDashboard() {
   const { user, logout } = useAuth();
-  const fileInputRef = useRef(null);
    
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState(null);
@@ -56,10 +55,8 @@ export default function AdminDashboard() {
   const [copied, setCopied] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
 
-  const [newAssignment, setNewAssignment] = useState({ title: "", description: "" });
   const [newTest, setNewTest] = useState({ name: "", score: "" });
 
-  // --- NEW STATES FOR EDITING BATCH ---
   const [isEditingBatch, setIsEditingBatch] = useState(false);
   const [editBatchName, setEditBatchName] = useState("");
 
@@ -67,7 +64,6 @@ export default function AdminDashboard() {
     setMounted(true);
   }, []);
 
-  // Reset editing mode when switching batches
   useEffect(() => {
     setIsEditingBatch(false);
   }, [selectedBatch?.id]);
@@ -77,7 +73,35 @@ export default function AdminDashboard() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // --- 1. FETCH ALL BATCHES FROM FIRESTORE ---
+  // --- AUTOMATIC HOMEWORK CLEANUP (Older than 1.5 months / 45 days) ---
+  const cleanUpOldHomework = async (batchId, assignments) => {
+    if (!assignments || Object.keys(assignments).length === 0) return;
+    
+    const now = new Date();
+    const FORTY_FIVE_DAYS = 45 * 24 * 60 * 60 * 1000;
+    let needsUpdate = false;
+    const updatedAssignments = { ...assignments };
+
+    Object.keys(updatedAssignments).forEach(key => {
+        const hwDate = new Date(updatedAssignments[key].createdAt);
+        if (now - hwDate > FORTY_FIVE_DAYS) {
+            delete updatedAssignments[key];
+            needsUpdate = true;
+        }
+    });
+
+    if (needsUpdate) {
+        try {
+            await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, batchId), {
+                assignments: updatedAssignments
+            });
+            console.log(`Cleaned up expired homework for batch ${batchId}`);
+        } catch (error) {
+            console.error("Cleanup error:", error);
+        }
+    }
+  };
+
   useEffect(() => {
     if (!user?.institutionCode) return;
     
@@ -85,10 +109,14 @@ export default function AdminDashboard() {
         try {
             const querySnapshot = await getDocs(collection(firestore, `institutions/${user.institutionCode}/batches`));
             const list = [];
-            querySnapshot.forEach((doc) => {
-                const data = doc.data();
+            querySnapshot.forEach((docSnap) => {
+                const data = docSnap.data();
+                
+                // Trigger background cleanup on fetch
+                cleanUpOldHomework(docSnap.id, data.assignments);
+
                 list.push({
-                    id: doc.id,
+                    id: docSnap.id,
                     ...data,
                     students: data.students || [],
                     assignments: data.assignments || {}
@@ -105,7 +133,6 @@ export default function AdminDashboard() {
     fetchBatches();
   }, [user?.institutionCode]);
 
-  // --- 2. REAL-TIME LISTEN ONLY TO SELECTED BATCH IN FIRESTORE ---
   useEffect(() => {
     if (!user?.institutionCode || !selectedBatch?.id) return;
     
@@ -145,7 +172,6 @@ export default function AdminDashboard() {
     showToast("New batch created!");
   };
 
-  // --- NEW: EDIT BATCH NAME ---
   const handleEditBatch = async () => {
     if (!editBatchName.trim() || !user?.institutionCode || !selectedBatch) return;
     try {
@@ -159,7 +185,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // --- NEW: DELETE BATCH ---
   const handleDeleteBatch = async () => {
     if (!user?.institutionCode || !selectedBatch) return;
     if (!confirm(`Are you sure you want to permanently delete the batch "${selectedBatch.name}"? This action cannot be undone.`)) return;
@@ -198,28 +223,6 @@ export default function AdminDashboard() {
     showToast("Student added successfully");
   };
 
-  const createAssignment = async () => {
-    if (!selectedBatch || !newAssignment.title || !user?.institutionCode) return;
-    const id = Date.now().toString();
-    
-    const updatedAssignments = {
-        ...(selectedBatch.assignments || {}),
-        [id]: {
-            id,
-            title: newAssignment.title,
-            description: newAssignment.description,
-            createdAt: new Date().toISOString()
-        }
-    };
-
-    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
-        assignments: updatedAssignments
-    });
-
-    setNewAssignment({ title: "", description: "" });
-    showToast("Assignment created!");
-  };
-
   const saveTestScore = async () => {
     if (!selectedStudent || !selectedBatch || !newTest.name || !newTest.score || !user?.institutionCode) return;
     
@@ -245,59 +248,6 @@ export default function AdminDashboard() {
     
     setNewTest({ name: "", score: "" });
     showToast("Test score added!");
-  };
-
-  const handleCSVImport = (e) => {
-    const file = e.target.files[0];
-    if (!file || !selectedBatch || !user?.institutionCode) return;
-
-    const reader = new FileReader();
-    reader.onload = async (event) => {
-        try {
-            const text = event.target.result;
-            const rows = text.split("\n").slice(1);
-            const newEntries = [];
-
-            rows.forEach(row => {
-                const [name, phone] = row.split(",");
-                if (name && name.trim() !== "") {
-                    newEntries.push({
-                        id: Date.now() + Math.random(),
-                        name: name.trim().replace(/"/g, ""),
-                        phone: phone ? phone.trim().replace(/"/g, "") : "N/A",
-                        fees: {},
-                        attendance: {},
-                        performance: 0,
-                        performanceHistory: []
-                    });
-                }
-            });
-
-            if (newEntries.length === 0) return showToast("No valid data found in CSV", "error");
-
-            const updatedStudents = [...(selectedBatch.students || []), ...newEntries];
-            await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
-                students: updatedStudents
-            });
-
-            showToast(`Imported ${newEntries.length} students!`);
-        } catch (err) {
-            showToast("Failed to parse CSV", "error");
-        }
-    };
-    reader.readAsText(file);
-    e.target.value = null;
-  };
-
-  const downloadTemplate = () => {
-    const csvContent = "data:text/csv;charset=utf-8,Name,Phone\nRahul Sharma,9876543210\nPriya Verma,9123456789";
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", "student_import_template.csv");
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   };
 
   const exportRealData = () => {
@@ -540,7 +490,6 @@ export default function AdminDashboard() {
                         <ArrowLeft size={24} />
                     </button>
                     <div>
-                        {/* EDITED: Integrated Edit and Delete logic for the selected batch heading */}
                         {isEditingBatch ? (
                             <div className="flex items-center gap-3 mb-1">
                                 <input 
@@ -607,7 +556,6 @@ export default function AdminDashboard() {
                 <div className="flex gap-2 border-b border-zinc-800 mb-8 overflow-x-auto custom-scrollbar pb-1">
                     {[
                         { id: "students", label: "Students List", icon: <Users size={18}/>, color: "text-blue-500", border: "border-blue-500" },
-                        { id: "homework", label: "Homework & Tasks", icon: <BookOpen size={18}/>, color: "text-indigo-400", border: "border-indigo-400" },
                         { id: "analytics", label: "Batch Analytics", icon: <Activity size={18}/>, color: "text-purple-500", border: "border-purple-500" }
                     ].map(tab => (
                         <button 
@@ -646,19 +594,6 @@ export default function AdminDashboard() {
                                 <motion.button whileTap={{ scale: 0.95 }} onClick={addStudent} className="bg-white text-black px-8 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition shadow-lg">
                                     Add Student
                                 </motion.button>
-                            </div>
-                            
-                            <div className="flex items-center justify-between pt-3 border-t border-zinc-800 mt-2">
-                                <p className="text-xs text-zinc-500 font-medium flex items-center gap-1.5">
-                                <FileText size={14}/> Bulk Operations
-                                </p>
-                                <div className="flex gap-3">
-                                    <button onClick={downloadTemplate} className="text-xs font-bold text-blue-400 hover:text-blue-300 transition px-2 py-1">Download Template</button>
-                                    <input type="file" ref={fileInputRef} hidden accept=".csv" onChange={handleCSVImport} />
-                                    <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-2 bg-zinc-800 text-zinc-300 px-4 py-2 rounded-lg text-xs font-bold hover:bg-zinc-700 transition border border-zinc-700 shadow-sm">
-                                    <Upload size={14}/> Import CSV
-                                    </button>
-                                </div>
                             </div>
                         </div>
 
@@ -718,51 +653,6 @@ export default function AdminDashboard() {
                                 )}
                                 </tbody>
                             </table>
-                        </div>
-                    </motion.div>
-                )}
-
-                {batchTab === "homework" && (
-                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }} className="space-y-8">
-                        <div className="bg-black p-5 rounded-[1.5rem] border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-3 items-center">
-                            <input 
-                                placeholder="Assignment Title (e.g., Chapter 4 Essay)" 
-                                value={newAssignment.title}
-                                onChange={e => setNewAssignment({...newAssignment, title: e.target.value})}
-                                className="flex-1 w-full bg-zinc-900 border border-zinc-800 p-3.5 rounded-xl text-sm text-white focus:border-indigo-500 outline-none transition-colors font-medium"
-                            />
-                            <input 
-                                placeholder="Description (optional details or instructions)" 
-                                value={newAssignment.description}
-                                onChange={e => setNewAssignment({...newAssignment, description: e.target.value})}
-                                className="flex-[2] w-full bg-zinc-900 border border-zinc-800 p-3.5 rounded-xl text-sm text-white focus:border-indigo-500 outline-none transition-colors font-medium"
-                            />
-                            <button onClick={createAssignment} className="w-full md:w-auto bg-indigo-600 text-white px-8 py-3.5 rounded-xl font-bold text-sm hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-500/20 whitespace-nowrap">
-                                Create Assignment
-                            </button>
-                        </div>
-                        
-                        <div className="space-y-4">
-                            <h3 className="font-bold text-lg text-white mb-2 flex items-center gap-2"><BookOpen size={20} className="text-indigo-400"/> Current Homework</h3>
-                            {selectedBatch.assignments && Object.keys(selectedBatch.assignments).length > 0 ? (
-                                Object.values(selectedBatch.assignments).sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt)).map(assign => (
-                                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} key={assign.id} className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-[1.5rem] flex flex-col sm:flex-row justify-between sm:items-center gap-4 group hover:border-zinc-700 transition-colors">
-                                        <div>
-                                            <h4 className="font-black text-white text-lg tracking-tight">{assign.title}</h4>
-                                            {assign.description && <p className="text-sm text-zinc-400 mt-1.5 font-medium leading-relaxed">{assign.description}</p>}
-                                        </div>
-                                        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between gap-2 shrink-0">
-                                            <span className="text-xs text-zinc-500 font-bold bg-black px-3 py-1 rounded-lg border border-zinc-800">{new Date(assign.createdAt).toLocaleDateString()}</span>
-                                        </div>
-                                    </motion.div>
-                                ))
-                            ) : (
-                                <div className="text-center py-24 border-2 border-dashed border-zinc-800 rounded-[2rem] bg-zinc-900/20">
-                                    <BookOpen size={48} className="mx-auto mb-4 text-zinc-700" />
-                                    <p className="text-zinc-400 text-base font-bold">No homework assigned yet.</p>
-                                    <p className="text-zinc-600 text-sm mt-1">Use the form above to notify your students.</p>
-                                </div>
-                            )}
                         </div>
                     </motion.div>
                 )}

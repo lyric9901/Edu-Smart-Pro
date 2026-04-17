@@ -11,7 +11,8 @@ import {
   School,
   Menu,
   X,
-  Clock // <--- Added Clock Icon Import
+  Clock,
+  BookOpen // <--- Added Clock Icon Import
 } from "lucide-react";
 import Link from "next/link";
 
@@ -35,6 +36,7 @@ export default function DashboardLayout({ children }) {
     { href: "/dashboard/fees", label: "Fees", icon: <IndianRupee size={20} /> },
     { href: "/dashboard/notices", label: "Notifications", icon: <Bell size={20} /> },
     { href: "/dashboard/timing", label: "Schedule", icon: <Clock size={20} /> }, // <--- Added Timing Link
+    { href: "/dashboard/homework", label: "Homework", icon: <BookOpen size={20} /> }
   ];
 
   return (
