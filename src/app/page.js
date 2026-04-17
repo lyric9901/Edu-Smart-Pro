@@ -338,10 +338,10 @@ export default function LandingPage() {
 
                 <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 pt-6 border-t border-slate-100">
                   <div className="flex items-center gap-2 text-slate-600 text-sm font-medium">
-                    <Mail size={16} className="text-blue-600" /> support@edusmartpro.in
+                    <Mail size={16} className="text-blue-600" /> shanibrooo@gmail.com
                   </div>
                   <div className="flex items-center gap-2 text-slate-600 text-sm font-medium">
-                    <Phone size={16} className="text-blue-600" /> +91 98765 43210
+                    <Phone size={16} className="text-blue-600" /> +91 73887-39691
                   </div>
                 </div>
               </div>
