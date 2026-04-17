@@ -2,8 +2,8 @@
 "use client";
 import { useState, useEffect, useRef, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { firestore } from "@/lib/firebase"; // <-- Updated to Firestore
-import { doc, collection, getDocs, setDoc, updateDoc, onSnapshot } from "firebase/firestore"; // <-- Firestore functions
+import { firestore } from "@/lib/firebase"; 
+import { doc, collection, getDocs, setDoc, updateDoc, onSnapshot, deleteDoc } from "firebase/firestore"; // <-- Added deleteDoc
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react"; 
 import { 
@@ -13,7 +13,7 @@ import {
   Plus, UserPlus, Users, Trash2, TrendingUp, X, Copy, 
   CheckCircle, PieChart, Sparkles, LayoutGrid, Search, ChevronRight,
   ArrowLeft, Share2, Download, LogOut, Upload, FileText, FileDown, BookOpen, Calendar,
-  Award, AlertTriangle, Activity
+  Award, AlertTriangle, Activity, Edit // <-- Added Edit icon
 } from "lucide-react";
 
 const Toast = ({ message, type, onClose }) => (
@@ -59,9 +59,18 @@ export default function AdminDashboard() {
   const [newAssignment, setNewAssignment] = useState({ title: "", description: "" });
   const [newTest, setNewTest] = useState({ name: "", score: "" });
 
+  // --- NEW STATES FOR EDITING BATCH ---
+  const [isEditingBatch, setIsEditingBatch] = useState(false);
+  const [editBatchName, setEditBatchName] = useState("");
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Reset editing mode when switching batches
+  useEffect(() => {
+    setIsEditingBatch(false);
+  }, [selectedBatch?.id]);
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -70,7 +79,6 @@ export default function AdminDashboard() {
 
   // --- 1. FETCH ALL BATCHES FROM FIRESTORE ---
   useEffect(() => {
-    // Note: We use user.institutionCode now instead of schoolId!
     if (!user?.institutionCode) return;
     
     const fetchBatches = async () => {
@@ -130,12 +138,40 @@ export default function AdminDashboard() {
     const id = Date.now().toString();
     const newBatchData = { name: newBatchName, students: [], assignments: {} };
     
-    // Save to Firestore
     await setDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, id), newBatchData);
     
     setBatches(prev => [...prev, { id, ...newBatchData }].sort((a, b) => a.name.localeCompare(b.name)));
     setNewBatchName("");
     showToast("New batch created!");
+  };
+
+  // --- NEW: EDIT BATCH NAME ---
+  const handleEditBatch = async () => {
+    if (!editBatchName.trim() || !user?.institutionCode || !selectedBatch) return;
+    try {
+        await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+            name: editBatchName.trim()
+        });
+        showToast("Batch renamed successfully!");
+        setIsEditingBatch(false);
+    } catch (err) {
+        showToast("Failed to rename batch", "error");
+    }
+  };
+
+  // --- NEW: DELETE BATCH ---
+  const handleDeleteBatch = async () => {
+    if (!user?.institutionCode || !selectedBatch) return;
+    if (!confirm(`Are you sure you want to permanently delete the batch "${selectedBatch.name}"? This action cannot be undone.`)) return;
+
+    try {
+        await deleteDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id));
+        setBatches(prev => prev.filter(b => b.id !== selectedBatch.id));
+        setSelectedBatch(null);
+        showToast("Batch deleted successfully!");
+    } catch (err) {
+        showToast("Failed to delete batch", "error");
+    }
   };
 
   const addStudent = async () => {
@@ -154,7 +190,6 @@ export default function AdminDashboard() {
       performanceHistory: []
     }];
     
-    // Update Array in Firestore
     await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
         students: updatedStudents
     });
@@ -334,7 +369,6 @@ export default function AdminDashboard() {
     s.phone.includes(searchQuery)
   ) || [];
 
-  // Batch Analytics Calculations
   const batchAnalytics = useMemo(() => {
       if (!selectedBatch || !selectedBatch.students || selectedBatch.students.length === 0) {
           return { average: 0, chartData: [], topPerformers: [], needsAttention: [] };
@@ -506,9 +540,38 @@ export default function AdminDashboard() {
                         <ArrowLeft size={24} />
                     </button>
                     <div>
-                        <h2 className="text-3xl font-black text-white flex items-center gap-2">
-                            {selectedBatch.name}
-                        </h2>
+                        {/* EDITED: Integrated Edit and Delete logic for the selected batch heading */}
+                        {isEditingBatch ? (
+                            <div className="flex items-center gap-3 mb-1">
+                                <input 
+                                    value={editBatchName} 
+                                    onChange={e => setEditBatchName(e.target.value)}
+                                    className="bg-black border border-zinc-700 py-1.5 px-3 rounded-xl text-2xl md:text-3xl font-black text-white outline-none focus:border-blue-500 transition-colors w-full md:w-auto"
+                                    autoFocus
+                                />
+                                <button onClick={handleEditBatch} className="text-green-400 hover:text-green-300 p-2 bg-green-900/20 border border-green-800/30 rounded-lg transition" title="Save">
+                                    <CheckCircle size={20}/>
+                                </button>
+                                <button onClick={() => setIsEditingBatch(false)} className="text-red-400 hover:text-red-300 p-2 bg-red-900/20 border border-red-800/30 rounded-lg transition" title="Cancel">
+                                    <X size={20}/>
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="flex items-center gap-3">
+                                <h2 className="text-3xl font-black text-white flex items-center gap-2">
+                                    {selectedBatch.name}
+                                </h2>
+                                <div className="flex gap-1">
+                                    <button onClick={() => { setEditBatchName(selectedBatch.name); setIsEditingBatch(true); }} className="text-zinc-500 hover:text-blue-400 p-1.5 hover:bg-blue-900/20 rounded-lg transition" title="Rename Batch">
+                                        <Edit size={18}/>
+                                    </button>
+                                    <button onClick={handleDeleteBatch} className="text-zinc-500 hover:text-red-400 p-1.5 hover:bg-red-900/20 rounded-lg transition" title="Delete Batch">
+                                        <Trash2 size={18}/>
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
                         <div className="flex items-center gap-3 mt-2">
                           <span className="text-xs text-zinc-400 font-medium bg-black px-3 py-1 rounded-lg border border-zinc-800 shadow-inner flex items-center gap-1">
                              <LayoutGrid size={12} className="text-blue-500" /> ID: {selectedBatch.id.slice(-6)}
