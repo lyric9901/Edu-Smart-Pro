@@ -1,3 +1,4 @@
+// src/app/dashboard/attendance/page.js
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
