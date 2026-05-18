@@ -48,7 +48,7 @@ export default function DashboardLayout({ children }) {
   }, [user?.institutionCode]);
 
   const handleSupportClick = () => {
-    const text = encodeURIComponent(`Hello Neel, I need support for my institution. My code is: ${user?.institutionCode}`);
+    const text = encodeURIComponent(`Hello Shah, I need support for my institution. My code is: ${user?.institutionCode}`);
     window.open(`https://wa.me/917388739691?text=${text}`, "_blank");
   };
 
