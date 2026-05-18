@@ -365,7 +365,7 @@ export default function AdminDashboard() {
   const magicLinkUrl = `${typeof window !== 'undefined' ? window.location.origin : ""}/login?code=${user?.institutionCode}`;
 
   return (
-    <div className="min-h-screen bg-transparent md:bg-black text-zinc-100 font-sans p-4 md:p-8">
+    <div className="min-h-screen bg-transparent md:bg-slate-50 md:dark:bg-black text-slate-900 dark:text-zinc-100 transition-colors duration-300 font-sans p-4 md:p-8">
       <AnimatePresence>
         {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       </AnimatePresence>

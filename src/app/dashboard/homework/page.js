@@ -27,7 +27,7 @@ const Toast = ({ message, type, onClose }) => (
 );
 
 const Skeleton = ({ className }) => (
-  <div className={`animate-pulse bg-zinc-800/50 rounded-xl ${className}`} />
+  <div className={`animate-pulse bg-slate-200/80 dark:bg-zinc-800/50 rounded-xl ${className}`} />
 );
 
 export default function HomeworkDashboard() {
@@ -162,7 +162,7 @@ export default function HomeworkDashboard() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-black text-zinc-100 font-sans p-4 md:p-8">
+    <div className="min-h-screen text-slate-900 dark:text-zinc-100 font-sans p-4 md:p-8">
       <AnimatePresence>
         {toast && <Toast message={toast.msg} type={toast.type} onClose={() => setToast(null)} />}
       </AnimatePresence>
@@ -170,12 +170,12 @@ export default function HomeworkDashboard() {
       <div className="max-w-7xl mx-auto space-y-6">
         
         {/* Page Header */}
-        <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <motion.div initial={{ opacity: 0, y: -12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2, ease: "easeInOut" }} className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
             <div>
                 <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
                     <BookOpen className="text-indigo-500" size={32} /> Homework Manager
                 </h1>
-                <p className="text-zinc-400 text-sm font-medium mt-1">
+                <p className="text-slate-600 dark:text-zinc-400 text-sm font-medium mt-1">
                     Assign, manage, and automatically clear old tasks across batches.
                 </p>
             </div>
@@ -185,10 +185,10 @@ export default function HomeworkDashboard() {
           
           {/* Left Sidebar: Batches */}
           <motion.div 
-            initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.1 }} 
-            className="lg:col-span-1 bg-zinc-900 p-5 rounded-[2rem] shadow-sm border border-zinc-800 h-fit flex flex-col max-h-[85vh]"
+            initial={{ x: -12, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.2, ease: "easeInOut" }} 
+            className="glass-card lg:col-span-1 p-5 rounded-[2rem] h-fit flex flex-col max-h-[85vh]"
           >
-            <h2 className="font-bold text-zinc-300 mb-4 text-sm uppercase tracking-widest flex items-center gap-2">
+            <h2 className="font-bold text-slate-600 dark:text-zinc-300 mb-4 text-sm uppercase tracking-widest flex items-center gap-2">
                 <LayoutGrid size={16}/> Select Batch
             </h2>
 
@@ -205,24 +205,24 @@ export default function HomeworkDashboard() {
                       return (
                         <motion.button 
                             key={batch.id}
-                            whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                            whileTap={{ scale: 0.99 }}
                             onClick={() => setSelectedBatch(batch)}
                             className={`w-full p-4 rounded-2xl flex flex-col items-start transition-all duration-200 border text-left ${
                                 selectedBatch?.id === batch.id 
-                                ? "bg-indigo-900/20 border-indigo-800/50 text-indigo-400 shadow-sm" 
-                                : "bg-black hover:bg-zinc-800 text-zinc-400 border-zinc-800/50"
+                                ? "bg-indigo-500/10 border-indigo-500/40 text-indigo-600 dark:bg-indigo-900/20 dark:border-indigo-800/50 dark:text-indigo-400 shadow-sm" 
+                                : "bg-white/55 hover:bg-white/80 text-slate-600 border-white/60 dark:bg-black/30 dark:hover:bg-zinc-800/70 dark:text-zinc-400 dark:border-zinc-800/50"
                             }`}
                         >
-                            <span className="font-bold text-base text-zinc-200">{batch.name}</span>
-                            <span className={`text-xs mt-1 font-medium ${selectedBatch?.id === batch.id ? "text-indigo-400/80" : "text-zinc-500"}`}>
+                            <span className="font-bold text-base text-slate-900 dark:text-zinc-200">{batch.name}</span>
+                            <span className={`text-xs mt-1 font-medium ${selectedBatch?.id === batch.id ? "text-indigo-600/80 dark:text-indigo-400/80" : "text-slate-500 dark:text-zinc-500"}`}>
                                 {hwCount} Active Assignment{hwCount !== 1 ? 's' : ''}
                             </span>
                         </motion.button>
                       );
                   })
               ) : (
-                  <div className="text-center py-10 border-2 border-dashed border-zinc-800 rounded-2xl">
-                      <p className="text-zinc-600 text-sm font-medium">No batches available.</p>
+                  <div className="text-center py-10 border-2 border-dashed border-slate-300 dark:border-zinc-800 rounded-2xl">
+                      <p className="text-slate-500 dark:text-zinc-600 text-sm font-medium">No batches available.</p>
                   </div>
               )}
             </div>
@@ -230,20 +230,20 @@ export default function HomeworkDashboard() {
 
           {/* Right Panel: Homework Management */}
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }} 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 0.2, ease: "easeInOut" }} 
             className="lg:col-span-3"
           >
             {selectedBatch ? (
-              <div className="bg-zinc-900 p-6 md:p-8 rounded-[2rem] shadow-sm border border-zinc-800 min-h-[500px] flex flex-col gap-8">
+              <div className="glass-card p-6 md:p-8 rounded-[2rem] min-h-[500px] flex flex-col gap-8">
                 
                 {/* Header inside Panel */}
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-zinc-800 pb-6 gap-4">
+                <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200/70 dark:border-zinc-800 pb-6 gap-4">
                     <div>
-                        <h2 className="text-2xl md:text-3xl font-black text-white flex items-center gap-2">
+                        <h2 className="text-2xl md:text-3xl font-black text-slate-950 dark:text-white flex items-center gap-2">
                             {selectedBatch.name}
                         </h2>
                         <div className="flex items-center gap-3 mt-2">
-                            <span className="text-xs text-zinc-400 font-medium bg-black px-3 py-1.5 rounded-lg border border-zinc-800 flex items-center gap-1.5">
+                            <span className="text-xs text-slate-600 dark:text-zinc-400 font-medium bg-white/60 dark:bg-black/40 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 flex items-center gap-1.5">
                                 <AlertCircle size={14} className="text-yellow-500"/> 
                                 Auto-deletes after 45 days
                             </span>
@@ -252,18 +252,18 @@ export default function HomeworkDashboard() {
                 </div>
 
                 {/* Create Assignment Form */}
-                <div className="bg-black p-5 rounded-[1.5rem] border border-zinc-800 shadow-sm flex flex-col md:flex-row gap-3 items-center">
+                <div className="bg-white/55 dark:bg-black/35 p-5 rounded-[1.5rem] border border-white/60 dark:border-zinc-800 shadow-sm flex flex-col md:flex-row gap-3 items-center">
                     <input 
                         placeholder="Task Title (e.g., Chapter 4 Exercises)" 
                         value={newAssignment.title}
                         onChange={e => setNewAssignment({...newAssignment, title: e.target.value})}
-                        className="flex-1 w-full bg-zinc-900 border border-zinc-800 p-3.5 rounded-xl text-sm text-white focus:border-indigo-500 outline-none transition-colors font-medium"
+                        className="flex-1 w-full bg-white/80 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3.5 rounded-xl text-sm text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-colors font-medium"
                     />
                     <input 
                         placeholder="Instructions / Details (optional)" 
                         value={newAssignment.description}
                         onChange={e => setNewAssignment({...newAssignment, description: e.target.value})}
-                        className="flex-[2] w-full bg-zinc-900 border border-zinc-800 p-3.5 rounded-xl text-sm text-white focus:border-indigo-500 outline-none transition-colors font-medium"
+                        className="flex-[2] w-full bg-white/80 dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-3.5 rounded-xl text-sm text-slate-900 dark:text-white focus:border-indigo-500 outline-none transition-colors font-medium"
                         onKeyDown={(e) => e.key === 'Enter' && createAssignment()}
                     />
                     <motion.button 
@@ -277,7 +277,7 @@ export default function HomeworkDashboard() {
                 
                 {/* Assignments List */}
                 <div className="space-y-4 flex-1">
-                    <h3 className="font-bold text-lg text-white mb-4 flex items-center gap-2">
+                    <h3 className="font-bold text-lg text-slate-950 dark:text-white mb-4 flex items-center gap-2">
                         <Calendar size={20} className="text-indigo-400"/> Current Assignments
                     </h3>
                     
@@ -291,22 +291,22 @@ export default function HomeworkDashboard() {
                                     
                                     return (
                                         <motion.div 
-                                            initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} 
+                                            initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.18, ease: "easeInOut" }}
                                             key={assign.id} 
-                                            className="p-6 bg-zinc-900/50 border border-zinc-800 rounded-[1.5rem] flex flex-col sm:flex-row justify-between sm:items-center gap-4 group hover:border-zinc-700 hover:bg-zinc-800/50 transition-colors"
+                                            className="p-6 bg-white/55 dark:bg-zinc-900/50 border border-white/60 dark:border-zinc-800 rounded-[1.5rem] flex flex-col sm:flex-row justify-between sm:items-center gap-4 group hover:bg-white/80 dark:hover:border-zinc-700 dark:hover:bg-zinc-800/50 transition-colors"
                                         >
                                             <div className="flex-1">
-                                                <h4 className="font-black text-white text-lg tracking-tight">{assign.title}</h4>
+                                                <h4 className="font-black text-slate-950 dark:text-white text-lg tracking-tight">{assign.title}</h4>
                                                 {assign.description && (
-                                                    <p className="text-sm text-zinc-400 mt-1.5 font-medium leading-relaxed max-w-3xl">
+                                                    <p className="text-sm text-slate-600 dark:text-zinc-400 mt-1.5 font-medium leading-relaxed max-w-3xl">
                                                         {assign.description}
                                                     </p>
                                                 )}
                                                 <div className="flex items-center gap-2 mt-4">
-                                                    <span className="text-[11px] text-zinc-500 font-bold bg-black px-3 py-1 rounded-lg border border-zinc-800/80 flex items-center gap-1.5">
+                                                    <span className="text-[11px] text-slate-500 dark:text-zinc-500 font-bold bg-white/70 dark:bg-black px-3 py-1 rounded-lg border border-slate-200 dark:border-zinc-800/80 flex items-center gap-1.5">
                                                         <Clock size={12}/> {createdDate.toLocaleDateString()}
                                                     </span>
-                                                    <span className={`text-[11px] font-bold px-3 py-1 rounded-lg border ${daysAgo > 30 ? 'bg-orange-900/10 text-orange-400 border-orange-800/30' : 'bg-zinc-900 text-zinc-500 border-zinc-800'}`}>
+                                                    <span className={`text-[11px] font-bold px-3 py-1 rounded-lg border ${daysAgo > 30 ? 'bg-orange-50 text-orange-600 border-orange-200 dark:bg-orange-900/10 dark:text-orange-400 dark:border-orange-800/30' : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-zinc-900 dark:text-zinc-500 dark:border-zinc-800'}`}>
                                                         {daysAgo === 0 ? 'Today' : `${daysAgo} day${daysAgo > 1 ? 's' : ''} ago`}
                                                     </span>
                                                 </div>
@@ -315,7 +315,7 @@ export default function HomeworkDashboard() {
                                             <div className="shrink-0 flex justify-end">
                                                 <button 
                                                     onClick={() => deleteAssignment(assign.id)} 
-                                                    className="text-zinc-500 hover:text-red-400 p-2.5 bg-black hover:bg-red-900/20 border border-zinc-800 hover:border-red-800/30 rounded-xl transition-all" 
+                                                    className="text-slate-500 dark:text-zinc-500 hover:text-red-500 p-2.5 bg-white/70 dark:bg-black hover:bg-red-50 dark:hover:bg-red-900/20 border border-slate-200 dark:border-zinc-800 hover:border-red-200 dark:hover:border-red-800/30 rounded-xl transition-all" 
                                                     title="Delete Homework"
                                                 >
                                                     <Trash2 size={18}/>
@@ -327,23 +327,23 @@ export default function HomeworkDashboard() {
                             }
                         </div>
                     ) : (
-                        <div className="text-center py-24 border-2 border-dashed border-zinc-800 rounded-[2rem] bg-zinc-900/20 flex flex-col items-center justify-center">
-                            <div className="bg-zinc-800/50 p-5 rounded-full mb-4">
-                                <BookOpen size={40} className="text-zinc-600" />
+                        <div className="text-center py-24 border-2 border-dashed border-slate-300 dark:border-zinc-800 rounded-[2rem] bg-white/35 dark:bg-zinc-900/20 flex flex-col items-center justify-center">
+                            <div className="bg-slate-100 dark:bg-zinc-800/50 p-5 rounded-full mb-4">
+                                <BookOpen size={40} className="text-slate-400 dark:text-zinc-600" />
                             </div>
-                            <p className="text-zinc-300 text-lg font-black tracking-tight">No active homework</p>
-                            <p className="text-zinc-500 text-sm mt-1 max-w-sm font-medium">Use the input above to assign tasks to the students in {selectedBatch.name}.</p>
+                            <p className="text-slate-700 dark:text-zinc-300 text-lg font-black tracking-tight">No active homework</p>
+                            <p className="text-slate-500 dark:text-zinc-500 text-sm mt-1 max-w-sm font-medium">Use the input above to assign tasks to the students in {selectedBatch.name}.</p>
                         </div>
                     )}
                 </div>
 
               </div>
             ) : (
-              <div className="h-full flex flex-col items-center justify-center bg-zinc-900 rounded-[2rem] border-2 border-dashed border-zinc-800 text-zinc-600 p-10 min-h-[500px]">
-                <div className="bg-zinc-800 p-6 rounded-full mb-5 shadow-inner">
+              <div className="h-full flex flex-col items-center justify-center glass-card rounded-[2rem] border-2 border-dashed border-slate-300 dark:border-zinc-800 text-slate-500 dark:text-zinc-600 p-10 min-h-[500px]">
+                <div className="bg-slate-100 dark:bg-zinc-800 p-6 rounded-full mb-5 shadow-inner">
                   <LayoutGrid size={48} className="opacity-30"/>
                 </div>
-                <p className="font-black text-xl text-zinc-400">Select a batch to view homework</p>
+                <p className="font-black text-xl text-slate-700 dark:text-zinc-400">Select a batch to view homework</p>
                 <p className="text-sm font-medium mt-2">Manage assignments seamlessly from the panel.</p>
               </div>
             )}

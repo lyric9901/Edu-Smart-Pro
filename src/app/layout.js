@@ -76,8 +76,20 @@ export const viewport = {
 };
 
 export default function RootLayout({ children }) {
+  const themeScript = `
+    try {
+      var preference = localStorage.getItem("eduSmartTheme") || "system";
+      var dark = preference === "dark" || (preference === "system" && window.matchMedia("(prefers-color-scheme: dark)").matches);
+      document.documentElement.classList.toggle("dark", dark);
+      document.documentElement.style.colorScheme = dark ? "dark" : "light";
+    } catch (_) {}
+  `;
+
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
       <body className={inter.className}>
         <Toaster position="bottom-right" reverseOrder={false} />
 

@@ -1,8 +1,27 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  color-scheme: light;
+  --background: #f7fafc;
+  --foreground: #111827;
+  --surface: rgba(255, 255, 255, 0.72);
+  --surface-strong: rgba(255, 255, 255, 0.86);
+  --border-soft: rgba(255, 255, 255, 0.62);
+  --muted: #64748b;
+  --accent: #2563eb;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #06080f;
+  --foreground: #f8fafc;
+  --surface: rgba(2, 6, 23, 0.58);
+  --surface-strong: rgba(15, 23, 42, 0.76);
+  --border-soft: rgba(255, 255, 255, 0.14);
+  --muted: #94a3b8;
+  --accent: #60a5fa;
 }
 
 @theme inline {
@@ -12,15 +31,97 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  text-rendering: geometricPrecision;
+}
+
+button,
+a,
+input,
+select,
+textarea {
+  -webkit-tap-highlight-color: transparent;
+}
+
+@layer utilities {
+  .app-shell {
+    position: relative;
+    min-height: 100dvh;
+    overflow-x: hidden;
+    background:
+      radial-gradient(circle at 12% 18%, rgba(37, 99, 235, 0.22), transparent 30rem),
+      radial-gradient(circle at 86% 12%, rgba(20, 184, 166, 0.16), transparent 28rem),
+      radial-gradient(circle at 48% 88%, rgba(244, 114, 182, 0.13), transparent 32rem),
+      linear-gradient(135deg, #f8fafc 0%, #eef6ff 44%, #f7f3ff 100%);
+  }
+
+  .dark .app-shell {
+    background:
+      radial-gradient(circle at 12% 18%, rgba(59, 130, 246, 0.23), transparent 30rem),
+      radial-gradient(circle at 84% 12%, rgba(45, 212, 191, 0.13), transparent 28rem),
+      radial-gradient(circle at 52% 90%, rgba(168, 85, 247, 0.13), transparent 34rem),
+      linear-gradient(135deg, #030712 0%, #07111f 52%, #0f1020 100%);
+  }
+
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.76);
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    box-shadow: 0 24px 80px rgba(15, 23, 42, 0.16);
+    backdrop-filter: blur(24px) saturate(150%);
+    -webkit-backdrop-filter: blur(24px) saturate(150%);
+  }
+
+  .dark .glass-panel {
+    background: rgba(2, 6, 23, 0.54);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 24px 80px rgba(0, 0, 0, 0.42);
+  }
+
+  .glass-card {
+    background: rgba(255, 255, 255, 0.82);
+    border: 1px solid rgba(255, 255, 255, 0.78);
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.14);
+    backdrop-filter: blur(18px) saturate(145%);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+  }
+
+  .dark .glass-card {
+    background: rgba(0, 0, 0, 0.22);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+  }
+
+  .touch-target {
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .gpu-animated {
+    transform: translateZ(0);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+  }
+
+  .no-scrollbar {
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
 }

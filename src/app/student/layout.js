@@ -6,14 +6,15 @@ import { Analytics } from "@vercel/analytics/next";
 export const metadata = {
   title: "Student Portal | EduSmart",
   description: "Student Dashboard and Management",
-  // This matches your mobile browser bar to the sleek dark background?!
-  themeColor: "#05050a", 
+};
+
+export const viewport = {
+  themeColor: "#06080f",
 };
 
 export default function StudentLayout({ children }) {
   return (
-    // We wrap the children in your base dark color so there are NEVER any white flashes while loading?!
-    <div className="bg-[#05050a] min-h-screen text-zinc-100 selection:bg-indigo-500/30">
+    <div className="app-shell min-h-screen text-slate-900 selection:bg-blue-500/20 dark:text-zinc-100 dark:selection:bg-indigo-500/30">
       {children}
       <SpeedInsights />
       <Analytics />

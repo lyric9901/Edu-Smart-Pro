@@ -16,6 +16,7 @@ import {
   Mail,
   Phone
 } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -34,8 +35,8 @@ export default function LandingPage() {
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
     whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true },
-    transition: { duration: 0.5 }
+    viewport: { once: true, margin: "0px" },
+    transition: { duration: 0.32, ease: "easeInOut" }
   };
 
   const modalVariants = {
@@ -66,10 +67,10 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-white font-sans text-slate-900 selection:bg-blue-100">
+    <div className="app-shell min-h-screen font-sans text-slate-900 selection:bg-blue-100 dark:text-slate-100 dark:selection:bg-blue-500/30">
       
       {/* --- NAVBAR --- */}
-      <nav className="fixed top-0 w-full z-40 bg-white/80 backdrop-blur-md border-b border-slate-100">
+      <nav className="glass-panel fixed top-0 w-full z-40 border-x-0 border-t-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16 items-center">
             {/* Logo */}
@@ -77,26 +78,27 @@ export default function LandingPage() {
               <div className="bg-blue-600 p-1.5 rounded-lg">
                 <Shield className="text-white w-5 h-5" />
               </div>
-              <span className="font-black text-xl tracking-tight text-slate-900">EduSmart<span className="text-blue-600">Pro</span></span>
+              <span className="font-black text-xl tracking-tight text-slate-900 dark:text-white">EduSmart<span className="text-blue-600 dark:text-blue-400">Pro</span></span>
             </div>
 
             {/* Desktop Links (Hidden on mobile and smaller tablets) */}
             <div className="hidden lg:flex items-center gap-8">
-              <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition">Features</a>
-              <a href="#reviews" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition">Reviews</a>
-              <Link href="/pricing" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition">Pricing</Link>
+              <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition dark:text-slate-300 dark:hover:text-blue-300">Features</a>
+              <a href="#reviews" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition dark:text-slate-300 dark:hover:text-blue-300">Reviews</a>
+              <Link href="/pricing" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition dark:text-slate-300 dark:hover:text-blue-300">Pricing</Link>
               <button 
                 onClick={() => setIsContactOpen(true)} 
-                className="text-sm font-medium text-slate-600 hover:text-blue-600 transition"
+                className="text-sm font-medium text-slate-600 hover:text-blue-600 transition dark:text-slate-300 dark:hover:text-blue-300"
               >
                 Contact Us
               </button>
+              <ThemeToggle compact />
               
-              <div className="flex items-center gap-3 ml-2 border-l pl-6 border-slate-200">
-                <Link href="/login" className="px-4 py-2 text-sm font-bold text-slate-700 hover:text-slate-900 transition">
+              <div className="flex items-center gap-3 ml-2 border-l pl-6 border-slate-200 dark:border-white/10">
+                <Link href="/login" className="touch-target inline-flex items-center px-4 text-sm font-bold text-slate-700 hover:text-slate-900 transition dark:text-slate-200 dark:hover:text-white">
                   Institute Login
                 </Link>
-                <Link href="/register" className="px-5 py-2.5 text-sm font-bold bg-slate-900 text-white rounded-full hover:bg-black transition shadow-lg shadow-slate-200">
+                <Link href="/register" className="touch-target inline-flex items-center px-5 text-sm font-bold bg-slate-900 text-white rounded-2xl hover:bg-black transition shadow-lg shadow-slate-200 dark:bg-white dark:text-slate-950 dark:shadow-black/30">
                   Register Free
                 </Link>
               </div>
@@ -104,7 +106,7 @@ export default function LandingPage() {
 
             {/* Mobile Menu Button */}
             <button 
-              className="lg:hidden p-2 text-slate-600 hover:bg-slate-50 rounded-lg transition z-50 relative" 
+              className="touch-target lg:hidden text-slate-600 hover:bg-white/60 rounded-xl transition z-50 relative dark:text-slate-200 dark:hover:bg-white/10" 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -119,25 +121,26 @@ export default function LandingPage() {
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: "auto", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="lg:hidden bg-white border-t border-slate-100 shadow-2xl overflow-hidden absolute w-full top-16 left-0"
+              className="lg:hidden overflow-hidden absolute w-full top-16 left-0 rounded-b-[1.5rem] border-b border-white/50 bg-white/92 shadow-2xl backdrop-blur-3xl dark:border-white/10 dark:bg-slate-950/92"
             >
               <div className="p-4 flex flex-col space-y-2">
-                <a href="#features" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-slate-50">Features</a>
-                <a href="#reviews" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-slate-50">Reviews</a>
-                <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-slate-50">Pricing</Link>
+                <a href="#features" onClick={() => setIsMenuOpen(false)} className="touch-target px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10">Features</a>
+                <a href="#reviews" onClick={() => setIsMenuOpen(false)} className="touch-target px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10">Reviews</a>
+                <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="touch-target px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10">Pricing</Link>
                 <button 
                   onClick={() => { setIsContactOpen(true); setIsMenuOpen(false); }} 
-                  className="text-left px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-slate-50"
+                  className="touch-target text-left px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10"
                 >
                   Contact Us
                 </button>
                 
-                <div className="h-px bg-slate-100 my-2"></div>
+                <ThemeToggle className="w-full justify-center" />
+                <div className="h-px bg-slate-100 my-2 dark:bg-white/10"></div>
                 
-                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-3 font-bold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition">
+                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="touch-target flex w-full items-center justify-center rounded-xl border border-slate-200 text-center font-bold text-slate-700 transition hover:bg-white/70 dark:border-white/20 dark:text-slate-100 dark:hover:bg-white/10">
                   Institute Login
                 </Link>
-                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="block w-full text-center py-3 font-bold bg-blue-600 text-white rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition">
+                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="touch-target flex w-full items-center justify-center rounded-xl bg-blue-600 text-center font-bold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700">
                   Register Now
                 </Link>
               </div>
@@ -148,24 +151,25 @@ export default function LandingPage() {
 
       {/* --- HERO SECTION --- */}
       <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[500px] h-[500px] bg-blue-100 rounded-full blur-3xl opacity-50"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-purple-100 rounded-full blur-3xl opacity-50"></div>
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[500px] h-[500px] bg-blue-100 rounded-full blur-3xl opacity-50 dark:bg-blue-500/20 dark:opacity-30"></div>
+        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-purple-100 rounded-full blur-3xl opacity-50 dark:bg-fuchsia-500/15 dark:opacity-25"></div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
           <motion.div 
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.32, ease: "easeInOut" }}
+            className="gpu-animated"
           >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold mb-6 sm:mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold mb-6 sm:mb-8 dark:bg-white/12 dark:border-white/20 dark:text-blue-100">
               <Zap size={14} fill="currentColor" /> New: Automated WhatsApp Notices
             </div>
             {/* Optimized heading for mobile devices */}
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 leading-[1.1]">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 leading-[1.1] dark:text-white">
               Manage your Coaching <br/>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Like a Pro.</span>
             </h1>
-            <p className="text-base sm:text-lg md:text-xl text-slate-500 mb-10 max-w-2xl mx-auto leading-relaxed px-2">
+            <p className="text-base sm:text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed px-2 dark:text-slate-200">
               Attendance, Fees, Notices, and Student Tracking—all in one beautiful app. 
               Give your institute the digital upgrade it deserves.
             </p>
@@ -179,7 +183,7 @@ export default function LandingPage() {
               </Link>
             </div>
 
-            <p className="mt-8 text-xs text-slate-400 font-medium uppercase tracking-wider">
+            <p className="mt-8 text-xs text-slate-500 font-medium uppercase tracking-wider dark:text-slate-300">
               Trusted by 100+ Institutes in India
             </p>
           </motion.div>
@@ -187,7 +191,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- FEATURES SECTION --- */}
-      <section id="features" className="py-20 bg-slate-50">
+      <section id="features" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-4">Everything you need to run your class</h2>
@@ -218,7 +222,7 @@ export default function LandingPage() {
       </section>
 
       {/* --- REVIEWS SECTION --- */}
-      <section id="reviews" className="py-20 bg-white">
+      <section id="reviews" className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div {...fadeInUp} className="text-center mb-12 sm:mb-16">
             <h2 className="text-2xl sm:text-3xl font-black text-slate-900">Loved by Tutors & Owners</h2>
@@ -230,9 +234,9 @@ export default function LandingPage() {
                 key={index}
                 initial={{ opacity: 0, scale: 0.9 }}
                 whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="p-6 sm:p-8 bg-slate-50 rounded-2xl border border-slate-100"
+                transition={{ duration: 0.26, delay: Math.min(index * 0.05, 0.1), ease: "easeInOut" }}
+                viewport={{ once: true, margin: "0px" }}
+                className="gpu-animated glass-card p-6 sm:p-8 rounded-2xl"
               >
                 <div className="flex gap-1 mb-4">
                   {[...Array(review.rating)].map((_, i) => (
@@ -359,9 +363,9 @@ function FeatureCard({ icon, title, desc, delay }) {
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.5, delay }}
-      viewport={{ once: true }}
-      className="p-6 sm:p-8 bg-white rounded-3xl shadow-sm border border-slate-100 hover:shadow-xl hover:border-blue-100 transition-all group"
+      transition={{ duration: 0.26, delay: Math.min(delay, 0.1), ease: "easeInOut" }}
+      viewport={{ once: true, margin: "0px" }}
+      className="gpu-animated glass-card p-6 sm:p-8 rounded-3xl hover:shadow-xl transition-all group"
     >
       <div className="mb-6 p-4 bg-slate-50 rounded-2xl w-fit group-hover:bg-blue-50 transition-colors">
         {icon}

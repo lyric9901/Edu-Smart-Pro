@@ -4,7 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 import { firestore } from "@/lib/firebase";
 import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
-import { Clock, Save, X, Edit2, CheckCircle2, Sun, Moon } from "lucide-react";
+import { Clock, Save, X, Edit2, CheckCircle2 } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function TimingPage() {
   const { user } = useAuth();
@@ -12,23 +13,11 @@ export default function TimingPage() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState(null);
   const [timeForm, setTimeForm] = useState({ start: "", end: "" });
-  const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem("eduSmartTheme") || "light";
-    setTheme(savedTheme);
-    if (savedTheme === "dark") document.documentElement.classList.add("dark");
   }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("eduSmartTheme", newTheme);
-    if (newTheme === "dark") document.documentElement.classList.add("dark");
-    else document.documentElement.classList.remove("dark");
-  };
 
   useEffect(() => {
     if (user?.institutionCode) {
@@ -73,7 +62,7 @@ export default function TimingPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-zinc-100 transition-colors duration-300 p-4 md:p-8">
+    <div className="min-h-screen text-slate-900 dark:text-zinc-100 transition-colors duration-300 p-4 md:p-8">
       <div className="max-w-5xl mx-auto space-y-8">
         
         <div className="flex justify-between items-center">
@@ -83,12 +72,7 @@ export default function TimingPage() {
                 </h1>
                 <p className="text-slate-500 dark:text-zinc-400 text-sm font-medium">Set timings for your batches</p>
             </div>
-            <button 
-                onClick={toggleTheme}
-                className="p-3 rounded-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm hover:scale-105 transition"
-            >
-                {theme === 'light' ? <Moon size={20}/> : <Sun size={20}/>}
-            </button>
+            <ThemeToggle compact />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -96,13 +80,14 @@ export default function TimingPage() {
             {batches.map((batch) => (
                 <motion.div 
                     layout
-                    initial={{ opacity: 0, scale: 0.9 }} 
+                    initial={{ opacity: 0, scale: 0.96 }} 
                     animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.22, ease: "easeInOut" }}
                     key={batch.id} 
-                    className={`p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden group ${
+                    className={`gpu-animated p-6 rounded-[2rem] border transition-all duration-300 relative overflow-hidden group ${
                         editingId === batch.id 
-                        ? "bg-white dark:bg-zinc-900 border-purple-500 shadow-xl ring-2 ring-purple-500/20" 
-                        : "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-md"
+                        ? "glass-card border-purple-500 shadow-xl ring-2 ring-purple-500/20" 
+                        : "glass-card border-white/50 dark:border-white/10 hover:shadow-xl"
                     }`}
                 >
                     <div className="flex justify-between items-start mb-6">

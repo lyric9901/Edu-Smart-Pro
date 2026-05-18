@@ -2,40 +2,57 @@
 import { createContext, useContext, useState, useEffect } from "react";
 
 const ThemeContext = createContext();
+const STORAGE_KEY = "eduSmartTheme";
+
+function getSystemTheme() {
+  if (typeof window === "undefined") return "light";
+  return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+}
+
+function applyTheme(preference) {
+  const resolvedTheme = preference === "system" ? getSystemTheme() : preference;
+  document.documentElement.classList.toggle("dark", resolvedTheme === "dark");
+  document.documentElement.style.colorScheme = resolvedTheme;
+  return resolvedTheme;
+}
 
 export function ThemeProvider({ children }) {
-  // 1. Change default state to "dark"
-  const [theme, setTheme] = useState("dark");
+  const [theme, setThemeState] = useState("system");
+  const [resolvedTheme, setResolvedTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    // 2. Change fallback to "dark" if no saved theme is found
-    const savedTheme = localStorage.getItem("eduSmartTheme") || "dark";
-    setTheme(savedTheme);
-    
-    // Apply theme on mount
-    if (savedTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-    }
+    const savedTheme = localStorage.getItem(STORAGE_KEY) || "system";
+    setThemeState(savedTheme);
+    setResolvedTheme(applyTheme(savedTheme));
     setMounted(true);
   }, []);
 
+  useEffect(() => {
+    if (theme !== "system") return;
+
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const syncSystemTheme = () => setResolvedTheme(applyTheme("system"));
+    media.addEventListener("change", syncSystemTheme);
+    return () => media.removeEventListener("change", syncSystemTheme);
+  }, [theme]);
+
+  const setTheme = (preference) => {
+    setThemeState(preference);
+    localStorage.setItem(STORAGE_KEY, preference);
+    setResolvedTheme(applyTheme(preference));
+  };
+
   const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("eduSmartTheme", newTheme);
-    
-    if (newTheme === "dark") {
-      document.documentElement.classList.add("dark");
-    } else {
-      document.documentElement.classList.remove("dark");
+    if (theme === "system") {
+      setTheme(resolvedTheme === "dark" ? "light" : "dark");
+      return;
     }
+    setTheme(theme === "dark" ? "light" : "dark");
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, mounted }}>
+    <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme, mounted }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -4,31 +4,20 @@ import { useAuth } from "@/context/AuthContext";
 import { firestore } from "@/lib/firebase";
 import { collection, doc, onSnapshot, addDoc, deleteDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bell, Trash2, Megaphone, Sun, Moon, Send, Loader2 } from "lucide-react";
+import { Bell, Trash2, Megaphone, Send, Loader2 } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function NoticesPage() {
   const { user } = useAuth();
   
   const [msg, setMsg] = useState("");
   const [notices, setNotices] = useState([]);
-  const [theme, setTheme] = useState("light");
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); 
 
   useEffect(() => {
     setMounted(true);
-    const savedTheme = localStorage.getItem("eduSmartTheme") || "light";
-    setTheme(savedTheme);
-    if (savedTheme === "dark") document.documentElement.classList.add("dark");
   }, []);
-
-  const toggleTheme = () => {
-    const newTheme = theme === "light" ? "dark" : "light";
-    setTheme(newTheme);
-    localStorage.setItem("eduSmartTheme", newTheme);
-    if (newTheme === "dark") document.documentElement.classList.add("dark");
-    else document.documentElement.classList.remove("dark");
-  };
 
   useEffect(() => {
     if (user?.institutionCode) {
@@ -74,7 +63,7 @@ export default function NoticesPage() {
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-zinc-100 transition-colors duration-300 p-4 md:p-8">
+    <div className="min-h-screen text-slate-900 dark:text-zinc-100 transition-colors duration-300 p-4 md:p-8">
       <div className="max-w-4xl mx-auto space-y-8">
         
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -84,15 +73,10 @@ export default function NoticesPage() {
                 </h1>
                 <p className="text-slate-500 dark:text-zinc-400 text-sm font-medium">Post announcements for the school.</p>
             </div>
-            <button 
-                onClick={toggleTheme}
-                className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm hover:shadow-md transition"
-            >
-                {theme === 'light' ? <Moon size={18} className="text-slate-600"/> : <Sun size={18} className="text-orange-400"/>}
-            </button>
+            <ThemeToggle />
         </div>
 
-        <div className="bg-white dark:bg-zinc-900 p-1 rounded-[2rem] shadow-lg border border-slate-200 dark:border-zinc-800">
+        <div className="glass-card p-1 rounded-[2rem]">
             <textarea 
                 value={msg}
                 onChange={e => setMsg(e.target.value)}
