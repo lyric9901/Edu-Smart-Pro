@@ -392,31 +392,6 @@ function StudentContent() {
             {/* Main Content Area */}
             <main className="flex-1 md:ml-72 relative z-10 flex flex-col min-h-screen overflow-x-hidden pt-4 md:pt-10">
                 
-                {/* Mobile Header */}
-                <header className="md:hidden sticky top-0 z-40 px-5 py-4 flex justify-between items-center bg-white/70 dark:bg-[#06080f]/70 backdrop-blur-xl border-b border-slate-200/50 dark:border-white/5">
-                    {activeTab === 'dashboard' ? (
-                        <div className="flex items-center gap-3 cursor-pointer" onClick={() => setShowProfileModal(true)}>
-                            <div>
-                                <h1 className="text-xl font-black leading-tight text-slate-950 dark:text-white tracking-tight">{schoolName}</h1>
-                                <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium mt-1">Student Dashboard</p>
-                            </div>
-                        </div>
-                    ) : (
-                        <div className="flex items-center gap-3">
-                            <motion.button whileTap={{ scale: 0.98 }} onClick={() => setActiveTab('dashboard')} className="touch-target rounded-2xl glass-card flex items-center justify-center">
-                                <ChevronLeft size={20} className="text-slate-700 dark:text-zinc-200" />
-                            </motion.button>
-                            <h1 className="text-lg font-bold text-slate-950 dark:text-white">{navItems.find(n => n.id === activeTab)?.label}</h1>
-                        </div>
-                    )}
-                    <div className="flex items-center gap-3">
-                        <ThemeToggle compact />
-                        <motion.button whileTap={{ scale: 0.98 }} onClick={() => setShowProfileModal(true)} className="touch-target rounded-2xl glass-card flex items-center justify-center">
-                            <Users size={18} className="text-slate-600 dark:text-zinc-300" />
-                        </motion.button>
-                    </div>
-                </header>
-
                 {/* Tab Content Wrapper */}
                 <div className="px-5 md:px-10 pb-12 max-w-6xl mx-auto pt-6 md:pt-0 w-full flex-1 mt-2">
                     <AnimatePresence mode="wait">
@@ -427,14 +402,14 @@ function StudentContent() {
                                 {/* Beautiful Welcome Banner */}
                                 <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#f0f4ff] to-[#e0e7ff] dark:from-[#1e293b] dark:to-[#0f172a] p-6 md:p-8 flex items-center justify-between border border-blue-200/40 dark:border-white/5 shadow-sm">
                                     <div className="relative z-10">
-                                        <h2 className="hidden md:flex text-xl md:text-2xl font-black text-slate-900 dark:text-white items-center gap-2 mb-1.5">
+                                        <h2 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white flex items-center gap-2 mb-1.5">
                                             Welcome back, {currentStudent?.name?.split(' ')[0] || "Student"}! 👋
                                         </h2>
                                         <p className="text-sm md:text-base text-slate-600 dark:text-slate-400 font-medium">
                                             Let's make today productive.
                                         </p>
                                     </div>
-                                    <div className="relative z-10 w-20 h-20 md:w-32 md:h-32 hidden md:flex items-center justify-center right-4">
+                                    <div className="relative z-10 w-20 h-20 md:w-32 md:h-32 hidden sm:flex items-center justify-center right-4">
                                         <div className="absolute inset-0 bg-blue-400/20 dark:bg-blue-500/20 rounded-full blur-2xl"></div>
                                         <span className="text-6xl md:text-7xl drop-shadow-2xl">📚</span>
                                     </div>
