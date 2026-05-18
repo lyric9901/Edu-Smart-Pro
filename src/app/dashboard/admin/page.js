@@ -51,7 +51,6 @@ export default function AdminDashboard() {
   const [showAllBatches, setShowAllBatches] = useState(false);
   const [showShareModal, setShowShareModal] = useState(false); 
   
-  // NEW MODALS FOR WINDOW ACTIONS
   const [showCreateBatchModal, setShowCreateBatchModal] = useState(false);
   const [showSelectBatchModal, setShowSelectBatchModal] = useState(false);
   const [showAddStudentModal, setShowAddStudentModal] = useState(false);
@@ -158,7 +157,6 @@ export default function AdminDashboard() {
     return () => unsub();
   }, [user?.institutionCode, selectedBatch?.id, selectedStudent?.id]);
 
-  // GLOBAL FEE CALCULATION FOR MOBILE WIDGET
   const globalFeeStats = useMemo(() => {
       let total = 0;
       let paid = 0;
@@ -372,12 +370,8 @@ export default function AdminDashboard() {
 
       <div className="max-w-7xl mx-auto space-y-6">
         
-        {/* =================================================================== */}
-        {/* MOBILE ONLY: GLASSMORPHISM CARD WITH CARTOON BOY AND SHARE BUTTON   */}
-        {/* =================================================================== */}
         <div className="md:hidden relative w-full mx-auto bg-gradient-to-br from-indigo-500/10 to-blue-500/5 dark:from-indigo-900/30 dark:to-blue-900/20 backdrop-blur-2xl border border-white/40 dark:border-white/10 rounded-[2rem] shadow-[0_8px_32px_0_rgba(31,38,135,0.1)] p-6 mb-4 flex flex-row items-center justify-between overflow-hidden">
           
-          {/* Abstract glowing shapes behind */}
           <div className="absolute -top-10 -left-10 w-32 h-32 bg-blue-400/20 rounded-full blur-2xl"></div>
           <div className="absolute -bottom-8 -right-8 w-28 h-28 bg-indigo-400/20 rounded-full blur-xl"></div>
 
@@ -394,63 +388,45 @@ export default function AdminDashboard() {
             </button>
           </div>
 
-          {/* CARTOON BOY ILLUSTRATION */}
           <div className="relative z-10 w-[45%] flex justify-end h-full mt-2">
             <svg className="w-36 h-36 drop-shadow-2xl translate-x-2" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-                {/* Background glowing circle behind boy */}
                 <circle cx="50" cy="50" r="40" fill="#E0E7FF" opacity="0.3" className="dark:opacity-10"/>
-                {/* Sparkles around */}
                 <path d="M15 25 L20 30 M20 25 L15 30" stroke="#FBBF24" strokeWidth="2.5" strokeLinecap="round"/>
                 <path d="M85 30 L90 35 M90 30 L85 35" stroke="#FBBF24" strokeWidth="2.5" strokeLinecap="round"/>
                 <circle cx="20" cy="65" r="3" fill="#60A5FA" />
                 <circle cx="80" cy="60" r="2" fill="#818CF8" />
-                {/* Boy's Laptop/Desk element */}
                 <path d="M30 85 L70 85 L75 95 L25 95 Z" fill="#94A3B8" />
                 <path d="M35 70 L65 70 L70 85 L30 85 Z" fill="#CBD5E1" />
-                {/* Boy's Body */}
                 <path d="M35 85 C35 55 40 45 50 45 C60 45 65 55 65 85 Z" fill="#4F46E5"/>
                 <path d="M40 85 L40 60 C40 55 60 55 60 60 L60 85 Z" fill="#4338CA"/>
-                {/* Boy's Head */}
                 <circle cx="50" cy="35" r="16" fill="#FDE68A"/>
-                {/* Hair */}
                 <path d="M32 35 C32 15 68 15 68 35 C65 20 35 20 32 35 Z" fill="#1E293B"/>
                 <path d="M38 18 C45 10 55 10 62 18 C58 22 42 22 38 18 Z" fill="#0F172A"/>
-                {/* Glasses */}
                 <circle cx="44" cy="35" r="5" fill="white" stroke="#1E293B" strokeWidth="2"/>
                 <circle cx="56" cy="35" r="5" fill="white" stroke="#1E293B" strokeWidth="2"/>
                 <line x1="49" y1="35" x2="51" y2="35" stroke="#1E293B" strokeWidth="2"/>
                 <line x1="34" y1="33" x2="39" y2="35" stroke="#1E293B" strokeWidth="2"/>
                 <line x1="66" y1="33" x2="61" y2="35" stroke="#1E293B" strokeWidth="2"/>
-                {/* Smile */}
                 <path d="M47 43 Q50 46 53 43" stroke="#B45309" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
         </div>
 
-        {/* =================================================================== */}
-        {/* MOBILE QUICK ACTIONS (3 Columns triggering Modals)                  */}
-        {/* =================================================================== */}
         <div className="md:hidden grid grid-cols-3 gap-3 mb-6 relative z-10">
-            {/* Create Batch -> Opens Window */}
             <button onClick={() => setShowCreateBatchModal(true)} className="flex flex-col items-center justify-center gap-2.5 py-4 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/50 dark:border-zinc-800 rounded-[1.5rem] shadow-sm hover:scale-105 transition">
                 <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center"><LayoutGrid size={20}/></div>
                 <span className="text-[10px] font-black uppercase text-zinc-700 dark:text-zinc-300 text-center leading-tight">Create<br/>Batch</span>
             </button>
-            {/* Add Student -> Opens Batch Selector then Add Window */}
             <button onClick={handleAddStudentQuickAction} className="flex flex-col items-center justify-center gap-2.5 py-4 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/50 dark:border-zinc-800 rounded-[1.5rem] shadow-sm hover:scale-105 transition">
                 <div className="w-10 h-10 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center"><UserPlus size={20}/></div>
                 <span className="text-[10px] font-black uppercase text-zinc-700 dark:text-zinc-300 text-center leading-tight">Add<br/>Student</span>
             </button>
-            {/* Mark Attendance */}
             <Link href="/dashboard/attendance" className="flex flex-col items-center justify-center gap-2.5 py-4 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/50 dark:border-zinc-800 rounded-[1.5rem] shadow-sm hover:scale-105 transition">
                 <div className="w-10 h-10 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center"><CheckSquare size={20}/></div>
                 <span className="text-[10px] font-black uppercase text-zinc-700 dark:text-zinc-300 text-center leading-tight">Mark<br/>Attend</span>
             </Link>
         </div>
 
-        {/* =================================================================== */}
-        {/* MOBILE ONLY: FEE COLLECTION SUMMARY (Replaces default Batches list) */}
-        {/* =================================================================== */}
         {!selectedBatch && (
             <div className="md:hidden bg-white/50 dark:bg-zinc-900 p-6 rounded-[2rem] shadow-sm border border-white/50 dark:border-zinc-800 mb-6">
                 <div className="flex justify-between items-center mb-4">
@@ -475,30 +451,7 @@ export default function AdminDashboard() {
             </div>
         )}
 
-        <motion.div 
-            initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }}
-            className={`flex-col md:flex-row justify-between items-start md:items-center gap-4 hidden md:flex`}
-        >
-            <div>
-                <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-                    <LayoutGrid className="text-blue-500" /> Admin Dashboard
-                </h1>
-                <p className="text-zinc-400 text-sm font-medium">Manage your institute efficiently</p>
-            </div>
-            
-            <div className="flex gap-3 items-center">
-                <motion.button 
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => logout()} 
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-red-900/20 text-red-500 border border-red-800/50 shadow-sm hover:shadow-md transition"
-                >
-                    <LogOut size={18} />
-                    <span className="text-xs font-bold uppercase tracking-wider">Logout</span>
-                </motion.button>
-            </div>
-        </motion.div>
-        
-        {/* DESKTOP ONLY: INSTITUTION BANNER IS NOW HIDDEN ON MOBILE */}
+        {/* DESKTOP BANNER: Moved to Top Since Header is Gone */}
         <motion.div 
             initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }}
             className={`bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-6 text-white shadow-xl shadow-blue-500/10 flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden hidden md:flex`}
@@ -537,7 +490,6 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
           
-          {/* DEFAULT BATCHES LIST: HIDDEN ON MOBILE ENTIRELY */}
           <motion.div 
             initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2 }} 
             className={`bg-white/50 dark:bg-zinc-900 p-5 rounded-[2rem] shadow-sm border border-white/50 dark:border-zinc-800 h-fit ${selectedBatch ? 'hidden lg:block' : 'hidden md:block'}`}
@@ -701,7 +653,6 @@ export default function AdminDashboard() {
                 {batchTab === "students" && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
                         
-                        {/* Hidden on mobile, added through Quick Action modal instead */}
                         <div className="hidden md:flex flex-col gap-3 mb-6 bg-white dark:bg-black p-5 rounded-2xl border border-gray-200 dark:border-zinc-800 shadow-sm">
                             <div className="flex flex-col md:flex-row gap-3">
                                 <div className="relative flex-1">
@@ -897,9 +848,6 @@ export default function AdminDashboard() {
           </motion.div>
         </div>
 
-        {/* =================================================================== */}
-        {/* NEW WINDOW MODAL: CREATE BATCH                                      */}
-        {/* =================================================================== */}
         <AnimatePresence>
         {showCreateBatchModal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[70]">
@@ -929,9 +877,6 @@ export default function AdminDashboard() {
         )}
         </AnimatePresence>
 
-        {/* =================================================================== */}
-        {/* NEW WINDOW MODAL: ADD STUDENT (Appears after Batch is Selected)     */}
-        {/* =================================================================== */}
         <AnimatePresence>
         {showAddStudentModal && selectedBatch && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[70]">
@@ -970,9 +915,6 @@ export default function AdminDashboard() {
         )}
         </AnimatePresence>
 
-        {/* =================================================================== */}
-        {/* SELECT BATCH MODAL (Pops up first when adding a student)            */}
-        {/* =================================================================== */}
         <AnimatePresence>
         {showSelectBatchModal && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[60]">
@@ -990,7 +932,6 @@ export default function AdminDashboard() {
                                     setSelectedBatch(batch); 
                                     setBatchTab("students"); 
                                     setShowSelectBatchModal(false); 
-                                    // Delay slightly to let the first modal unmount
                                     setTimeout(() => setShowAddStudentModal(true), 200);
                                 }}
                                 className="w-full p-4 rounded-2xl flex justify-between items-center transition-all bg-gray-50 dark:bg-black hover:bg-gray-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent shadow-sm"
