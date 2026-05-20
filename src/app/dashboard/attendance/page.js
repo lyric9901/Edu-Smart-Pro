@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 
 const Skeleton = ({ className }) => (
-  <div className={`animate-pulse bg-slate-200 dark:bg-zinc-800 rounded-xl ${className}`} />
+  <div className={`animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl ${className}`} />
 );
 
 const containerVariants = {
@@ -101,7 +101,7 @@ export default function AttendancePage() {
     }
     updatedBatch.students[studentIndex].attendance[selectedDate] = newStatus;
 
-    // Send Alert to Student when absent
+    // Handle absent notifications and revocation
     if (newStatus === "absent") {
         if (!updatedBatch.students[studentIndex].notifications) {
             updatedBatch.students[studentIndex].notifications = [];
@@ -111,8 +111,17 @@ export default function AttendancePage() {
             text: `You were marked absent for ${new Date(selectedDate).toDateString()}.`,
             date: new Date().toISOString(),
             type: "alert",
-            read: false
+            read: false,
+            attendanceDate: selectedDate 
         });
+    } else if (currentStatus === "absent") {
+        // Revoke the notification if status changes from absent to something else
+        if (updatedBatch.students[studentIndex].notifications) {
+            const absentText = `You were marked absent for ${new Date(selectedDate).toDateString()}.`;
+            updatedBatch.students[studentIndex].notifications = updatedBatch.students[studentIndex].notifications.filter(
+                (n) => n.attendanceDate !== selectedDate && n.text !== absentText
+            );
+        }
     }
 
     setSelectedBatch(updatedBatch);
@@ -127,8 +136,20 @@ export default function AttendancePage() {
     
     const updatedBatch = { ...selectedBatch };
     updatedBatch.students.forEach((student, index) => {
+        const currentStatus = student.attendance?.[selectedDate] || "not-marked";
+
         if (!updatedBatch.students[index].attendance) updatedBatch.students[index].attendance = {};
         updatedBatch.students[index].attendance[selectedDate] = status;
+
+        // If marking all as something other than absent, clean up prior absent alerts
+        if (status !== "absent" && currentStatus === "absent") {
+             if (updatedBatch.students[index].notifications) {
+                 const absentText = `You were marked absent for ${new Date(selectedDate).toDateString()}.`;
+                 updatedBatch.students[index].notifications = updatedBatch.students[index].notifications.filter(
+                     (n) => n.attendanceDate !== selectedDate && n.text !== absentText
+                 );
+             }
+        }
     });
     
     setSelectedBatch(updatedBatch);
@@ -193,151 +214,149 @@ export default function AttendancePage() {
 
   const getStatusUI = (status) => {
     switch (status) {
-      case "present": return { color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800", icon: <Check size={18} strokeWidth={3} />, label: "Present" };
-      case "absent": return { color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800", icon: <X size={18} strokeWidth={3} />, label: "Absent" };
-      default: return { color: "bg-slate-50 dark:bg-zinc-800 text-slate-400 dark:text-zinc-500 border-slate-200 dark:border-zinc-700", icon: <Minus size={18} />, label: "Mark" };
+      case "present": return { color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800/60", icon: <Check size={18} strokeWidth={3} />, label: "Present" };
+      case "absent": return { color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60", icon: <X size={18} strokeWidth={3} />, label: "Absent" };
+      default: return { color: "bg-slate-50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-400 border-slate-200 dark:border-slate-700", icon: <Minus size={18} />, label: "Mark" };
     }
   };
 
   if (!mounted) return null;
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-zinc-100 transition-colors duration-300 p-4 md:p-8">
-      <div className="max-w-5xl mx-auto space-y-6">
-        
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-            <div>
-                <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-                    <CheckCircle2 className="text-blue-600" size={32} /> Attendance
-                </h1>
-                <p className="text-slate-500 dark:text-zinc-400 text-sm font-medium">
-                  {isPastDate ? "Managing Past Records" : "Today's Tracker"}
-                </p>
-            </div>
-        </div>
-
-        <div className="bg-white dark:bg-zinc-900 p-5 rounded-[2rem] shadow-sm border border-slate-200 dark:border-zinc-800 flex flex-col md:flex-row gap-4 justify-between items-center">
-            <div className={`flex items-center gap-2 px-2 py-2 rounded-2xl border w-full md:w-auto transition-colors ${isPastDate ? 'bg-orange-50 border-orange-200 dark:bg-orange-900/10 dark:border-orange-800' : 'bg-slate-50 border-slate-100 dark:bg-black dark:border-zinc-800'}`}>
-                <button onClick={() => changeDate(-1)} className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition"><ChevronLeft size={20} /></button>
-                <div className="flex items-center gap-2 px-2">
-                    <Calendar size={18} className={isPastDate ? "text-orange-500" : "text-slate-400"} />
-                    <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="bg-transparent outline-none text-sm font-bold text-slate-700 dark:text-zinc-200 uppercase cursor-pointer" />
-                </div>
-                <button onClick={() => changeDate(1)} className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition"><ChevronRight size={20} /></button>
-            </div>
-
-            <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto custom-scrollbar no-scrollbar items-center">
-                {loading ? (
-                    <>
-                      <Skeleton className="w-24 h-10 rounded-2xl" />
-                      <Skeleton className="w-24 h-10 rounded-2xl" />
-                    </>
-                ) : batches.length > 0 ? batches.map(batch => (
-                    <motion.button 
-                        whileTap={{ scale: 0.95 }}
-                        key={batch.id}
-                        onClick={() => setSelectedBatch(batch)}
-                        className={`px-6 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-200 border ${
-                            selectedBatch?.id === batch.id 
-                            ? "bg-slate-900 dark:bg-white text-white dark:text-black border-transparent shadow-lg" 
-                            : "bg-white dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 border-slate-200 dark:border-zinc-800 hover:bg-slate-50 dark:hover:bg-zinc-800"
-                        }`}
-                    >
-                        {batch.name}
-                    </motion.button>
-                )) : (
-                    <span className="text-sm text-slate-400 italic px-4">No batches found.</span>
-                )}
-            </div>
-        </div>
-
-        <AnimatePresence mode="wait">
-        {loading ? (
-           <div className="space-y-4">
-              <Skeleton className="w-full h-24 rounded-[2.5rem]" />
-              <Skeleton className="w-full h-20 rounded-2xl" />
-              <Skeleton className="w-full h-20 rounded-2xl" />
-              <Skeleton className="w-full h-20 rounded-2xl" />
-           </div>
-        ) : selectedBatch ? (
-            <motion.div 
-                key={selectedBatch.id}
-                initial="hidden" animate="visible" exit={{ opacity: 0, y: 20 }} variants={containerVariants}
-                className="bg-white dark:bg-zinc-900 rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-zinc-800 overflow-hidden"
-            >
-                <div className="p-6 border-b border-slate-100 dark:border-zinc-800 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 dark:bg-black/20 gap-4">
-                    <div>
-                        <h2 className="text-2xl font-black tracking-tight">{selectedBatch.name}</h2>
-                        <div className="flex items-center gap-2 mt-1">
-                          <p className={`text-xs font-bold uppercase tracking-wider ${isPastDate ? "text-orange-500" : "text-slate-400"}`}>
-                            {new Date(selectedDate).toDateString()}
-                          </p>
-                          {isPastDate && <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">HISTORY MODE</span>}
-                        </div>
-                    </div>
-                    
-                    <div className="flex flex-wrap gap-3 w-full md:w-auto">
-                        <motion.button 
-                            whileTap={{ scale: 0.95 }}
-                            onClick={downloadCSV}
-                            className="flex items-center justify-center gap-2 bg-white dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 px-4 py-3 rounded-2xl text-sm font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-zinc-700 transition"
-                            title="Download Monthly Report"
-                        >
-                            <Download size={18} /> <span className="hidden sm:inline">Export CSV</span>
-                        </motion.button>
-
-                        <motion.button
-                            whileTap={{ scale: 0.95 }}
-                            onClick={() => markAll("present")}
-                            className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 transition"
-                        >
-                            <CheckCircle2 size={16} /> Mark All Present
-                        </motion.button>
-                    </div>
-                </div>
-
-                <div className="divide-y divide-slate-100 dark:divide-zinc-800 p-2">
-                    {selectedBatch.students.map((student, index) => {
-                        const status = getStatus(student);
-                        const ui = getStatusUI(status);
-                        
-                        return (
-                            <motion.div 
-                                key={student.id || index} 
-                                variants={itemVariants}
-                                onClick={() => toggleAttendance(index)}
-                                whileTap={{ scale: 0.99, backgroundColor: "rgba(0,0,0,0.02)" }}
-                                className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-zinc-800/30 rounded-2xl transition group"
-                            >
-                                <div className="flex items-center gap-4">
-                                    <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-lg transition-colors border-2 shadow-sm ${ui.color}`}>
-                                        {student.name.charAt(0)}
-                                    </div>
-                                    <div>
-                                        <p className="font-bold text-base text-slate-800 dark:text-zinc-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">{student.name}</p>
-                                        <p className="text-xs text-slate-400 font-mono font-medium hidden md:block">{student.phone}</p>
-                                    </div>
-                                </div>
-
-                                <div className={`px-5 py-2.5 rounded-xl border-2 flex items-center gap-2 text-sm font-bold transition-all w-32 justify-center shadow-sm ${ui.color}`}>
-                                    {ui.icon} {ui.label}
-                                </div>
-                            </motion.div>
-                        );
-                    })}
-                    {selectedBatch.students.length === 0 && (
-                        <div className="p-20 text-center text-slate-400 font-medium italic">No students found.</div>
-                    )}
-                </div>
-            </motion.div>
-        ) : (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-80 flex flex-col items-center justify-center bg-white dark:bg-zinc-900 rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-zinc-800 text-slate-400 dark:text-zinc-600">
-                <div className="bg-slate-50 dark:bg-zinc-800/50 p-6 rounded-full mb-6"><Users size={48} className="opacity-40" /></div>
-                <p className="font-bold text-lg">Select a batch</p>
-            </motion.div>
-        )}
-        </AnimatePresence>
+    <div className="w-full max-w-5xl mx-auto space-y-6 text-slate-900 dark:text-slate-100 transition-colors duration-300">
+      
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+              <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
+                  <CheckCircle2 className="text-blue-600" size={32} /> Attendance
+              </h1>
+              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
+                {isPastDate ? "Managing Past Records" : "Today's Tracker"}
+              </p>
+          </div>
       </div>
+
+      <div className="bg-white dark:bg-slate-800/60 backdrop-blur-md p-5 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-700/80 flex flex-col md:flex-row gap-4 justify-between items-center">
+          <div className={`flex items-center gap-2 px-2 py-2 rounded-2xl border w-full md:w-auto transition-colors ${isPastDate ? 'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800/50' : 'bg-slate-50 border-slate-100 dark:bg-slate-900/50 dark:border-slate-700'}`}>
+              <button onClick={() => changeDate(-1)} className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition"><ChevronLeft size={20} /></button>
+              <div className="flex items-center gap-2 px-2">
+                  <Calendar size={18} className={isPastDate ? "text-orange-500" : "text-slate-400"} />
+                  <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="bg-transparent outline-none text-sm font-bold text-slate-700 dark:text-slate-200 uppercase cursor-pointer" />
+              </div>
+              <button onClick={() => changeDate(1)} className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition"><ChevronRight size={20} /></button>
+          </div>
+
+          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto custom-scrollbar no-scrollbar items-center">
+              {loading ? (
+                  <>
+                    <Skeleton className="w-24 h-10 rounded-2xl" />
+                    <Skeleton className="w-24 h-10 rounded-2xl" />
+                  </>
+              ) : batches.length > 0 ? batches.map(batch => (
+                  <motion.button 
+                      whileTap={{ scale: 0.95 }}
+                      key={batch.id}
+                      onClick={() => setSelectedBatch(batch)}
+                      className={`px-6 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-200 border ${
+                          selectedBatch?.id === batch.id 
+                          ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-transparent shadow-lg" 
+                          : "bg-white dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
+                      }`}
+                  >
+                      {batch.name}
+                  </motion.button>
+              )) : (
+                  <span className="text-sm text-slate-400 italic px-4">No batches found.</span>
+              )}
+          </div>
+      </div>
+
+      <AnimatePresence mode="wait">
+      {loading ? (
+         <div className="space-y-4">
+            <Skeleton className="w-full h-24 rounded-[2.5rem]" />
+            <Skeleton className="w-full h-20 rounded-2xl" />
+            <Skeleton className="w-full h-20 rounded-2xl" />
+            <Skeleton className="w-full h-20 rounded-2xl" />
+         </div>
+      ) : selectedBatch ? (
+          <motion.div 
+              key={selectedBatch.id}
+              initial="hidden" animate="visible" exit={{ opacity: 0, y: 20 }} variants={containerVariants}
+              className="bg-white dark:bg-slate-800/60 backdrop-blur-md rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-700/80 overflow-hidden"
+          >
+              <div className="p-6 border-b border-slate-100 dark:border-slate-700/80 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 dark:bg-slate-900/40 gap-4">
+                  <div>
+                      <h2 className="text-2xl font-black tracking-tight">{selectedBatch.name}</h2>
+                      <div className="flex items-center gap-2 mt-1">
+                        <p className={`text-xs font-bold uppercase tracking-wider ${isPastDate ? "text-orange-500" : "text-slate-400"}`}>
+                          {new Date(selectedDate).toDateString()}
+                        </p>
+                        {isPastDate && <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">HISTORY MODE</span>}
+                      </div>
+                  </div>
+                  
+                  <div className="flex flex-wrap gap-3 w-full md:w-auto">
+                      <motion.button 
+                          whileTap={{ scale: 0.95 }}
+                          onClick={downloadCSV}
+                          className="flex items-center justify-center gap-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-2xl text-sm font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition"
+                          title="Download Monthly Report"
+                      >
+                          <Download size={18} /> <span className="hidden sm:inline">Export CSV</span>
+                      </motion.button>
+
+                      <motion.button
+                          whileTap={{ scale: 0.95 }}
+                          onClick={() => markAll("present")}
+                          className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 transition"
+                      >
+                          <CheckCircle2 size={16} /> Mark All Present
+                      </motion.button>
+                  </div>
+              </div>
+
+              <div className="divide-y divide-slate-100 dark:divide-slate-700/60 p-2">
+                  {selectedBatch.students.map((student, index) => {
+                      const status = getStatus(student);
+                      const ui = getStatusUI(status);
+                      
+                      return (
+                          <motion.div 
+                              key={student.id || index} 
+                              variants={itemVariants}
+                              onClick={() => toggleAttendance(index)}
+                              whileTap={{ scale: 0.99, backgroundColor: "rgba(0,0,0,0.02)" }}
+                              className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/40 rounded-2xl transition group"
+                          >
+                              <div className="flex items-center gap-4">
+                                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-lg transition-colors border-2 shadow-sm ${ui.color}`}>
+                                      {student.name.charAt(0)}
+                                  </div>
+                                  <div>
+                                      <p className="font-bold text-base text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">{student.name}</p>
+                                      <p className="text-xs text-slate-400 font-mono font-medium hidden md:block">{student.phone}</p>
+                                  </div>
+                              </div>
+
+                              <div className={`px-5 py-2.5 rounded-xl border-2 flex items-center gap-2 text-sm font-bold transition-all w-32 justify-center shadow-sm ${ui.color}`}>
+                                  {ui.icon} {ui.label}
+                              </div>
+                          </motion.div>
+                      );
+                  })}
+                  {selectedBatch.students.length === 0 && (
+                      <div className="p-20 text-center text-slate-400 font-medium italic">No students found.</div>
+                  )}
+              </div>
+          </motion.div>
+      ) : (
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-80 flex flex-col items-center justify-center bg-white dark:bg-slate-800/60 backdrop-blur-md rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500">
+              <div className="bg-slate-50 dark:bg-slate-700/50 p-6 rounded-full mb-6"><Users size={48} className="opacity-40" /></div>
+              <p className="font-bold text-lg">Select a batch</p>
+          </motion.div>
+      )}
+      </AnimatePresence>
     </div>
   );
 }
