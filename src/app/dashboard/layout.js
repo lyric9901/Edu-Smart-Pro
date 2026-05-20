@@ -18,7 +18,8 @@ import {
   BookOpen,
   MessageCircleQuestion,
   Settings as SettingsIcon,
-  User
+  User,
+  Users // <-- Added Users icon here
 } from "lucide-react";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -55,7 +56,6 @@ export default function DashboardLayout({ children }) {
   const handleSwitchToStudent = () => {
     const existing = localStorage.getItem("eduSmartStudentsList");
     if (!existing) {
-        // Create a temporary dummy profile so the admin can explore the student UI
         const dummy = {
             id: "admin-preview",
             name: user.username || "Admin Preview",
@@ -84,7 +84,7 @@ export default function DashboardLayout({ children }) {
   return (
     <div className="app-shell flex h-screen transition-colors duration-300">
       
-      {/* MOBILE HEADER (removed on mobile) */}
+      {/* MOBILE HEADER */}
       <div className="glass-panel hidden fixed top-0 w-full z-50 p-4 flex justify-between items-center">
          <div className="flex items-center gap-2 font-black text-xl text-blue-600 dark:text-blue-400">
             <School /> {schoolName}
@@ -217,7 +217,6 @@ export default function DashboardLayout({ children }) {
                               </div>
                           </button>
 
-                          {/* MAGICAL SWITCH TO STUDENT BUTTON */}
                           <button onClick={handleSwitchToStudent} className="glass-card w-full flex items-center justify-between p-5 rounded-[1.5rem] transition-colors group border border-white/40 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/5">
                               <div className="flex items-center gap-4">
                                   <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform"><User size={24} /></div>

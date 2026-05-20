@@ -13,7 +13,7 @@ import {
   Plus, UserPlus, Users, Trash2, TrendingUp, X, Copy, 
   CheckCircle, PieChart, Sparkles, LayoutGrid, Search, ChevronRight,
   ArrowLeft, Share2, Download, LogOut, FileDown,
-  Award, AlertTriangle, Activity, Edit, CheckSquare, IndianRupee
+  Award, AlertTriangle, Activity, Edit, CheckSquare, IndianRupee, Bell
 } from "lucide-react";
 
 const Toast = ({ message, type, onClose }) => (
@@ -209,11 +209,6 @@ export default function AdminDashboard() {
     } catch (err) {
         showToast("Failed to delete batch", "error");
     }
-  };
-
-  const handleAddStudentQuickAction = () => {
-    setBatchTab("students");
-    setShowSelectBatchModal(true);
   };
 
   const addStudent = async () => {
@@ -413,14 +408,14 @@ export default function AdminDashboard() {
         </div>
 
         <div className="md:hidden grid grid-cols-3 gap-3 mb-6 relative z-10">
-            <button onClick={() => setShowCreateBatchModal(true)} className="flex flex-col items-center justify-center gap-2.5 py-4 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/50 dark:border-zinc-800 rounded-[1.5rem] shadow-sm hover:scale-105 transition">
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center"><LayoutGrid size={20}/></div>
-                <span className="text-[10px] font-black uppercase text-zinc-700 dark:text-zinc-300 text-center leading-tight">Create<br/>Batch</span>
+            <button onClick={() => setShowAllBatches(true)} className="flex flex-col items-center justify-center gap-2.5 py-4 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/50 dark:border-zinc-800 rounded-[1.5rem] shadow-sm hover:scale-105 transition">
+                <div className="w-10 h-10 rounded-full bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center"><Users size={20}/></div>
+                <span className="text-[10px] font-black uppercase text-zinc-700 dark:text-zinc-300 text-center leading-tight">View<br/>Batches</span>
             </button>
-            <button onClick={handleAddStudentQuickAction} className="flex flex-col items-center justify-center gap-2.5 py-4 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/50 dark:border-zinc-800 rounded-[1.5rem] shadow-sm hover:scale-105 transition">
-                <div className="w-10 h-10 rounded-full bg-green-500/10 text-green-600 dark:text-green-400 flex items-center justify-center"><UserPlus size={20}/></div>
-                <span className="text-[10px] font-black uppercase text-zinc-700 dark:text-zinc-300 text-center leading-tight">Add<br/>Student</span>
-            </button>
+            <Link href="/dashboard/notices" className="flex flex-col items-center justify-center gap-2.5 py-4 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/50 dark:border-zinc-800 rounded-[1.5rem] shadow-sm hover:scale-105 transition">
+                <div className="w-10 h-10 rounded-full bg-orange-500/10 text-orange-600 dark:text-orange-400 flex items-center justify-center"><Bell size={20}/></div>
+                <span className="text-[10px] font-black uppercase text-zinc-700 dark:text-zinc-300 text-center leading-tight">Send<br/>Notice</span>
+            </Link>
             <Link href="/dashboard/attendance" className="flex flex-col items-center justify-center gap-2.5 py-4 bg-white/50 dark:bg-zinc-900/50 backdrop-blur-xl border border-white/50 dark:border-zinc-800 rounded-[1.5rem] shadow-sm hover:scale-105 transition">
                 <div className="w-10 h-10 rounded-full bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center"><CheckSquare size={20}/></div>
                 <span className="text-[10px] font-black uppercase text-zinc-700 dark:text-zinc-300 text-center leading-tight">Mark<br/>Attend</span>
@@ -555,7 +550,7 @@ export default function AdminDashboard() {
 
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }} 
-            className={`lg:col-span-2 ${selectedBatch ? 'block' : 'hidden lg:block'}`}
+            className="lg:col-span-2"
           >
             {selectedBatch ? (
               <div className="bg-white/50 dark:bg-zinc-900 p-6 rounded-[2rem] shadow-sm border border-white/50 dark:border-zinc-800 min-h-[500px] flex flex-col">
@@ -585,10 +580,13 @@ export default function AdminDashboard() {
                             </div>
                         ) : (
                             <div className="flex items-center gap-3">
-                                <h2 className="text-3xl font-black text-zinc-800 dark:text-white flex items-center gap-2">
+                                <h2 className="text-2xl md:text-3xl font-black text-zinc-800 dark:text-white flex items-center gap-2">
                                     {selectedBatch.name}
                                 </h2>
                                 <div className="flex gap-1">
+                                    <button onClick={() => setShowAddStudentModal(true)} className="md:hidden text-zinc-500 hover:text-green-500 dark:hover:text-green-400 p-1.5 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition" title="Add Student">
+                                        <UserPlus size={18}/>
+                                    </button>
                                     <button onClick={() => { setEditBatchName(selectedBatch.name); setIsEditingBatch(true); }} className="text-zinc-500 hover:text-blue-500 dark:hover:text-blue-400 p-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition" title="Rename Batch">
                                         <Edit size={18}/>
                                     </button>
@@ -988,9 +986,16 @@ export default function AdminDashboard() {
         {showAllBatches && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white dark:bg-zinc-900 rounded-[2rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh] border border-gray-200 dark:border-zinc-800">
-                    <div className="p-6 border-b border-gray-200 dark:border-zinc-800 flex justify-between items-center">
-                        <h3 className="text-xl font-black text-zinc-800 dark:text-white">All Batches ({batches.length})</h3>
-                        <button onClick={() => setShowAllBatches(false)} className="p-2 bg-gray-100 dark:bg-zinc-800 rounded-full hover:rotate-90 transition text-zinc-500 dark:text-zinc-400"><X size={20}/></button>
+                    <div className="p-6 border-b border-gray-200 dark:border-zinc-800 flex justify-between items-center gap-4">
+                        <h3 className="text-xl font-black text-zinc-800 dark:text-white flex-1">All Batches ({batches.length})</h3>
+                        <div className="flex items-center gap-2">
+                            <button onClick={() => setShowCreateBatchModal(true)} className="p-2 bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 rounded-full hover:scale-110 transition shadow-sm">
+                                <Plus size={20}/>
+                            </button>
+                            <button onClick={() => setShowAllBatches(false)} className="p-2 bg-gray-100 dark:bg-zinc-800 rounded-full hover:rotate-90 transition text-zinc-500 dark:text-zinc-400">
+                                <X size={20}/>
+                            </button>
+                        </div>
                     </div>
                     <div className="p-4 overflow-y-auto flex-1 space-y-2 custom-scrollbar">
                         {batches.map(batch => (
@@ -1001,7 +1006,7 @@ export default function AdminDashboard() {
                                 className={`w-full p-4 rounded-2xl flex justify-between items-center transition-all ${
                                     selectedBatch?.id === batch.id 
                                     ? "bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800/50 text-blue-600 dark:text-blue-400" 
-                                    : "bg-gray-50 dark:bg-black hover:bg-gray-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent"
+                                    : "bg-gray-50 dark:bg-black hover:bg-gray-100 dark:hover:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-transparent shadow-sm"
                                 }`}
                             >
                                 <span className="font-bold">{batch.name}</span>
