@@ -695,84 +695,84 @@ function StudentContent() {
 
             <AnimatePresence>
                 {showSettingsModal && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.12 } }} exit={{ opacity: 0, transition: { duration: 0.12 } }} className="fixed inset-0 z-50 bg-slate-950/45 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-                        <motion.div initial={{ y: "100%" }} animate={{ y: 0, transition: modalSpring }} exit={{ y: "100%", transition: { duration: 0.16, ease: "easeInOut" } }} className="bg-white dark:bg-[#0b1120] border border-slate-100 dark:border-white/10 w-full sm:w-[28rem] rounded-t-[2.5rem] sm:rounded-[2.5rem] overflow-hidden relative shadow-2xl">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.12 } }} exit={{ opacity: 0, transition: { duration: 0.12 } }} className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-md flex items-center justify-center p-4">
+                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1, transition: modalSpring }} exit={{ scale: 0.95, opacity: 0, transition: { duration: 0.15 } }} className="bg-white dark:bg-[#0b1120] border border-slate-100 dark:border-white/10 w-full max-w-sm max-h-[95vh] rounded-[2rem] overflow-y-auto custom-scrollbar relative shadow-2xl flex flex-col">
                             <AnimatePresence mode="wait" custom={settingsDirection}>
                                 {settingsView === "main" && (
-                                    <motion.div key="main" custom={settingsDirection} variants={viewVariants} initial="hidden" animate="visible" exit="exit" className="w-full p-6 md:p-8">
-                                        <div className="flex justify-between items-center mb-6">
-                                            <h3 className="text-xl md:text-2xl font-black tracking-tight flex items-center gap-2 md:gap-3 text-slate-950 dark:text-white"><Settings size={24} className="text-slate-600 dark:text-zinc-300" /> Settings</h3>
-                                            <button onClick={() => setShowSettingsModal(false)} className="touch-target bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-2xl text-slate-600 dark:text-zinc-300 flex items-center justify-center"><X size={20} /></button>
+                                    <motion.div key="main" custom={settingsDirection} variants={viewVariants} initial="hidden" animate="visible" exit="exit" className="w-full p-5 flex flex-col gap-1">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <h3 className="text-lg font-black tracking-tight flex items-center gap-2 text-slate-950 dark:text-white"><Settings size={20} className="text-slate-600 dark:text-zinc-300" /> Settings</h3>
+                                            <button onClick={() => setShowSettingsModal(false)} className="touch-target bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-600 dark:text-zinc-300 flex items-center justify-center"><X size={18} /></button>
                                         </div>
 
-                                        <div className="flex flex-col items-center justify-center bg-slate-50 dark:bg-[#06080f] border border-slate-100 dark:border-white/5 rounded-[1.5rem] md:rounded-[2rem] p-5 md:p-6 mb-6">
-                                            <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-slate-200 dark:bg-zinc-800 text-slate-900 dark:text-white flex items-center justify-center text-2xl md:text-3xl font-black shadow-inner mb-3 md:mb-4 border-2 border-white dark:border-white/20">
+                                        <div className="flex flex-col items-center justify-center bg-slate-50 dark:bg-[#06080f] border border-slate-100 dark:border-white/5 rounded-2xl p-4 mb-4">
+                                            <div className="w-14 h-14 rounded-full bg-slate-200 dark:bg-zinc-800 text-slate-900 dark:text-white flex items-center justify-center text-xl font-black shadow-inner mb-2 border-2 border-white dark:border-white/20">
                                                 {currentStudent?.name?.charAt(0)}
                                             </div>
-                                            <h2 className="text-lg md:text-xl font-black text-slate-950 dark:text-white">{currentStudent?.name}</h2>
-                                            <p className="text-xs md:text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">{currentStudent?.batchName || "Student"}</p>
+                                            <h2 className="text-base font-black text-slate-950 dark:text-white">{currentStudent?.name}</h2>
+                                            <p className="text-xs font-bold text-slate-500 dark:text-zinc-400 mt-0.5">{currentStudent?.batchName || "Student"}</p>
                                         </div>
 
-                                        <div className="space-y-3 md:space-y-4">
+                                        <div className="space-y-2.5">
                                             
                                             {/* THEME TOGGLE ADDED TO SETTINGS */}
-                                            <div className="w-full flex items-center justify-between p-4 md:p-5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-[1.25rem] md:rounded-[1.5rem] transition-colors">
-                                                <div className="flex items-center gap-3 md:gap-4">
-                                                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:text-zinc-300 flex items-center justify-center"><Palette size={20} /></div>
-                                                    <span className="font-bold text-slate-900 dark:text-white text-sm md:text-base">App Theme</span>
+                                            <div className="w-full flex items-center justify-between p-3.5 bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl transition-colors">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-lg bg-slate-200 text-slate-600 dark:bg-zinc-800 dark:text-zinc-300 flex items-center justify-center"><Palette size={18} /></div>
+                                                    <span className="font-bold text-slate-900 dark:text-white text-sm">App Theme</span>
                                                 </div>
                                                 <ThemeToggle compact />
                                             </div>
 
                                             {/* SWITCH CHILD BUTTON */}
-                                            <motion.button whileTap={{ scale: 0.99 }} onClick={() => { setShowSettingsModal(false); setShowProfileModal(true); }} className="w-full flex items-center justify-between p-4 md:p-5 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-[1.25rem] md:rounded-[1.5rem] transition-colors group">
-                                                <div className="flex items-center gap-3 md:gap-4">
-                                                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-blue-200 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center group-hover:scale-110 transition-transform"><Users size={20} /></div>
-                                                    <div className="text-left"><p className="font-bold text-slate-900 dark:text-white text-sm md:text-base">Switch Child</p><p className="text-[10px] md:text-xs text-slate-500 dark:text-zinc-400 font-medium">Manage student profiles</p></div>
+                                            <motion.button whileTap={{ scale: 0.99 }} onClick={() => { setShowSettingsModal(false); setShowProfileModal(true); }} className="w-full flex items-center justify-between p-3.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-xl transition-colors group">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-lg bg-blue-200 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition-transform"><Users size={18} /></div>
+                                                    <div className="text-left"><p className="font-bold text-slate-900 dark:text-white text-sm">Switch Child</p><p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Manage student profiles</p></div>
                                                 </div>
-                                                <ChevronRight size={18} className="text-slate-400 dark:text-zinc-500 transition-colors" />
+                                                <ChevronRight size={16} className="text-slate-400 dark:text-zinc-500" />
                                             </motion.button>
 
                                             {adminUser && (
-                                                <motion.button whileTap={{ scale: 0.99 }} onClick={() => router.push('/dashboard/admin')} className="w-full flex items-center justify-between p-4 md:p-5 bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-[1.25rem] md:rounded-[1.5rem] border border-purple-200 dark:border-purple-800/30 transition-colors group">
-                                                    <div className="flex items-center gap-3 md:gap-4">
-                                                        <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-purple-200 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 flex items-center justify-center group-hover:scale-110 transition-transform"><Shield size={20} /></div>
-                                                        <div className="text-left"><p className="font-bold text-slate-900 dark:text-white text-sm md:text-base">Switch to Admin</p><p className="text-[10px] md:text-xs text-slate-500 dark:text-zinc-400 font-medium">Return to dashboard</p></div>
+                                                <motion.button whileTap={{ scale: 0.99 }} onClick={() => router.push('/dashboard/admin')} className="w-full flex items-center justify-between p-3.5 bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-xl border border-purple-200 dark:border-purple-800/30 transition-colors group">
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-9 h-9 rounded-lg bg-purple-200 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 flex items-center justify-center group-hover:scale-105 transition-transform"><Shield size={18} /></div>
+                                                        <div className="text-left"><p className="font-bold text-slate-900 dark:text-white text-sm">Switch to Admin</p><p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Return to dashboard</p></div>
                                                     </div>
-                                                    <ChevronRight size={18} className="text-slate-400 dark:text-zinc-500 transition-colors" />
+                                                    <ChevronRight size={16} className="text-slate-400 dark:text-zinc-500" />
                                                 </motion.button>
                                             )}
 
-                                            <motion.button whileTap={{ scale: 0.99 }} onClick={() => navigateSettings("password")} className="w-full flex items-center justify-between p-4 md:p-5 bg-white border border-slate-200 hover:bg-slate-50 dark:bg-[#06080f] dark:border-white/5 dark:hover:bg-white/5 rounded-[1.25rem] md:rounded-[1.5rem] transition-colors group">
-                                                <div className="flex items-center gap-3 md:gap-4">
-                                                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-zinc-300 flex items-center justify-center group-hover:scale-110 transition-transform"><Shield size={20} /></div>
-                                                    <div className="text-left"><p className="font-bold text-slate-900 dark:text-white text-sm md:text-base">Change Password</p><p className="text-[10px] md:text-xs text-slate-500 dark:text-zinc-400 font-medium">Update your credentials</p></div>
+                                            <motion.button whileTap={{ scale: 0.99 }} onClick={() => navigateSettings("password")} className="w-full flex items-center justify-between p-3.5 bg-white border border-slate-200 hover:bg-slate-50 dark:bg-[#06080f] dark:border-white/5 dark:hover:bg-white/5 rounded-xl transition-colors group">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-zinc-300 flex items-center justify-center group-hover:scale-105 transition-transform"><Shield size={18} /></div>
+                                                    <div className="text-left"><p className="font-bold text-slate-900 dark:text-white text-sm">Change Password</p><p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Update your credentials</p></div>
                                                 </div>
-                                                <ChevronRight size={18} className="text-slate-400 dark:text-zinc-500 transition-colors" />
+                                                <ChevronRight size={16} className="text-slate-400 dark:text-zinc-500" />
                                             </motion.button>
 
-                                            <motion.button whileTap={{ scale: 0.98 }} onClick={handleLogout} className="w-full flex items-center justify-between p-4 md:p-5 bg-red-50 hover:bg-red-100 border border-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:border-red-500/20 rounded-[1.25rem] md:rounded-[1.5rem] transition-all mt-4">
-                                                <div className="flex items-center gap-3 md:gap-4">
-                                                    <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 flex items-center justify-center"><LogOut size={20} /></div>
-                                                    <div className="text-left"><p className="font-bold text-red-600 dark:text-red-400 text-sm md:text-base">Logout</p></div>
+                                            <motion.button whileTap={{ scale: 0.98 }} onClick={handleLogout} className="w-full flex items-center justify-between p-3.5 bg-red-50 hover:bg-red-100 border border-red-100 dark:bg-red-500/10 dark:hover:bg-red-500/20 dark:border-red-500/20 rounded-xl transition-all mt-2">
+                                                <div className="flex items-center gap-3">
+                                                    <div className="w-9 h-9 rounded-lg bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400 flex items-center justify-center"><LogOut size={18} /></div>
+                                                    <div className="text-left"><p className="font-bold text-red-600 dark:text-red-400 text-sm">Logout</p></div>
                                                 </div>
                                             </motion.button>
                                         </div>
                                     </motion.div>
                                 )}
                                 {settingsView === "password" && (
-                                    <motion.div key="password" custom={settingsDirection} variants={viewVariants} initial="hidden" animate="visible" exit="exit" className="w-full p-6 md:p-8">
-                                        <div className="flex justify-between items-center mb-6">
-                                            <button onClick={() => { navigateSettings("main"); setPassMsg({ text: "", type: "" }); }} className="flex items-center gap-2 text-sm font-bold text-slate-600 hover:text-slate-950 dark:text-zinc-300 dark:hover:text-white transition-colors"><ChevronLeft size={18} /> Back</button>
-                                            <button onClick={() => setShowSettingsModal(false)} className="touch-target bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-2xl text-slate-600 dark:text-zinc-300 flex items-center justify-center"><X size={20} /></button>
+                                    <motion.div key="password" custom={settingsDirection} variants={viewVariants} initial="hidden" animate="visible" exit="exit" className="w-full p-5 flex flex-col gap-1">
+                                        <div className="flex justify-between items-center mb-4">
+                                            <button onClick={() => { navigateSettings("main"); setPassMsg({ text: "", type: "" }); }} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-950 dark:text-zinc-300 dark:hover:text-white transition-colors"><ChevronLeft size={16} /> Back</button>
+                                            <button onClick={() => setShowSettingsModal(false)} className="touch-target bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-600 dark:text-zinc-300 flex items-center justify-center"><X size={18} /></button>
                                         </div>
-                                        <h3 className="text-xl md:text-2xl font-black mb-6 text-slate-950 dark:text-white">Change Password</h3>
-                                        <div className="space-y-4">
-                                            <input type="password" placeholder="Current Password" value={passForm.current} onChange={e => setPassForm({ ...passForm, current: e.target.value })} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 md:py-4 text-sm outline-none focus:border-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-colors" />
-                                            <input type="password" placeholder="New Password" value={passForm.new} onChange={e => setPassForm({ ...passForm, new: e.target.value })} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 md:py-4 text-sm outline-none focus:border-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-colors" />
-                                            <input type="password" placeholder="Confirm New Password" value={passForm.confirm} onChange={e => setPassForm({ ...passForm, confirm: e.target.value })} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-4 py-3.5 md:py-4 text-sm outline-none focus:border-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-colors" />
-                                            {passMsg.text && <p className={`text-xs font-bold p-3 md:p-4 rounded-xl border ${passMsg.type === 'error' ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400' : 'bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400'}`}>{passMsg.text}</p>}
-                                            <motion.button whileTap={{ scale: 0.99 }} onClick={handlePasswordChange} className="w-full bg-slate-900 text-white dark:bg-white dark:text-slate-950 py-3.5 md:py-4 rounded-xl text-sm md:text-base font-bold hover:bg-black dark:hover:bg-slate-200 transition mt-4">Save Password</motion.button>
+                                        <h3 className="text-lg font-black mb-4 text-slate-950 dark:text-white">Change Password</h3>
+                                        <div className="space-y-3">
+                                            <input type="password" placeholder="Current Password" value={passForm.current} onChange={e => setPassForm({ ...passForm, current: e.target.value })} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-3 text-sm outline-none focus:border-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-colors" />
+                                            <input type="password" placeholder="New Password" value={passForm.new} onChange={e => setPassForm({ ...passForm, new: e.target.value })} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-3 text-sm outline-none focus:border-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-colors" />
+                                            <input type="password" placeholder="Confirm New Password" value={passForm.confirm} onChange={e => setPassForm({ ...passForm, confirm: e.target.value })} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-3 text-sm outline-none focus:border-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-colors" />
+                                            {passMsg.text && <p className={`text-xs font-bold p-3 rounded-xl border ${passMsg.type === 'error' ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400' : 'bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400'}`}>{passMsg.text}</p>}
+                                            <motion.button whileTap={{ scale: 0.99 }} onClick={handlePasswordChange} className="w-full bg-slate-900 text-white dark:bg-white dark:text-slate-950 py-3 rounded-xl text-sm font-bold hover:bg-black dark:hover:bg-slate-200 transition mt-2">Save Password</motion.button>
                                         </div>
                                     </motion.div>
                                 )}
@@ -781,7 +781,6 @@ function StudentContent() {
                     </motion.div>
                 )}
             </AnimatePresence>
-
             <AnimatePresence>
                 {showAddModal && (
                     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.12 } }} exit={{ opacity: 0, transition: { duration: 0.12 } }} className="fixed inset-0 z-[110] bg-slate-950/45 backdrop-blur-md flex items-center justify-center p-4 sm:p-6">
