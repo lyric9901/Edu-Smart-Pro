@@ -61,6 +61,7 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [newTest, setNewTest] = useState({ name: "", score: "" });
+  const [editTestModal, setEditTestModal] = useState(null); // Added state for editing tests
 
   const [isEditingBatch, setIsEditingBatch] = useState(false);
   const [editBatchName, setEditBatchName] = useState("");
@@ -235,20 +236,27 @@ export default function AdminDashboard() {
     showToast("Student added successfully");
   };
 
+  const calculateAverage = (history) => {
+    if (!history || history.length === 0) return 0;
+    const total = history.reduce((acc, curr) => acc + Number(curr.score), 0);
+    return Math.round(total / history.length);
+  };
+
   const saveTestScore = async () => {
     if (!selectedStudent || !selectedBatch || !newTest.name || !newTest.score || !user?.institutionCode) return;
     
+    const history = selectedStudent.performanceHistory || [];
+    const updatedHistory = [...history, { 
+        id: Date.now(), 
+        name: newTest.name, 
+        score: Number(newTest.score),
+        date: new Date().toISOString() 
+    }];
+    
+    const avg = calculateAverage(updatedHistory);
+
     const updatedStudents = selectedBatch.students.map(s => {
         if (s.id === selectedStudent.id) {
-            const history = s.performanceHistory || [];
-            const updatedHistory = [...history, { 
-                id: Date.now(), 
-                name: newTest.name, 
-                score: Number(newTest.score),
-                date: new Date().toISOString() 
-            }];
-            const avg = Math.round(updatedHistory.reduce((acc, curr) => acc + curr.score, 0) / updatedHistory.length);
-            
             return { ...s, performanceHistory: updatedHistory, performance: avg };
         }
         return s;
@@ -260,6 +268,60 @@ export default function AdminDashboard() {
     
     setNewTest({ name: "", score: "" });
     showToast("Test score added!");
+  };
+
+  const handleDeleteTestScore = async (testId) => {
+    if (!selectedStudent || !selectedBatch || !user?.institutionCode) return;
+    if (!confirm("Are you sure you want to remove this test record?")) return;
+
+    const updatedHistory = (selectedStudent.performanceHistory || []).filter(t => t.id !== testId);
+    const newAvg = calculateAverage(updatedHistory);
+
+    const updatedStudents = selectedBatch.students.map(s => {
+        if (s.id === selectedStudent.id) {
+            return { ...s, performanceHistory: updatedHistory, performance: newAvg };
+        }
+        return s;
+    });
+
+    try {
+        await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+            students: updatedStudents
+        });
+        showToast("Test record deleted successfully!");
+    } catch (error) {
+        showToast("Error deleting test", "error");
+    }
+  };
+
+  const handleSaveEditTest = async () => {
+    if (!selectedStudent || !selectedBatch || !user?.institutionCode || !editTestModal) return;
+    
+    const updatedHistory = (selectedStudent.performanceHistory || []).map(t => {
+        if (t.id === editTestModal.id) {
+            return { ...t, name: editTestModal.name, score: Number(editTestModal.score) };
+        }
+        return t;
+    });
+    
+    const newAvg = calculateAverage(updatedHistory);
+
+    const updatedStudents = selectedBatch.students.map(s => {
+        if (s.id === selectedStudent.id) {
+            return { ...s, performanceHistory: updatedHistory, performance: newAvg };
+        }
+        return s;
+    });
+
+    try {
+        await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+            students: updatedStudents
+        });
+        setEditTestModal(null);
+        showToast("Test record updated!");
+    } catch (error) {
+        showToast("Error updating test", "error");
+    }
   };
 
   const exportRealData = () => {
@@ -1071,22 +1133,32 @@ export default function AdminDashboard() {
                           {selectedStudent.performanceHistory && selectedStudent.performanceHistory.length > 0 && (
                               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-700/80">
                                   <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Recorded Academic History</h4>
-                                  <div className="space-y-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar">
+                                  <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
                                       {selectedStudent.performanceHistory.map((test, index) => (
-                                          <div key={test.id} className="flex justify-between items-center bg-white dark:bg-slate-800/50 p-4 rounded-[1rem] border border-slate-200 dark:border-slate-700/80">
+                                          <div key={test.id} className="flex flex-col sm:flex-row justify-between sm:items-center bg-white dark:bg-slate-800/50 p-4 rounded-[1rem] border border-slate-200 dark:border-slate-700/80 gap-4 sm:gap-2 hover:border-blue-300 dark:hover:border-blue-700/50 transition-colors">
                                               <div className="flex gap-3 items-center">
-                                                  <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500 dark:text-zinc-400">{index + 1}</div>
+                                                  <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500 dark:text-zinc-400 shrink-0">{index + 1}</div>
                                                   <div>
                                                       <p className="text-sm font-black text-zinc-800 dark:text-zinc-200">{test.name}</p>
                                                       <p className="text-[10px] font-medium text-zinc-500 mt-0.5">{new Date(test.date).toLocaleDateString()}</p>
                                                   </div>
                                               </div>
-                                              <div className={`px-3 py-1 rounded-lg text-sm font-black border ${
-                                                  test.score >= 80 ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800/50' 
-                                                  : test.score >= 50 ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/50'
-                                                  : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/50'
-                                              }`}>
-                                                  {test.score}%
+                                              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto ml-11 sm:ml-0">
+                                                  <div className={`px-3 py-1 rounded-lg text-sm font-black border ${
+                                                      test.score >= 80 ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800/50' 
+                                                      : test.score >= 50 ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/50'
+                                                      : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/50'
+                                                  }`}>
+                                                      {test.score}%
+                                                  </div>
+                                                  <div className="flex items-center gap-1">
+                                                      <button onClick={() => setEditTestModal(test)} className="p-2 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 rounded-lg transition" title="Edit Test">
+                                                          <Edit size={16}/>
+                                                      </button>
+                                                      <button onClick={() => handleDeleteTestScore(test.id)} className="p-2 text-zinc-400 hover:text-red-600 hover:bg-red-50 dark:hover:text-red-400 dark:hover:bg-red-900/30 rounded-lg transition" title="Delete Test">
+                                                          <Trash2 size={16}/>
+                                                      </button>
+                                                  </div>
                                               </div>
                                           </div>
                                       ))}
@@ -1097,6 +1169,47 @@ export default function AdminDashboard() {
                   </div>
               </motion.div>
           </motion.div>
+        )}
+        </AnimatePresence>
+
+        {/* MODAL FOR EDITING TEST SCORES */}
+        <AnimatePresence>
+        {editTestModal && (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[90]">
+                <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white dark:bg-slate-800/60 rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700/80">
+                    <div className="p-6 border-b border-gray-200 dark:border-slate-700/80 flex justify-between items-center">
+                        <h3 className="text-xl font-black text-zinc-800 dark:text-white flex items-center gap-2"><Edit size={20} className="text-blue-500"/> Edit Test Result</h3>
+                        <button onClick={() => setEditTestModal(null)} className="p-2 bg-gray-100 dark:bg-zinc-800 rounded-full hover:rotate-90 transition text-zinc-500 dark:text-zinc-400"><X size={20}/></button>
+                    </div>
+                    <div className="p-6 space-y-4">
+                        <div>
+                            <label className="block text-xs font-bold text-zinc-500 mb-1.5 uppercase tracking-wider">Test Name</label>
+                            <input 
+                                value={editTestModal.name} 
+                                onChange={e => setEditTestModal({...editTestModal, name: e.target.value})}
+                                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80 p-3.5 rounded-xl text-sm outline-none focus:border-blue-500 transition-all font-medium text-zinc-800 dark:text-zinc-200"
+                            />
+                        </div>
+                        <div>
+                            <label className="block text-xs font-bold text-zinc-500 mb-1.5 uppercase tracking-wider">Score (%)</label>
+                            <input 
+                                type="number"
+                                min="0" max="100"
+                                value={editTestModal.score} 
+                                onChange={e => setEditTestModal({...editTestModal, score: e.target.value})}
+                                className="w-full bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/80 p-3.5 rounded-xl text-sm outline-none focus:border-blue-500 transition-all font-medium text-zinc-800 dark:text-zinc-200"
+                            />
+                        </div>
+                        <motion.button 
+                            whileTap={{ scale: 0.95 }} 
+                            onClick={handleSaveEditTest} 
+                            className="w-full mt-2 bg-blue-600 text-white p-3.5 rounded-xl font-bold hover:bg-blue-700 transition shadow-lg shadow-blue-500/30"
+                        >
+                            Save Changes
+                        </motion.button>
+                    </div>
+                </motion.div>
+            </motion.div>
         )}
         </AnimatePresence>
 
