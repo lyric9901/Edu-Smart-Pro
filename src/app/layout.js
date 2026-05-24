@@ -26,6 +26,9 @@ export const metadata = {
     "Fee Manager",
     "Tuition App India",
     "EduSmart Pro",
+    "Edu Smart Pro",
+    "Edu Smart",
+    "EduSmart",
     "Godhra Coaching",
   ],
 
@@ -55,12 +58,12 @@ export const metadata = {
     images: ["/icons/icon-384x384.png"],
   },
 
-  // 🔥 Proper favicon setup (PATHS FIXED)
+  // 🔥 Proper favicon setup mapped to your actual files
   icons: {
     icon: [
       { url: "/favicon.ico" },
-      { url: "/icons/icon-16.png", sizes: "16x16", type: "image/png" },
-      { url: "/icons/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icons/icon-48x48.png", sizes: "48x48", type: "image/png" },
+      { url: "/icons/icon-72x72.png", sizes: "72x72", type: "image/png" },
     ],
     apple: [
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
