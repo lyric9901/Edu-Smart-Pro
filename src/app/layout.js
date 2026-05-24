@@ -9,14 +9,13 @@ const inter = Inter({ subsets: ["latin"] });
 
 // --- SEO + META ---
 export const metadata = {
-  manifest: "/manifest.json", // <--- ADD THIS EXACT LINE HERE!
+  manifest: "/manifest.json", 
   metadataBase: new URL("https://edusmartpro.in"),
 
   title: {
     default: "EduSmart Pro | #1 Coaching Management App",
     template: "%s | EduSmart Pro",
   },
-
 
   description:
     "Automate attendance, fees, and student management. The smartest app for coaching centers in India.",
@@ -27,11 +26,11 @@ export const metadata = {
     "Fee Manager",
     "Tuition App India",
     "EduSmart Pro",
-    "Lucknow Coaching",
+    "Godhra Coaching",
   ],
 
-  authors: [{ name: "Shah Nawaz Ali" }],
-  creator: "Shah Nawaz",
+  authors: [{ name: "Neel" }],
+  creator: "Neel",
 
   openGraph: {
     title: "EduSmart Pro - Digital Coaching Management",
@@ -40,9 +39,9 @@ export const metadata = {
     siteName: "EduSmart Pro",
     images: [
       {
-        url: "/og.png",
-        width: 1200,
-        height: 630,
+        url: "/icons/icon-512x512.png", 
+        width: 512,
+        height: 512,
       },
     ],
     locale: "en_IN",
@@ -53,18 +52,18 @@ export const metadata = {
     card: "summary_large_image",
     title: "EduSmart Pro | Smart Coaching App",
     description: "Automate your coaching center today.",
-    images: ["/og.png"],
+    images: ["/icons/icon-512x512.png"],
   },
 
-  // 🔥 Proper favicon setup
+  // 🔥 Proper favicon setup (PATHS FIXED)
   icons: {
     icon: [
-      { url: "/public/favicon.ico" },
-      { url: "/public/icons/icon-16.png", sizes: "16x16", type: "image/png" },
-      { url: "/public/icons/icon-32.png", sizes: "32x32", type: "image/png" },
+      { url: "/favicon.ico" },
+      { url: "/icons/icon-16.png", sizes: "16x16", type: "image/png" },
+      { url: "/icons/icon-32.png", sizes: "32x32", type: "image/png" },
     ],
     apple: [
-      { url: "/public/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
     ],
   },
 };
@@ -76,6 +75,7 @@ export const viewport = {
 };
 
 export default function RootLayout({ children }) {
+  // Mitigates Dark Mode FOUC (Flash of Unstyled Content)
   const themeScript = `
     try {
       var preference = localStorage.getItem("eduSmartTheme") || "system";
@@ -91,13 +91,13 @@ export default function RootLayout({ children }) {
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={inter.className}>
-        <Toaster position="bottom-right" reverseOrder={false} />
-
-        {/* 🔥 PWA handler */}
-        <PWAManager />
-
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <AuthProvider>
+            <Toaster position="bottom-right" reverseOrder={false} />
+            {/* 🔥 PWA handler */}
+            <PWAManager />
+            {children}
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>
