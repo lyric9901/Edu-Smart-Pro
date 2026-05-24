@@ -1,0 +1,12 @@
+# public/robots.txt
+
+User-agent: *
+Allow: /
+
+# Block search engines from indexing internal dashboard routes
+Disallow: /dashboard/
+Disallow: /student/
+Disallow: /super-admin/
+
+# Point crawlers directly to your dynamic Next.js sitemap
+Sitemap: https://edusmartpro.in/sitemap.xml
