@@ -1,6 +1,6 @@
 {
   "name": "Edu Smart Pro",
-  "short_name": "Edu Smart",
+  "short_name": "Edu Smart Pro",
   "icons": [
     {
       "src": "icons/icon-48x48.png",
@@ -57,7 +57,7 @@
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#0f172a",
-  "description": "The #1 Management Platform for Coaching Institutes in India.",
+  "description": "The #1 Management Platform for Coaching Institutes in Lucknow.",
   "lang": "en",
   "dir": "ltr",
   "scope": "/",
