@@ -29,8 +29,8 @@ export const metadata = {
     "Godhra Coaching",
   ],
 
-  authors: [{ name: "Neel" }],
-  creator: "Neel",
+  authors: [{ name: "Shah Nawaz Ali" }],
+  creator: "Shah Nawaz Ali",
 
   openGraph: {
     title: "EduSmart Pro - Digital Coaching Management",
@@ -39,9 +39,9 @@ export const metadata = {
     siteName: "EduSmart Pro",
     images: [
       {
-        url: "/icons/icon-512x512.png", 
-        width: 512,
-        height: 512,
+        url: "/icons/icon-384x384.png", 
+        width: 384,
+        height: 384,
       },
     ],
     locale: "en_IN",
@@ -52,7 +52,7 @@ export const metadata = {
     card: "summary_large_image",
     title: "EduSmart Pro | Smart Coaching App",
     description: "Automate your coaching center today.",
-    images: ["/icons/icon-512x512.png"],
+    images: ["/icons/icon-384x384.png"],
   },
 
   // 🔥 Proper favicon setup (PATHS FIXED)
