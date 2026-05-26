@@ -1,362 +1,464 @@
 // src/app/dashboard/attendance/page.js
 "use client";
+
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { firestore } from "@/lib/firebase";
 import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Calendar, Check, X, Minus, Users, CheckCircle2, 
-  ChevronLeft, ChevronRight, Download 
+
+import {
+    Calendar,
+    Check,
+    X,
+    Minus,
+    Users,
+    CheckCircle2,
+    ChevronLeft,
+    ChevronRight,
+    Download,
 } from "lucide-react";
 
 const Skeleton = ({ className }) => (
-  <div className={`animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl ${className}`} />
+    <div
+        className={`animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl ${className}`}
+    />
 );
 
 const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.05 } }
+    hidden: { opacity: 0 },
+    visible: {
+        opacity: 1,
+        transition: {
+            staggerChildren: 0.05,
+        },
+    },
 };
 
 const itemVariants = {
-  hidden: { opacity: 0, y: 10 },
-  visible: { opacity: 1, y: 0 }
+    hidden: {
+        opacity: 0,
+        y: 10,
+    },
+    visible: {
+        opacity: 1,
+        y: 0,
+    },
 };
 
 export default function AttendancePage() {
-  const { user } = useAuth();
-  
-  const getLocalToday = () => {
-    const d = new Date();
-    const offset = d.getTimezoneOffset() * 60000;
-    return new Date(d.getTime() - offset).toISOString().split('T')[0];
-  };
+    const { user } = useAuth();
 
-  const [batches, setBatches] = useState([]);
-  const [selectedBatch, setSelectedBatch] = useState(null);
-  const [selectedDate, setSelectedDate] = useState(getLocalToday()); 
-  const [stats, setStats] = useState({ present: 0, absent: 0, total: 0 });
-  const [mounted, setMounted] = useState(false);
-  const [loading, setLoading] = useState(true); 
-  const [isPastDate, setIsPastDate] = useState(false);
+    const getLocalToday = () => {
+        const d = new Date();
+        const offset = d.getTimezoneOffset() * 60000;
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+        return new Date(d.getTime() - offset)
+            .toISOString()
+            .split("T")[0];
+    };
 
-  useEffect(() => {
-    setIsPastDate(selectedDate !== getLocalToday());
-  }, [selectedDate]);
+    const [batches, setBatches] = useState([]);
+    const [selectedBatch, setSelectedBatch] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(getLocalToday());
 
-  useEffect(() => {
-    if (user?.institutionCode) {
-      setLoading(true);
-      const unsub = onSnapshot(collection(firestore, `institutions/${user.institutionCode}/batches`), (snapshot) => {
-        const list = [];
-        snapshot.forEach((doc) => {
-            list.push({
-                id: doc.id,
-                ...doc.data(),
-                students: doc.data().students || []
-            });
-        });
-        setBatches(list);
-        
-        if (selectedBatch) {
-             const updated = list.find(b => b.id === selectedBatch.id);
-             if (updated) setSelectedBatch(updated);
-        }
-        setLoading(false); 
-      });
-      return () => unsub();
-    }
-  }, [user, selectedBatch?.id]);
+    const [stats, setStats] = useState({
+        present: 0,
+        absent: 0,
+        total: 0,
+    });
 
-  useEffect(() => {
-    if (selectedBatch && selectedBatch.students) {
-      let p = 0, a = 0;
-      selectedBatch.students.forEach(s => {
-        const status = s.attendance?.[selectedDate];
-        if (status === "present") p++;
-        if (status === "absent") a++;
-      });
-      setStats({ present: p, absent: a, total: selectedBatch.students.length });
-    }
-  }, [selectedBatch, selectedDate]);
+    const [mounted, setMounted] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [isPastDate, setIsPastDate] = useState(false);
 
-  const toggleAttendance = async (studentIndex) => {
-    if (!selectedBatch) return;
+    useEffect(() => {
+        setMounted(true);
+    }, []);
 
-    const student = selectedBatch.students[studentIndex];
-    const currentStatus = student.attendance?.[selectedDate] || "not-marked";
-    let newStatus = "present"; 
+    useEffect(() => {
+        setIsPastDate(selectedDate !== getLocalToday());
+    }, [selectedDate]);
 
-    if (currentStatus === "present") newStatus = "absent";       
-    if (currentStatus === "absent") newStatus = "not-marked";    
+    useEffect(() => {
+        if (user?.institutionCode) {
+            setLoading(true);
 
-    const updatedBatch = { ...selectedBatch };
-    if (!updatedBatch.students[studentIndex].attendance) {
-        updatedBatch.students[studentIndex].attendance = {};
-    }
-    updatedBatch.students[studentIndex].attendance[selectedDate] = newStatus;
+            const unsub = onSnapshot(
+                collection(
+                    firestore,
+                    `institutions/${user.institutionCode}/batches`
+                ),
+                (snapshot) => {
+                    const list = [];
 
-    // Handle absent notifications and revocation
-    if (newStatus === "absent") {
-        if (!updatedBatch.students[studentIndex].notifications) {
-            updatedBatch.students[studentIndex].notifications = [];
-        }
-        updatedBatch.students[studentIndex].notifications.push({
-            id: Date.now().toString(),
-            text: `You were marked absent for ${new Date(selectedDate).toDateString()}.`,
-            date: new Date().toISOString(),
-            type: "alert",
-            read: false,
-            attendanceDate: selectedDate 
-        });
-    } else if (currentStatus === "absent") {
-        // Revoke the notification if status changes from absent to something else
-        if (updatedBatch.students[studentIndex].notifications) {
-            const absentText = `You were marked absent for ${new Date(selectedDate).toDateString()}.`;
-            updatedBatch.students[studentIndex].notifications = updatedBatch.students[studentIndex].notifications.filter(
-                (n) => n.attendanceDate !== selectedDate && n.text !== absentText
+                    snapshot.forEach((doc) => {
+                        list.push({
+                            id: doc.id,
+                            ...doc.data(),
+                            students: doc.data().students || [],
+                        });
+                    });
+
+                    setBatches(list);
+
+                    if (selectedBatch) {
+                        const updated = list.find(
+                            (b) => b.id === selectedBatch.id
+                        );
+
+                        if (updated) setSelectedBatch(updated);
+                    }
+
+                    setLoading(false);
+                }
             );
+
+            return () => unsub();
         }
-    }
+    }, [user, selectedBatch?.id]);
 
-    setSelectedBatch(updatedBatch);
+    useEffect(() => {
+        if (selectedBatch && selectedBatch.students) {
+            let p = 0,
+                a = 0;
 
-    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
-        students: updatedBatch.students
-    });
-  };
+            selectedBatch.students.forEach((s) => {
+                const status = s.attendance?.[selectedDate];
 
-  const markAll = async (status) => {
-    if (!selectedBatch) return;
-    
-    const updatedBatch = { ...selectedBatch };
-    updatedBatch.students.forEach((student, index) => {
-        const currentStatus = student.attendance?.[selectedDate] || "not-marked";
+                if (status === "present") p++;
+                if (status === "absent") a++;
+            });
 
-        if (!updatedBatch.students[index].attendance) updatedBatch.students[index].attendance = {};
-        updatedBatch.students[index].attendance[selectedDate] = status;
-
-        // If marking all as something other than absent, clean up prior absent alerts
-        if (status !== "absent" && currentStatus === "absent") {
-             if (updatedBatch.students[index].notifications) {
-                 const absentText = `You were marked absent for ${new Date(selectedDate).toDateString()}.`;
-                 updatedBatch.students[index].notifications = updatedBatch.students[index].notifications.filter(
-                     (n) => n.attendanceDate !== selectedDate && n.text !== absentText
-                 );
-             }
+            setStats({
+                present: p,
+                absent: a,
+                total: selectedBatch.students.length,
+            });
         }
-    });
-    
-    setSelectedBatch(updatedBatch);
+    }, [selectedBatch, selectedDate]);
 
-    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
-        students: updatedBatch.students
-    });
-  };
+    const toggleAttendance = async (studentIndex) => {
+        if (!selectedBatch) return;
 
-  const changeDate = (days) => {
-    const d = new Date(selectedDate);
-    d.setDate(d.getDate() + days);
-    const offset = d.getTimezoneOffset() * 60000;
-    const newDate = new Date(d.getTime() - offset).toISOString().split('T')[0];
-    setSelectedDate(newDate);
-  };
+        const student = selectedBatch.students[studentIndex];
 
-  const downloadCSV = () => {
-    if (!selectedBatch) return;
+        const currentStatus =
+            student.attendance?.[selectedDate] || "not-marked";
 
-    const dateObj = new Date(selectedDate);
-    const year = dateObj.getFullYear();
-    const month = dateObj.getMonth(); 
-    const monthName = dateObj.toLocaleString('default', { month: 'long' });
-    const daysInMonth = new Date(year, month + 1, 0).getDate();
+        let newStatus = "present";
 
-    let csv = "Student Name,Phone";
-    for(let d=1; d<=daysInMonth; d++) {
-        csv += `,${d} ${monthName.slice(0,3)}`;
-    }
-    csv += ",Total Present\n";
+        if (currentStatus === "present") newStatus = "absent";
 
-    selectedBatch.students.forEach(student => {
-        let row = `"${student.name}","${student.phone}"`;
-        let presentCount = 0;
-        
-        for(let d=1; d<=daysInMonth; d++) {
-             const dayStr = String(d).padStart(2, '0');
-             const monthStr = String(month + 1).padStart(2, '0');
-             const dateKey = `${year}-${monthStr}-${dayStr}`;
-             
-             const status = student.attendance?.[dateKey];
-             let code = "-";
-             if (status === "present") { code = "P"; presentCount++; }
-             else if (status === "absent") code = "A";
-             
-             row += `,${code}`;
+        if (currentStatus === "absent")
+            newStatus = "not-marked";
+
+        const updatedBatch = { ...selectedBatch };
+
+        if (!updatedBatch.students[studentIndex].attendance) {
+            updatedBatch.students[studentIndex].attendance = {};
         }
-        row += `,${presentCount}`;
-        csv += `${row}\n`;
-    });
 
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `Attendance_${selectedBatch.name}_${monthName}_${year}.csv`;
-    a.click();
-  };
+        updatedBatch.students[studentIndex].attendance[
+            selectedDate
+        ] = newStatus;
 
-  const getStatus = (student) => student.attendance?.[selectedDate] || "not-marked";
+        setSelectedBatch(updatedBatch);
 
-  const getStatusUI = (status) => {
-    switch (status) {
-      case "present": return { color: "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800/60", icon: <Check size={18} strokeWidth={3} />, label: "Present" };
-      case "absent": return { color: "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60", icon: <X size={18} strokeWidth={3} />, label: "Absent" };
-      default: return { color: "bg-slate-50 dark:bg-slate-800/40 text-slate-400 dark:text-slate-400 border-slate-200 dark:border-slate-700", icon: <Minus size={18} />, label: "Mark" };
-    }
-  };
+        await updateDoc(
+            doc(
+                firestore,
+                `institutions/${user.institutionCode}/batches`,
+                selectedBatch.id
+            ),
+            {
+                students: updatedBatch.students,
+            }
+        );
+    };
 
-  if (!mounted) return null;
+    const markAll = async (status) => {
+        if (!selectedBatch) return;
 
-  return (
-    <div className="w-full max-w-5xl mx-auto space-y-6 text-slate-900 dark:text-slate-100 transition-colors duration-300">
-      
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-              <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-                  <CheckCircle2 className="text-blue-600" size={32} /> Attendance
-              </h1>
-              <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">
-                {isPastDate ? "Managing Past Records" : "Today's Tracker"}
-              </p>
-          </div>
-      </div>
+        const updatedBatch = { ...selectedBatch };
 
-      <div className="bg-white dark:bg-slate-800/60 backdrop-blur-md p-5 rounded-[2rem] shadow-sm border border-slate-200 dark:border-slate-700/80 flex flex-col md:flex-row gap-4 justify-between items-center">
-          <div className={`flex items-center gap-2 px-2 py-2 rounded-2xl border w-full md:w-auto transition-colors ${isPastDate ? 'bg-orange-50 border-orange-200 dark:bg-orange-900/20 dark:border-orange-800/50' : 'bg-slate-50 border-slate-100 dark:bg-slate-900/50 dark:border-slate-700'}`}>
-              <button onClick={() => changeDate(-1)} className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition"><ChevronLeft size={20} /></button>
-              <div className="flex items-center gap-2 px-2">
-                  <Calendar size={18} className={isPastDate ? "text-orange-500" : "text-slate-400"} />
-                  <input type="date" value={selectedDate} onChange={(e) => setSelectedDate(e.target.value)} className="bg-transparent outline-none text-sm font-bold text-slate-700 dark:text-slate-200 uppercase cursor-pointer" />
-              </div>
-              <button onClick={() => changeDate(1)} className="p-2 hover:bg-black/5 dark:hover:bg-white/10 rounded-xl transition"><ChevronRight size={20} /></button>
-          </div>
+        updatedBatch.students.forEach((student, index) => {
+            if (!updatedBatch.students[index].attendance)
+                updatedBatch.students[index].attendance = {};
 
-          <div className="flex gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto custom-scrollbar no-scrollbar items-center">
-              {loading ? (
-                  <>
-                    <Skeleton className="w-24 h-10 rounded-2xl" />
-                    <Skeleton className="w-24 h-10 rounded-2xl" />
-                  </>
-              ) : batches.length > 0 ? batches.map(batch => (
-                  <motion.button 
-                      whileTap={{ scale: 0.95 }}
-                      key={batch.id}
-                      onClick={() => setSelectedBatch(batch)}
-                      className={`px-6 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all duration-200 border ${
-                          selectedBatch?.id === batch.id 
-                          ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-transparent shadow-lg" 
-                          : "bg-white dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
-                      }`}
-                  >
-                      {batch.name}
-                  </motion.button>
-              )) : (
-                  <span className="text-sm text-slate-400 italic px-4">No batches found.</span>
-              )}
-          </div>
-      </div>
+            updatedBatch.students[index].attendance[
+                selectedDate
+            ] = status;
+        });
 
-      <AnimatePresence mode="wait">
-      {loading ? (
-         <div className="space-y-4">
-            <Skeleton className="w-full h-24 rounded-[2.5rem]" />
-            <Skeleton className="w-full h-20 rounded-2xl" />
-            <Skeleton className="w-full h-20 rounded-2xl" />
-            <Skeleton className="w-full h-20 rounded-2xl" />
-         </div>
-      ) : selectedBatch ? (
-          <motion.div 
-              key={selectedBatch.id}
-              initial="hidden" animate="visible" exit={{ opacity: 0, y: 20 }} variants={containerVariants}
-              className="bg-white dark:bg-slate-800/60 backdrop-blur-md rounded-[2.5rem] shadow-sm border border-slate-200 dark:border-slate-700/80 overflow-hidden"
-          >
-              <div className="p-6 border-b border-slate-100 dark:border-slate-700/80 flex flex-col md:flex-row justify-between items-start md:items-center bg-slate-50/50 dark:bg-slate-900/40 gap-4">
-                  <div>
-                      <h2 className="text-2xl font-black tracking-tight">{selectedBatch.name}</h2>
-                      <div className="flex items-center gap-2 mt-1">
-                        <p className={`text-xs font-bold uppercase tracking-wider ${isPastDate ? "text-orange-500" : "text-slate-400"}`}>
-                          {new Date(selectedDate).toDateString()}
+        setSelectedBatch(updatedBatch);
+
+        await updateDoc(
+            doc(
+                firestore,
+                `institutions/${user.institutionCode}/batches`,
+                selectedBatch.id
+            ),
+            {
+                students: updatedBatch.students,
+            }
+        );
+    };
+
+    const changeDate = (days) => {
+        const d = new Date(selectedDate);
+
+        d.setDate(d.getDate() + days);
+
+        const offset = d.getTimezoneOffset() * 60000;
+
+        const newDate = new Date(d.getTime() - offset)
+            .toISOString()
+            .split("T")[0];
+
+        setSelectedDate(newDate);
+    };
+
+    const downloadCSV = () => { };
+
+    const getStatus = (student) =>
+        student.attendance?.[selectedDate] || "not-marked";
+
+    const getStatusUI = (status) => {
+        switch (status) {
+            case "present":
+                return {
+                    color:
+                        "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800/60",
+                    icon: <Check size={18} strokeWidth={3} />,
+                    label: "Present",
+                };
+
+            case "absent":
+                return {
+                    color:
+                        "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/60",
+                    icon: <X size={18} strokeWidth={3} />,
+                    label: "Absent",
+                };
+
+            default:
+                return {
+                    color:
+                        "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700",
+                    icon: <Minus size={18} />,
+                    label: "Mark",
+                };
+        }
+    };
+
+    if (!mounted) return null;
+
+    return (
+        <div className="w-full max-w-6xl mx-auto px-3 sm:px-5 py-4 text-slate-900 dark:text-white">
+
+            {/* HEADER */}
+            <div className="mb-5">
+                <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
+                    <Calendar className="text-blue-600" size={30} />
+                    Attendance
+                </h1>
+
+                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    {isPastDate
+                        ? "Managing Past Records"
+                        : "Today's Tracker"}
+                </p>
+            </div>
+
+            {/* TOP CONTROLS */}
+            <div className="bg-gradient-to-br from-blue-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-4 sm:p-5 shadow-sm">
+
+                {/* DATE */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 flex items-center justify-between mb-4">
+
+                    <button
+                        onClick={() => changeDate(-1)}
+                        className="h-10 w-10 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    >
+                        <ChevronLeft size={18} />
+                    </button>
+
+                    <div className="flex items-center gap-2">
+                        <Calendar size={18} className="text-slate-400" />
+
+                        <input
+                            type="date"
+                            value={selectedDate}
+                            onChange={(e) =>
+                                setSelectedDate(e.target.value)
+                            }
+                            className="bg-transparent outline-none text-sm font-bold"
+                        />
+                    </div>
+
+                    <button
+                        onClick={() => changeDate(1)}
+                        className="h-10 w-10 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                    >
+                        <ChevronRight size={18} />
+                    </button>
+                </div>
+
+                {/* BATCHES */}
+                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
+
+                    {loading ? (
+                        <>
+                            <Skeleton className="w-24 h-11" />
+                            <Skeleton className="w-24 h-11" />
+                        </>
+                    ) : batches.length > 0 ? (
+                        batches.map((batch) => (
+                            <motion.button
+                                whileTap={{ scale: 0.96 }}
+                                key={batch.id}
+                                onClick={() => setSelectedBatch(batch)}
+                                className={`px-6 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all border shadow-sm ${selectedBatch?.id === batch.id
+                                        ? "bg-[#0B132B] text-white border-[#0B132B]"
+                                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                                    }`}
+                            >
+                                {batch.name}
+                            </motion.button>
+                        ))
+                    ) : (
+                        <p className="text-sm text-slate-400">
+                            No batches found
                         </p>
-                        {isPastDate && <span className="text-[10px] bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full font-bold">HISTORY MODE</span>}
-                      </div>
-                  </div>
-                  
-                  <div className="flex flex-wrap gap-3 w-full md:w-auto">
-                      <motion.button 
-                          whileTap={{ scale: 0.95 }}
-                          onClick={downloadCSV}
-                          className="flex items-center justify-center gap-2 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 px-4 py-3 rounded-2xl text-sm font-bold shadow-sm hover:bg-slate-50 dark:hover:bg-slate-700 transition"
-                          title="Download Monthly Report"
-                      >
-                          <Download size={18} /> <span className="hidden sm:inline">Export CSV</span>
-                      </motion.button>
+                    )}
+                </div>
+            </div>
 
-                      <motion.button
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => markAll("present")}
-                          className="flex-1 md:flex-none flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-blue-500/20 transition"
-                      >
-                          <CheckCircle2 size={16} /> Mark All Present
-                      </motion.button>
-                  </div>
-              </div>
+            <AnimatePresence mode="wait">
 
-              <div className="divide-y divide-slate-100 dark:divide-slate-700/60 p-2">
-                  {selectedBatch.students.map((student, index) => {
-                      const status = getStatus(student);
-                      const ui = getStatusUI(status);
-                      
-                      return (
-                          <motion.div 
-                              key={student.id || index} 
-                              variants={itemVariants}
-                              onClick={() => toggleAttendance(index)}
-                              whileTap={{ scale: 0.99, backgroundColor: "rgba(0,0,0,0.02)" }}
-                              className="p-4 flex items-center justify-between cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-700/40 rounded-2xl transition group"
-                          >
-                              <div className="flex items-center gap-4">
-                                  <div className={`w-12 h-12 rounded-full flex items-center justify-center font-black text-lg transition-colors border-2 shadow-sm ${ui.color}`}>
-                                      {student.name.charAt(0)}
-                                  </div>
-                                  <div>
-                                      <p className="font-bold text-base text-slate-800 dark:text-slate-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition">{student.name}</p>
-                                      <p className="text-xs text-slate-400 font-mono font-medium hidden md:block">{student.phone}</p>
-                                  </div>
-                              </div>
+                {loading ? (
+                    <div className="space-y-4 mt-5">
+                        <Skeleton className="w-full h-32 rounded-3xl" />
+                        <Skeleton className="w-full h-20 rounded-2xl" />
+                        <Skeleton className="w-full h-20 rounded-2xl" />
+                    </div>
+                ) : selectedBatch ? (
 
-                              <div className={`px-5 py-2.5 rounded-xl border-2 flex items-center gap-2 text-sm font-bold transition-all w-32 justify-center shadow-sm ${ui.color}`}>
-                                  {ui.icon} {ui.label}
-                              </div>
-                          </motion.div>
-                      );
-                  })}
-                  {selectedBatch.students.length === 0 && (
-                      <div className="p-20 text-center text-slate-400 font-medium italic">No students found.</div>
-                  )}
-              </div>
-          </motion.div>
-      ) : (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="h-80 flex flex-col items-center justify-center bg-white dark:bg-slate-800/60 backdrop-blur-md rounded-[2.5rem] border-2 border-dashed border-slate-200 dark:border-slate-700 text-slate-400 dark:text-slate-500">
-              <div className="bg-slate-50 dark:bg-slate-700/50 p-6 rounded-full mb-6"><Users size={48} className="opacity-40" /></div>
-              <p className="font-bold text-lg">Select a batch</p>
-          </motion.div>
-      )}
-      </AnimatePresence>
-    </div>
-  );
+                    <motion.div
+                        key={selectedBatch.id}
+                        initial="hidden"
+                        animate="visible"
+                        exit={{ opacity: 0 }}
+                        variants={containerVariants}
+                        className="mt-5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] overflow-hidden shadow-sm"
+                    >
+
+                        {/* BATCH HEADER */}
+                        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800">
+
+                            <h2 className="text-3xl font-black tracking-tight">
+                                {selectedBatch.name}
+                            </h2>
+
+                            <p className="text-xs uppercase tracking-widest text-slate-400 font-bold mt-1">
+                                {new Date(selectedDate).toDateString()}
+                            </p>
+
+                            {/* ACTION BUTTONS */}
+                            <div className="flex items-center gap-3 mt-5">
+
+                                <motion.button
+                                    whileTap={{ scale: 0.95 }}
+                                    onClick={downloadCSV}
+                                    className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm"
+                                >
+                                    <Download size={18} />
+                                </motion.button>
+
+                                <motion.button
+                                    whileTap={{ scale: 0.96 }}
+                                    onClick={() => markAll("present")}
+                                    className="flex-1 h-14 rounded-2xl bg-blue-600 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
+                                >
+                                    <CheckCircle2 size={18} />
+                                    Mark All Present
+                                </motion.button>
+                            </div>
+                        </div>
+
+                        {/* STUDENT LIST */}
+                        <div className="p-3 sm:p-4 space-y-3">
+
+                            {selectedBatch.students.map(
+                                (student, index) => {
+                                    const status = getStatus(student);
+
+                                    const ui = getStatusUI(status);
+
+                                    return (
+                                        <motion.div
+                                            key={student.id || index}
+                                            variants={itemVariants}
+                                            whileTap={{ scale: 0.985 }}
+                                            onClick={() =>
+                                                toggleAttendance(index)
+                                            }
+                                            className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between cursor-pointer shadow-sm hover:shadow-md transition-all"
+                                        >
+
+                                            {/* LEFT */}
+                                            <div className="flex items-center gap-4 min-w-0">
+
+                                                <div
+                                                    className={`h-12 w-12 rounded-full border-2 flex items-center justify-center font-black text-lg shrink-0 ${ui.color}`}
+                                                >
+                                                    {student.name.charAt(0)}
+                                                </div>
+
+                                                <div className="min-w-0">
+                                                    <p className="font-bold truncate text-base">
+                                                        {student.name}
+                                                    </p>
+
+                                                    <p className="text-xs text-slate-400 truncate">
+                                                        {student.phone}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            {/* RIGHT */}
+                                            <div
+                                                className={`min-w-[115px] h-12 rounded-xl border-2 flex items-center justify-center gap-2 text-sm font-bold px-4 transition-all ${ui.color}`}
+                                            >
+                                                {ui.icon}
+                                                {ui.label}
+                                            </div>
+                                        </motion.div>
+                                    );
+                                }
+                            )}
+
+                            {selectedBatch.students.length === 0 && (
+                                <div className="py-20 text-center text-slate-400">
+                                    No students found
+                                </div>
+                            )}
+                        </div>
+                    </motion.div>
+                ) : (
+                    <div className="mt-5 h-[320px] rounded-[2.5rem] border-2 border-dashed border-slate-300 dark:border-slate-700 flex flex-col items-center justify-center text-slate-400">
+
+                        <div className="h-20 w-20 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-5">
+                            <Users size={38} />
+                        </div>
+
+                        <p className="font-bold text-lg">
+                            Select a batch
+                        </p>
+                    </div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
 }
