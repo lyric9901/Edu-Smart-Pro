@@ -1,3 +1,4 @@
+// src/app/dashboard/admin/page.js
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
@@ -21,7 +22,7 @@ const Toast = ({ message, type, onClose }) => (
     initial={{ opacity: 0, y: 50, scale: 0.9 }} 
     animate={{ opacity: 1, y: 0, scale: 1 }} 
     exit={{ opacity: 0, scale: 0.9 }}
-    className={`fixed top-6 md:bottom-6 md:top-auto right-6 md:right-6 left-6 md:left-auto px-6 py-4 rounded-2xl shadow-2xl flex items-center justify-center gap-3 z-[100] border backdrop-blur-md ${
+    className={`fixed top-6 md:bottom-6 md:top-auto right-6 md:right-6 left-6 md:left-auto px-6 py-4 rounded-2xl shadow-2xl flex items-center justify-center gap-3 z-[150] border backdrop-blur-md ${
       type === "error" 
       ? "bg-red-900/90 text-red-100 border-red-800" 
       : "bg-zinc-900/90 text-white border-zinc-800"
@@ -692,23 +693,23 @@ export default function AdminDashboard() {
                 </div>
 
                 <div className="flex gap-2 mb-8 overflow-x-auto pb-2 custom-scrollbar no-scrollbar items-center">
-    {[
-        { id: "students", label: "Students List", icon: <Users size={18}/> },
-        { id: "analytics", label: "Batch Analytics", icon: <Activity size={18}/> }
-    ].map(tab => (
-        <button 
-            key={tab.id}
-            onClick={() => setBatchTab(tab.id)} 
-            className={`px-6 py-3 rounded-2xl text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all duration-200 border ${
-                batchTab === tab.id 
-                ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-transparent shadow-lg" 
-                : "bg-white dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
-            }`}
-        >
-            {tab.icon} {tab.label}
-        </button>
-    ))}
-</div>
+                  {[
+                      { id: "students", label: "Students List", icon: <Users size={18}/> },
+                      { id: "analytics", label: "Batch Analytics", icon: <Activity size={18}/> }
+                  ].map(tab => (
+                      <button 
+                          key={tab.id}
+                          onClick={() => setBatchTab(tab.id)} 
+                          className={`px-6 py-3 rounded-2xl text-sm font-bold flex items-center gap-2 whitespace-nowrap transition-all duration-200 border ${
+                              batchTab === tab.id 
+                              ? "bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 border-transparent shadow-lg" 
+                              : "bg-white dark:bg-slate-800/40 text-slate-500 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60"
+                          }`}
+                      >
+                          {tab.icon} {tab.label}
+                      </button>
+                  ))}
+                </div>
 
                 {batchTab === "students" && (
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3 }}>
@@ -910,7 +911,7 @@ export default function AdminDashboard() {
 
         <AnimatePresence>
         {showCreateBatchModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[70]">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[130]">
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white dark:bg-slate-800/60 rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700/80">
                     <div className="p-6 border-b border-gray-200 dark:border-slate-700/80 flex justify-between items-center">
                         <h3 className="text-xl font-black text-zinc-800 dark:text-white flex items-center gap-2"><LayoutGrid size={20} className="text-blue-500"/> Create New Batch</h3>
@@ -939,7 +940,7 @@ export default function AdminDashboard() {
 
         <AnimatePresence>
         {showAddStudentModal && selectedBatch && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[70]">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[130]">
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white dark:bg-slate-800/60 rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700/80">
                     <div className="p-6 border-b border-gray-200 dark:border-slate-700/80 flex justify-between items-center">
                         <div>
@@ -977,7 +978,7 @@ export default function AdminDashboard() {
 
         <AnimatePresence>
         {showSelectBatchModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[60]">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[120]">
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white dark:bg-slate-800/60 rounded-[2rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh] border border-slate-200 dark:border-slate-700/80">
                     <div className="p-6 border-b border-gray-200 dark:border-slate-700/80 flex justify-between items-center">
                         <h3 className="text-xl font-black text-zinc-800 dark:text-white">Select Batch to Add Student</h3>
@@ -1013,7 +1014,7 @@ export default function AdminDashboard() {
 
         <AnimatePresence>
         {showShareModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[120]">
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white dark:bg-slate-800/60 rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl relative border border-slate-200 dark:border-slate-700/80">
                     <button onClick={() => setShowShareModal(false)} className="absolute top-4 right-4 p-2 bg-gray-100 dark:bg-zinc-800 rounded-full hover:bg-red-100 dark:hover:bg-red-900/20 text-gray-500 dark:text-gray-400 hover:text-red-500 transition z-10"><X size={20}/></button>
                     
@@ -1046,7 +1047,7 @@ export default function AdminDashboard() {
 
         <AnimatePresence>
         {showAllBatches && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-50">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[120]">
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white dark:bg-slate-800/60 rounded-[2rem] w-full max-w-lg overflow-hidden shadow-2xl flex flex-col max-h-[80vh] border border-slate-200 dark:border-slate-700/80">
                     <div className="p-6 border-b border-gray-200 dark:border-slate-700/80 flex justify-between items-center gap-4">
                         <h3 className="text-xl font-black text-zinc-800 dark:text-white flex-1">All Batches ({batches.length})</h3>
@@ -1083,17 +1084,17 @@ export default function AdminDashboard() {
 
         <AnimatePresence>
         {selectedStudent && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white dark:bg-slate-800/60 rounded-[2rem] w-full max-w-md overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700/80">
-                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700 p-6 text-white flex justify-between items-start shadow-inner">
-                      <div>
-                          <h3 className="text-3xl font-black tracking-tight">{selectedStudent.name}</h3>
-                          <p className="text-blue-100 text-sm font-medium mt-1 bg-black/20 inline-block px-3 py-1 rounded-full">{selectedStudent.phone}</p>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/80 backdrop-blur-md flex items-center justify-center p-4 z-[120]">
+              <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white dark:bg-slate-800/60 rounded-[2rem] w-full max-w-md max-h-[90vh] overflow-y-auto custom-scrollbar shadow-2xl border border-slate-200 dark:border-slate-700/80 flex flex-col">
+                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700 p-6 text-white flex justify-between items-start shadow-inner shrink-0">
+                      <div className="min-w-0 pr-4">
+                          <h3 className="text-2xl sm:text-3xl font-black tracking-tight truncate">{selectedStudent.name}</h3>
+                          <p className="text-blue-100 text-sm font-medium mt-1 bg-black/20 inline-block px-3 py-1 rounded-full truncate max-w-full">{selectedStudent.phone}</p>
                       </div>
-                      <button onClick={() => setSelectedStudent(null)} className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition"><X size={20}/></button>
+                      <button onClick={() => setSelectedStudent(null)} className="bg-white/10 hover:bg-white/20 p-2 rounded-full transition shrink-0"><X size={20}/></button>
                   </div>
                    
-                  <div className="p-6 space-y-6">
+                  <div className="p-4 sm:p-6 space-y-6 shrink-0">
                       <div className="grid grid-cols-2 gap-4">
                           <div className="bg-green-50 dark:bg-green-900/10 p-5 rounded-2xl border border-green-200 dark:border-green-800/30 text-center">
                               <div className="text-4xl font-black text-green-600 dark:text-green-400">{getStats(selectedStudent).attPercent}%</div>
@@ -1115,7 +1116,7 @@ export default function AdminDashboard() {
                                   placeholder="Test Identifier (e.g., Midterms)"
                                   value={newTest.name}
                                   onChange={e => setNewTest({...newTest, name: e.target.value})}
-                                  className="flex-1 bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 p-3.5 rounded-xl text-sm outline-none focus:border-blue-500 text-zinc-800 dark:text-white transition-colors"
+                                  className="flex-1 min-w-0 bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 p-3.5 rounded-xl text-sm outline-none focus:border-blue-500 text-zinc-800 dark:text-white transition-colors"
                               />
                               <input 
                                   type="number" 
@@ -1123,7 +1124,7 @@ export default function AdminDashboard() {
                                   min="0" max="100"
                                   value={newTest.score}
                                   onChange={e => setNewTest({...newTest, score: e.target.value})}
-                                  className="w-24 bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 p-3.5 rounded-xl text-sm text-center outline-none focus:border-blue-500 text-zinc-800 dark:text-white transition-colors font-bold"
+                                  className="w-20 sm:w-24 shrink-0 bg-white dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 p-3.5 rounded-xl text-sm text-center outline-none focus:border-blue-500 text-zinc-800 dark:text-white transition-colors font-bold"
                               />
                           </div>
                           <motion.button whileTap={{ scale: 0.98 }} onClick={saveTestScore} className="w-full bg-blue-600 text-white py-3.5 rounded-xl font-bold hover:bg-blue-700 transition-all text-sm shadow-lg shadow-blue-500/20">
@@ -1133,17 +1134,17 @@ export default function AdminDashboard() {
                           {selectedStudent.performanceHistory && selectedStudent.performanceHistory.length > 0 && (
                               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-slate-700/80">
                                   <h4 className="text-[11px] font-bold text-zinc-500 uppercase tracking-widest mb-4">Recorded Academic History</h4>
-                                  <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                                  <div className="space-y-3">
                                       {selectedStudent.performanceHistory.map((test, index) => (
-                                          <div key={test.id} className="flex flex-col sm:flex-row justify-between sm:items-center bg-white dark:bg-slate-800/50 p-4 rounded-[1rem] border border-slate-200 dark:border-slate-700/80 gap-4 sm:gap-2 hover:border-blue-300 dark:hover:border-blue-700/50 transition-colors">
-                                              <div className="flex gap-3 items-center">
+                                          <div key={test.id} className="flex flex-col sm:flex-row justify-between sm:items-center bg-white dark:bg-slate-800/50 p-4 rounded-[1rem] border border-slate-200 dark:border-slate-700/80 gap-3 sm:gap-2 hover:border-blue-300 dark:hover:border-blue-700/50 transition-colors w-full">
+                                              <div className="flex gap-3 items-center min-w-0">
                                                   <div className="w-8 h-8 rounded-full bg-gray-100 dark:bg-zinc-800 flex items-center justify-center text-xs font-bold text-zinc-500 dark:text-zinc-400 shrink-0">{index + 1}</div>
-                                                  <div>
-                                                      <p className="text-sm font-black text-zinc-800 dark:text-zinc-200">{test.name}</p>
+                                                  <div className="min-w-0 flex-1">
+                                                      <p className="text-sm font-black text-zinc-800 dark:text-zinc-200 truncate">{test.name}</p>
                                                       <p className="text-[10px] font-medium text-zinc-500 mt-0.5">{new Date(test.date).toLocaleDateString()}</p>
                                                   </div>
                                               </div>
-                                              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto ml-11 sm:ml-0">
+                                              <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-t-0 border-slate-100 dark:border-slate-700/50 pt-3 sm:pt-0">
                                                   <div className={`px-3 py-1 rounded-lg text-sm font-black border ${
                                                       test.score >= 80 ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800/50' 
                                                       : test.score >= 50 ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/50'
@@ -1151,7 +1152,7 @@ export default function AdminDashboard() {
                                                   }`}>
                                                       {test.score}%
                                                   </div>
-                                                  <div className="flex items-center gap-1">
+                                                  <div className="flex items-center gap-1 shrink-0">
                                                       <button onClick={() => setEditTestModal(test)} className="p-2 text-zinc-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:text-blue-400 dark:hover:bg-blue-900/30 rounded-lg transition" title="Edit Test">
                                                           <Edit size={16}/>
                                                       </button>
@@ -1175,7 +1176,7 @@ export default function AdminDashboard() {
         {/* MODAL FOR EDITING TEST SCORES */}
         <AnimatePresence>
         {editTestModal && (
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[90]">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center p-4 z-[130]">
                 <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }} className="bg-white dark:bg-slate-800/60 rounded-[2rem] w-full max-w-sm overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700/80">
                     <div className="p-6 border-b border-gray-200 dark:border-slate-700/80 flex justify-between items-center">
                         <h3 className="text-xl font-black text-zinc-800 dark:text-white flex items-center gap-2"><Edit size={20} className="text-blue-500"/> Edit Test Result</h3>

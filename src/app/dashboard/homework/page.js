@@ -7,7 +7,7 @@ import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   BookOpen, Plus, Trash2, CheckCircle, X, LayoutGrid, 
-  Calendar, Clock, ChevronRight, AlertCircle
+  Calendar, Clock, ChevronRight, AlertCircle, ChevronDown, Search
 } from "lucide-react";
 
 const Toast = ({ message, type, onClose }) => (
@@ -40,6 +40,10 @@ export default function HomeworkDashboard() {
   const [toast, setToast] = useState(null);
   
   const [newAssignment, setNewAssignment] = useState({ title: "", description: "" });
+  
+  // Mobile specific states
+  const [isMobileSelectOpen, setIsMobileSelectOpen] = useState(false);
+  const [batchSearchQuery, setBatchSearchQuery] = useState("");
 
   useEffect(() => {
     setMounted(true);
@@ -99,12 +103,13 @@ export default function HomeworkDashboard() {
             });
         });
         
-        list.sort((a, b) => a.name.localeCompare(b.name));
+        // Use numeric collation to properly sort Class 7, Class 8, Class 9, Class 10, etc.
+        list.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
         setBatches(list);
 
         // Keep selected batch up to date if data changes
         setSelectedBatch(prev => {
-            if (!prev) return list.length > 0 ? list[0] : null; // Auto-select first batch if none selected
+            if (!prev) return null; // Default to null so "Select" is shown initially
             return list.find(b => b.id === prev.id) || null;
         });
         
@@ -159,6 +164,10 @@ export default function HomeworkDashboard() {
     }
   };
 
+  const filteredBatches = batches.filter(b => 
+    b.name.toLowerCase().includes(batchSearchQuery.toLowerCase())
+  );
+
   if (!mounted) return null;
 
   return (
@@ -181,12 +190,79 @@ export default function HomeworkDashboard() {
             </div>
         </motion.div>
 
+        {/* Mobile Batch Selector */}
+        <div className="block lg:hidden relative z-[60]">
+            <button
+                onClick={() => setIsMobileSelectOpen(!isMobileSelectOpen)}
+                className="w-full bg-white/55 dark:bg-black/35 p-4 rounded-[1.5rem] border border-white/60 dark:border-zinc-800 flex justify-between items-center shadow-sm"
+            >
+                <div className="flex items-center gap-2">
+                    <LayoutGrid size={18} className="text-indigo-500"/>
+                    <span className="font-bold text-slate-700 dark:text-zinc-200">
+                        {selectedBatch ? selectedBatch.name : "Select"}
+                    </span>
+                </div>
+                <ChevronDown size={20} className={`text-slate-500 transition-transform ${isMobileSelectOpen ? 'rotate-180' : ''}`} />
+            </button>
+
+            <AnimatePresence>
+                {isMobileSelectOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        className="absolute top-full left-0 w-full mt-2 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-[1.5rem] shadow-xl p-4 z-50 flex flex-col max-h-[350px]"
+                    >
+                        <div className="relative mb-3">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+                            <input
+                                type="text"
+                                placeholder="Search batches..."
+                                value={batchSearchQuery}
+                                onChange={(e) => setBatchSearchQuery(e.target.value)}
+                                className="w-full bg-slate-100 dark:bg-zinc-800/50 pl-10 pr-4 py-3 rounded-xl text-sm outline-none border border-transparent focus:border-indigo-500 transition-colors dark:text-white"
+                            />
+                        </div>
+                        <div className="overflow-y-auto custom-scrollbar flex-1 space-y-1">
+                            {filteredBatches.length > 0 ? (
+                                filteredBatches.map(batch => {
+                                    const hwCount = Object.keys(batch.assignments || {}).length;
+                                    return (
+                                        <button
+                                            key={batch.id}
+                                            onClick={() => {
+                                                setSelectedBatch(batch);
+                                                setIsMobileSelectOpen(false);
+                                                setBatchSearchQuery("");
+                                            }}
+                                            className={`w-full text-left px-4 py-3 rounded-xl text-sm transition-colors flex justify-between items-center ${
+                                                selectedBatch?.id === batch.id
+                                                ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 font-black"
+                                                : "hover:bg-slate-100 dark:hover:bg-zinc-800/50 text-slate-700 dark:text-zinc-300 font-bold"
+                                            }`}
+                                        >
+                                            <span>{batch.name}</span>
+                                            <span className="text-[10px] bg-slate-200 dark:bg-zinc-700 px-2 py-1 rounded-md text-slate-600 dark:text-zinc-300">
+                                                {hwCount}
+                                            </span>
+                                        </button>
+                                    )
+                                })
+                            ) : (
+                                <div className="text-center py-4 text-slate-500 text-sm font-medium">No batches found</div>
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 relative">
           
-          {/* Left Sidebar: Batches */}
+          {/* Desktop Left Sidebar: Batches (Hidden on mobile) */}
           <motion.div 
             initial={{ x: -12, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ duration: 0.2, ease: "easeInOut" }} 
-            className="glass-card lg:col-span-1 p-5 rounded-[2rem] h-fit flex flex-col max-h-[85vh]"
+            className="hidden lg:flex glass-card lg:col-span-1 p-5 rounded-[2rem] h-fit flex-col max-h-[85vh]"
           >
             <h2 className="font-bold text-slate-600 dark:text-zinc-300 mb-4 text-sm uppercase tracking-widest flex items-center gap-2">
                 <LayoutGrid size={16}/> Select Batch
