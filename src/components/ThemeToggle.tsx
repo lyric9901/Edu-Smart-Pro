@@ -9,7 +9,12 @@ const modes = [
   { value: "system", label: "System", icon: Monitor },
 ];
 
-export default function ThemeToggle({ compact = false, className = "" }) {
+interface ThemeToggleProps {
+  compact?: boolean;
+  className?: string;
+}
+
+export default function ThemeToggle({ compact = false, className = "" }: ThemeToggleProps) {
   const { theme, resolvedTheme, setTheme, mounted } = useTheme();
   const activeTheme = mounted ? theme : "system";
   const CurrentIcon = resolvedTheme === "dark" ? Moon : Sun;

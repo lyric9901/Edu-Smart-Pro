@@ -3,12 +3,13 @@ import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import PWAManager from "@/components/PWAManager";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"] });
 
 // --- SEO + META ---
-export const metadata = {
+export const metadata: Metadata = {
   manifest: "/manifest.json", 
   metadataBase: new URL("https://edusmartpro.in"),
 
@@ -58,7 +59,6 @@ export const metadata = {
     images: ["/icons/icon-384x384.png"],
   },
 
-  // 🔥 Proper favicon setup mapped to your actual files
   icons: {
     icon: [
       { url: "/favicon.ico" },
@@ -71,13 +71,17 @@ export const metadata = {
   },
 };
 
-export const viewport = {
+export const viewport: Viewport = {
   themeColor: "#000000",
   width: "device-width",
   initialScale: 1,
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   // Mitigates Dark Mode FOUC (Flash of Unstyled Content)
   const themeScript = `
     try {
@@ -97,7 +101,6 @@ export default function RootLayout({ children }) {
         <ThemeProvider>
           <AuthProvider>
             <Toaster position="bottom-right" reverseOrder={false} />
-            {/* 🔥 PWA handler */}
             <PWAManager />
             {children}
           </AuthProvider>

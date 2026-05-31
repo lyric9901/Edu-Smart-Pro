@@ -10,9 +10,9 @@ import { motion, AnimatePresence } from "framer-motion";
 
 export default function SuperAdmin() {
   const router = useRouter();
-  const [schools, setSchools] = useState({}); 
-  const [admins, setAdmins] = useState({});   
-  const [combinedData, setCombinedData] = useState([]);
+  const [schools, setSchools] = useState<any>({}); 
+  const [admins, setAdmins] = useState<any>({});   
+  const [combinedData, setCombinedData] = useState<any[]>([]);
   
   const [masterKey, setMasterKey] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -21,8 +21,8 @@ export default function SuperAdmin() {
   const [showPasswords, setShowPasswords] = useState({});
 
   // --- MODAL STATES ---
-  const [editingSchool, setEditingSchool] = useState(null); 
-  const [resettingPassword, setResettingPassword] = useState(null); 
+  const [editingSchool, setEditingSchool] = useState<any>(null); 
+  const [resettingPassword, setResettingPassword] = useState<any>(null); 
   
   // --- FORMS ---
   const [editForm, setEditForm] = useState({ name: "", owner: "", phone: "" });
@@ -36,7 +36,7 @@ export default function SuperAdmin() {
   }, []);
 
   // 2. AUTH
-  const handleLogin = (e) => {
+  const handleLogin = (e: any) => {
     e.preventDefault();
     const secret = process.env.NEXT_PUBLIC_SUPER_ADMIN_KEY || "998357"; 
     if (masterKey === secret) {
@@ -59,13 +59,13 @@ export default function SuperAdmin() {
     if (isAuthenticated) {
       // Fetch Institutions
       const unsubSchools = onSnapshot(collection(firestore, "institutions"), (snap) => {
-          const instData = {};
+          const instData: any = {};
           snap.forEach(doc => { instData[doc.id] = doc.data(); });
           setSchools(instData);
       });
       // Fetch Admins
       const unsubAdmins = onSnapshot(collection(firestore, "admins"), (snap) => {
-          const admData = {};
+          const admData: any = {};
           snap.forEach(doc => { admData[doc.id] = doc.data(); });
           setAdmins(admData);
       });
@@ -76,9 +76,9 @@ export default function SuperAdmin() {
   // 4. COMBINE DATA
   useEffect(() => {
     if (schools) {
-      const list = Object.entries(schools).map(([id, val]) => {
+      const list = Object.entries(schools).map(([id, val]: [string, any]) => {
         // Find admin matching this institution code
-        const adminEntry = Object.entries(admins || {}).find(([_, v]) => v.institutionCode === id);
+        const adminEntry = Object.entries(admins || {}).find(([_, v]: [string, any]) => v.institutionCode === id);
         return {
           id, // This is the institutionCode (e.g., LPS)
           name: val.name,
@@ -97,7 +97,7 @@ export default function SuperAdmin() {
   // --- ACTIONS ---
 
   // A. DELETE SCHOOL (Firestore)
-  const deleteSchool = async (schoolId, schoolName, username) => {
+  const deleteSchool = async (schoolId: string, schoolName: string, username: string) => {
     if (confirm(`⚠️ PERMANENTLY DELETE "${schoolName}"?\n\nThis will remove all branches, students, and login access.`)) {
         try {
             await deleteDoc(doc(firestore, "institutions", schoolId));
@@ -110,7 +110,7 @@ export default function SuperAdmin() {
   };
 
   // B. EDIT SCHOOL INFO (Firestore)
-  const openEditModal = (school) => {
+  const openEditModal = (school: any) => {
       setEditingSchool(school);
       setEditForm({ name: school.name, owner: school.owner, phone: school.phone });
   };
@@ -130,7 +130,7 @@ export default function SuperAdmin() {
   };
 
   // C. CHANGE PASSWORD (Firestore)
-  const openPassModal = (school) => {
+  const openPassModal = (school: any) => {
       setResettingPassword(school);
       setPassForm(""); 
   };
@@ -148,8 +148,8 @@ export default function SuperAdmin() {
       }
   };
 
-  const togglePassword = (id) => {
-    setShowPasswords(prev => ({ ...prev, [id]: !prev[id] }));
+  const togglePassword = (id: string) => {
+    setShowPasswords((prev: any) => ({ ...prev, [id]: !prev[id] }));
   };
 
   if (!isClient) return null; 
@@ -168,7 +168,7 @@ export default function SuperAdmin() {
     );
   }
 
-  const filteredSchools = combinedData.filter(s => 
+  const filteredSchools = combinedData.filter((s: any) => 
     (s.name?.toLowerCase() || "").includes(search.toLowerCase()) || 
     (s.owner?.toLowerCase() || "").includes(search.toLowerCase()) ||
     (s.id?.toLowerCase() || "").includes(search.toLowerCase())
@@ -206,7 +206,7 @@ export default function SuperAdmin() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-zinc-800/50">
-                            {filteredSchools.map((school) => (
+                            {filteredSchools.map((school: any) => (
                                 <tr key={school.id} className="hover:bg-zinc-800/30 transition">
                                     <td className="p-5">
                                         <div className="flex items-center gap-2">
