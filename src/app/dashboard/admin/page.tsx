@@ -62,7 +62,7 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
 
   const [newTest, setNewTest] = useState({ name: "", score: "" });
-  const [editTestModal, setEditTestModal] = useState(null); // Added state for editing tests
+  const [editTestModal, setEditTestModal] = useState(null); 
 
   const [isEditingBatch, setIsEditingBatch] = useState(false);
   const [editBatchName, setEditBatchName] = useState("");
@@ -365,19 +365,60 @@ export default function AdminDashboard() {
     showToast("Student removed");
   };
 
+  // UPDATED DOWNLOAD QR LOGIC
   const downloadQR = () => {
     const svg = document.getElementById("magic-qr");
-    if (!svg) return;
+    if (!svg) {
+      showToast("QR Code not found", "error");
+      return;
+    }
+    
+    // Convert SVG to string
     const svgData = new XMLSerializer().serializeToString(svg);
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    
+    // Use a scale factor for high-resolution output (prevents blur on mobile)
+    const scale = 3;
+    const width = 200; // Matches QRCodeSVG size prop
+    const height = 200;
+    canvas.width = width * scale;
+    canvas.height = height * scale;
+    
+    // Create blob from SVG
     const blob = new Blob([svgData], { type: "image/svg+xml;charset=utf-8" });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `${user?.institutionCode}-qrcode.svg`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    showToast("QR Code Downloaded");
+    
+    img.onload = () => {
+      if (ctx) {
+        // Fill canvas with white background so transparent parts aren't black
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Scale up and draw the image
+        ctx.scale(scale, scale);
+        ctx.drawImage(img, 0, 0, width, height);
+        
+        // Export to high-quality PNG
+        const pngUrl = canvas.toDataURL("image/png");
+        
+        // Trigger download
+        const link = document.createElement("a");
+        link.href = pngUrl;
+        link.download = `${user?.institutionCode}-qrcode.png`;
+        document.body.appendChild(link);
+        link.click();
+        
+        // Cleanup
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        showToast("QR Code Downloaded as PNG!");
+      }
+    };
+    
+    img.src = url;
   };
 
   const getStats = (student) => {
@@ -509,7 +550,6 @@ export default function AdminDashboard() {
             </div>
         )}
 
-        {/* DESKTOP BANNER: Moved to Top Since Header is Gone */}
         <motion.div 
             initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }}
             className={`bg-gradient-to-r from-blue-600 to-indigo-700 rounded-[2rem] p-6 text-white shadow-xl shadow-blue-500/10 flex-col md:flex-row justify-between items-center gap-6 relative overflow-hidden hidden md:flex`}
