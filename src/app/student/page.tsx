@@ -286,12 +286,13 @@ function StudentContent() {
     };
 
     const stats = useMemo(() => {
-        if (!currentStudent) return { attPercent: 0, feePaid: 0, streak: 0, monthlyData: [], monthLabels: [] };
+        if (!currentStudent) return { attPercent: 0, feePaid: 0, streak: 0, monthlyData: [], monthLabels: [], attTotal: 0, attPresent: 0, attAbsent: 0 };
 
         const allAttendanceValues = Object.values(currentStudent.attendance || {});
         const validDays = allAttendanceValues.filter(v => v === "present" || v === "absent");
         const attTotal = validDays.length;
         const attPresent = validDays.filter(v => v === "present").length;
+        const attAbsent = validDays.filter(v => v === "absent").length;
         const attPercent = attTotal ? Math.round((attPresent / attTotal) * 100) : 0;
 
         const currentYear = new Date().getFullYear();
@@ -315,7 +316,7 @@ function StudentContent() {
             monthlyData.push(t ? Math.round((p / t) * 100) : 0);
         }
 
-        return { attPercent, feePaid, monthlyData, monthLabels };
+        return { attPercent, feePaid, monthlyData, monthLabels, attTotal, attPresent, attAbsent };
     }, [currentStudent]);
 
     if (!mounted || loading) return (
@@ -501,7 +502,47 @@ function StudentContent() {
                         )}
 
                         {activeTab === 'attendance' && (
-                            <motion.div key="att" variants={pageVariants} initial="hidden" animate="visible" exit="exit">
+                            <motion.div key="att" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4 md:space-y-6">
+                                
+                                {/* --- NEW ATTENDANCE SUMMARY CARD --- */}
+                                <div className="bg-white dark:bg-[#0b1120] border border-slate-100 dark:border-white/5 shadow-sm p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] flex flex-col gap-6">
+                                    <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
+                                        <div>
+                                            <h3 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white">Attendance Summary</h3>
+                                            <p className="text-xs md:text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">Your overall attendance record for the session.</p>
+                                        </div>
+                                        <div className="flex gap-4 md:gap-6">
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total Days</span>
+                                                <span className="text-xl md:text-2xl font-black text-slate-700 dark:text-slate-300">{stats.attTotal}</span>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[10px] md:text-xs font-black text-emerald-500 uppercase tracking-widest mb-1">Present</span>
+                                                <span className="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400">{stats.attPresent}</span>
+                                            </div>
+                                            <div className="flex flex-col items-end">
+                                                <span className="text-[10px] md:text-xs font-black text-rose-500 uppercase tracking-widest mb-1">Absent</span>
+                                                <span className="text-xl md:text-2xl font-black text-rose-600 dark:text-rose-400">{stats.attAbsent}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-4">
+                                        <div className="flex-1 bg-slate-100 dark:bg-white/5 rounded-full h-3 md:h-4 overflow-hidden relative">
+                                            <motion.div 
+                                                initial={{ width: 0 }} 
+                                                animate={{ width: `${stats.attPercent}%` }} 
+                                                transition={{ duration: 1.2, ease: "easeOut" }}
+                                                className={`absolute left-0 top-0 bottom-0 rounded-full ${stats.attPercent >= 75 ? 'bg-emerald-500' : stats.attPercent >= 50 ? 'bg-yellow-500' : 'bg-rose-500'}`}
+                                            />
+                                        </div>
+                                        <span className={`text-xl md:text-2xl font-black tracking-tight ${stats.attPercent >= 75 ? 'text-emerald-500' : stats.attPercent >= 50 ? 'text-yellow-500' : 'text-rose-500'}`}>
+                                            {stats.attPercent}%
+                                        </span>
+                                    </div>
+                                </div>
+
+                                {/* --- EXISTING CALENDAR --- */}
                                 <div className="bg-white dark:bg-[#0b1120] border border-slate-100 dark:border-white/5 shadow-sm p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem]">
                                     <div className="flex justify-between items-center mb-5 md:mb-10">
                                         <h3 className="font-black text-lg md:text-2xl text-slate-900 dark:text-white tracking-tight">{viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
