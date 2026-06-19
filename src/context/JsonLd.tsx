@@ -13,10 +13,10 @@ export default function JsonLd() {
     },
     "offers": {
       "@type": "Offer",
-      "price": "0", // Update this if you have a paid tier!
+      "price": "0", 
       "priceCurrency": "INR"
     },
-    "keywords": "Coaching App, Attendance Tracker, Fee Manager, EduSmart Pro , School managemt, Tuition App India, Edu Smart Pro, Edu Smart, EduSmart, Godhra Coaching, Best Coaching App, Coaching Center Management, Student Management, Fee Collection, Attendance Automation, Coaching Software, EduTech India, Coaching Center Software, EduSmart Pro App",
+    "keywords": "Coaching App, Attendance Tracker, Fee Manager, EduSmart Pro"
   };
 
   return (

@@ -102,10 +102,7 @@ export default function RootLayout({
           <AuthProvider>
             <Toaster position="bottom-right" reverseOrder={false} />
             <PWAManager />
-            {/* W wrapped right here 👇 */}
-            <main>
-              {children}
-            </main>
+            {children}
           </AuthProvider>
         </ThemeProvider>
       </body>

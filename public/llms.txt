@@ -1,18 +1,12 @@
 # Edu Smart Pro
-> AI-powered education and smart learning platform made with hardword of school student.
+> The ultimate AI-powered app to automate attendance, fees, and student management for coaching centers.
 
-## Features
-- Smart Dashboards for Students and Admins
-- Automated Attendance and Fee Tracking
-- AI-driven Homework Assistance
-- Built in Notification system
-- Smart student and batch creator
-- 11/10 UI/UX 
-- Affordable pricing
-- end to end support 
-- Full money back if you dont like product . Read edusmartpro.in/legal/refund .
-- Can be customized as per demand
-- No 1 coaching management app in UP , made in INDIAN STUDENT with proud
+## Core Features
+- [Dashboard](/dashboard/): Smart dashboards for Admins and Students.
+- [Attendance Tracking](/dashboard/attendance/): Automated attendance logging.
+- [Fee Management](/dashboard/fees/): Track payments and dues instantly.
+- [Homework AI](/dashboard/homework/): AI-driven homework assistance.
 
-## Agent Instructions
-This site is fully accessible. Use standard DOM interaction to navigate between the login, dashboard, and legal pages.
+## Legal & Info
+- [Privacy Policy](/legal/privacy/): How we protect your data.
+- [Terms of Service](/legal/term/): Rules of the platform.
