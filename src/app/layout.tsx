@@ -5,74 +5,49 @@ import { ThemeProvider } from "@/context/ThemeContext";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-// 🚀 Performance tweak: display swap is mandatory for text performance
+// 🚀 display: "swap" is mandatory for text performance
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
 // 🚀 THE CHEAT CODE: Lazy load non-critical client components
+// This stops them from blocking the mobile main thread!
 const Toaster = dynamic(() => import("react-hot-toast").then((mod) => mod.Toaster), { ssr: false });
 const PWAManager = dynamic(() => import("@/components/PWAManager"), { ssr: false });
 const JsonLd = dynamic(() => import("@/context/JsonLd"), { ssr: false });
 
-// --- SEO + META (Fully expanded like the original!) ---
+// --- SEO + META ---
 export const metadata: Metadata = {
   manifest: "/manifest.json", 
   metadataBase: new URL("https://edusmartpro.in"),
-
   title: {
     default: "EduSmart Pro | #1 Coaching Management App",
     template: "%s | EduSmart Pro",
   },
-
-  description:
-    "Automate attendance, fees, and student management. The smartest app for coaching centers in India.",
-
-  keywords: [
-    "Coaching App",
-    "Attendance Tracker",
-    "Fee Manager",
-    "Tuition App India",
-    "EduSmart Pro",
-    "Edu Smart Pro",
-    "Edu Smart",
-    "EduSmart",
-    "Godhra Coaching",
-  ],
-
+  description: "Automate attendance, fees, and student management. The smartest app for coaching centers in India.",
+  keywords: ["Coaching App", "Attendance Tracker", "Fee Manager", "EduSmart Pro"],
   authors: [{ name: "Shah Nawaz Ali" }],
   creator: "Shah Nawaz Ali",
-
   openGraph: {
     title: "EduSmart Pro - Digital Coaching Management",
     description: "Manage fees & attendance in seconds. Try it now!",
     url: "https://edusmartpro.in",
     siteName: "EduSmart Pro",
-    images: [
-      {
-        url: "/icons/icon-384x384.png", 
-        width: 384,
-        height: 384,
-      },
-    ],
+    images: [{ url: "/icons/icon-384x384.png", width: 384, height: 384 }],
     locale: "en_IN",
     type: "website",
   },
-
   twitter: {
     card: "summary_large_image",
     title: "EduSmart Pro | Smart Coaching App",
     description: "Automate your coaching center today.",
     images: ["/icons/icon-384x384.png"],
   },
-
   icons: {
     icon: [
       { url: "/favicon.ico" },
       { url: "/icons/icon-48x48.png", sizes: "48x48", type: "image/png" },
       { url: "/icons/icon-72x72.png", sizes: "72x72", type: "image/png" },
     ],
-    apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
-    ],
+    apple: [{ url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" }],
   },
 };
 
@@ -82,12 +57,7 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  // Mitigates Dark Mode FOUC (Flash of Unstyled Content)
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   const themeScript = `
     try {
       var preference = localStorage.getItem("eduSmartTheme") || "system";
@@ -105,17 +75,12 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <AuthProvider>
+            <main>{children}</main>
             
-            {/* W wrapped right here 👇 */}
-            <main>
-              {children}
-            </main>
-
-            {/* These will now load in the background without nuking your mobile score */}
+            {/* These will now load in the background without nuking your score */}
             <PWAManager />
             <Toaster position="bottom-right" reverseOrder={false} />
             <JsonLd />
-            
           </AuthProvider>
         </ThemeProvider>
       </body>
