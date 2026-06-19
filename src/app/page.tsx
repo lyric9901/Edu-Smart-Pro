@@ -75,14 +75,14 @@ export default function LandingPage() {
   return (
     <div className="app-shell min-h-screen font-sans text-slate-900 selection:bg-blue-100 dark:text-slate-100 dark:selection:bg-blue-500/30">
       
-      {/* --- NAVBAR --- */}
-      <nav className="glass-panel fixed top-0 w-full z-40 border-x-0 border-t-0">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* --- HEADER & NAVBAR --- */}
+      <header className="glass-panel fixed top-0 w-full z-40 border-x-0 border-t-0">
+        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main Navigation">
           <div className="flex justify-between h-16 items-center">
             {/* Logo */}
             <div className="flex items-center gap-2 z-50 relative">
               <div className="bg-blue-600 p-1.5 rounded-lg">
-                <Shield className="text-white w-5 h-5" />
+                <Shield className="text-white w-5 h-5" aria-hidden="true" />
               </div>
               <span className="font-black text-xl tracking-tight text-slate-900 dark:text-white">EduSmart<span className="text-blue-600 dark:text-blue-400">Pro</span></span>
             </div>
@@ -112,13 +112,15 @@ export default function LandingPage() {
 
             {/* Mobile Menu Button */}
             <button 
+              aria-label={isMenuOpen ? "Close menu" : "Open menu"}
+              aria-expanded={isMenuOpen}
               className="touch-target lg:hidden text-slate-600 hover:bg-white/60 rounded-xl transition z-50 relative dark:text-slate-200 dark:hover:bg-white/10" 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              {isMenuOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
             </button>
           </div>
-        </div>
+        </nav>
 
         {/* Mobile Menu Overlay */}
         <AnimatePresence>
@@ -153,126 +155,129 @@ export default function LandingPage() {
             </motion.div>
           )}
         </AnimatePresence>
-      </nav>
+      </header>
 
-      {/* --- HERO SECTION --- */}
-      <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden">
-        <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[500px] h-[500px] bg-blue-100 rounded-full blur-3xl opacity-50 dark:bg-blue-500/20 dark:opacity-30"></div>
-        <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-purple-100 rounded-full blur-3xl opacity-50 dark:bg-fuchsia-500/15 dark:opacity-25"></div>
+      {/* --- MAIN CONTENT AREA --- */}
+      <main>
+        {/* --- HERO SECTION --- */}
+        <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden" aria-labelledby="hero-heading">
+          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[500px] h-[500px] bg-blue-100 rounded-full blur-3xl opacity-50 dark:bg-blue-500/20 dark:opacity-30" aria-hidden="true"></div>
+          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-purple-100 rounded-full blur-3xl opacity-50 dark:bg-fuchsia-500/15 dark:opacity-25" aria-hidden="true"></div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.32, ease: "easeInOut" }}
-            className="gpu-animated"
-          >
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold mb-6 sm:mb-8 dark:bg-white/12 dark:border-white/20 dark:text-blue-100">
-              <Zap size={14} fill="currentColor" /> New: Automated WhatsApp Notices
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+            <motion.div 
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.32, ease: "easeInOut" }}
+              className="gpu-animated"
+            >
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold mb-6 sm:mb-8 dark:bg-white/12 dark:border-white/20 dark:text-blue-100">
+                <Zap size={14} fill="currentColor" aria-hidden="true" /> New: Automated WhatsApp Notices
+              </div>
+              <h1 id="hero-heading" className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 leading-[1.1] dark:text-white">
+                Manage your Coaching <br/>
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Like a Pro.</span>
+              </h1>
+              <p className="text-base sm:text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed px-2 dark:text-slate-200">
+                Attendance, Fees, Notices, and Student Tracking—all in one beautiful app. 
+                Give your institute the digital upgrade it deserves.
+              </p>
+              
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link href="/register" className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-xl shadow-blue-200 hover:bg-blue-700 transition flex items-center justify-center gap-2">
+                  Get Started for Free <ArrowRight size={18} aria-hidden="true" />
+                </Link>
+                <Link href="/login" className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 font-bold border border-slate-200 rounded-xl hover:bg-slate-50 transition text-center dark:bg-slate-900 dark:text-white dark:border-slate-800 dark:hover:bg-slate-800">
+                  Existing User Login
+                </Link>
+              </div>
+
+              <p className="mt-8 text-xs text-slate-500 font-medium uppercase tracking-wider dark:text-slate-400">
+                Trusted by 100+ Institutes in India
+              </p>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* --- FEATURES SECTION --- */}
+        <section id="features" className="py-20" aria-labelledby="features-heading">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-10 sm:mb-16">
+              <h2 id="features-heading" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-4">Everything you need</h2>
+              <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">Stop using WhatsApp groups and Excel sheets.</p>
             </div>
-            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 leading-[1.1] dark:text-white">
-              Manage your Coaching <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Like a Pro.</span>
-            </h1>
-            <p className="text-base sm:text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed px-2 dark:text-slate-200">
-              Attendance, Fees, Notices, and Student Tracking—all in one beautiful app. 
-              Give your institute the digital upgrade it deserves.
-            </p>
-            
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link href="/register" className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-xl shadow-blue-200 hover:bg-blue-700 transition flex items-center justify-center gap-2">
-                Get Started for Free <ArrowRight size={18} />
-              </Link>
-              <Link href="/login" className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 font-bold border border-slate-200 rounded-xl hover:bg-slate-50 transition text-center dark:bg-slate-900 dark:text-white dark:border-slate-800 dark:hover:bg-slate-800">
-                Existing User Login
-              </Link>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8">
+              <FeatureCard 
+                icon={<Users className="text-blue-600 dark:text-blue-400" size={22} aria-hidden="true" />}
+                title="Student Management"
+                desc="Track academic journeys in one click."
+                delay={0.1}
+              />
+              <FeatureCard 
+                icon={<BarChart3 className="text-purple-600 dark:text-purple-400" size={22} aria-hidden="true" />}
+                title="Smart Attendance"
+                desc="Instant alerts for absent students."
+                delay={0.2}
+              />
+              <FeatureCard 
+                icon={<CheckCircle2 className="text-green-600 dark:text-green-400" size={22} aria-hidden="true" />}
+                title="Fee Tracking"
+                desc="Automated reminders & receipts."
+                delay={0.3}
+              />
+              <FeatureCard 
+                icon={<MessageSquare className="text-orange-600 dark:text-orange-400" size={22} aria-hidden="true" />}
+                title="Notice Board"
+                desc="Broadcast updates to everyone instantly."
+                delay={0.4}
+              />
             </div>
-
-            <p className="mt-8 text-xs text-slate-500 font-medium uppercase tracking-wider dark:text-slate-400">
-              Trusted by 100+ Institutes in India
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* --- FEATURES SECTION (2x2 Grid on Mobile) --- */}
-      <section id="features" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-10 sm:mb-16">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-4">Everything you need</h2>
-            <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">Stop using WhatsApp groups and Excel sheets.</p>
           </div>
+        </section>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8">
-            <FeatureCard 
-              icon={<Users className="text-blue-600 dark:text-blue-400" size={22} />}
-              title="Student Management"
-              desc="Track academic journeys in one click."
-              delay={0.1}
-            />
-            <FeatureCard 
-              icon={<BarChart3 className="text-purple-600 dark:text-purple-400" size={22} />}
-              title="Smart Attendance"
-              desc="Instant alerts for absent students."
-              delay={0.2}
-            />
-            <FeatureCard 
-              icon={<CheckCircle2 className="text-green-600 dark:text-green-400" size={22} />}
-              title="Fee Tracking"
-              desc="Automated reminders & receipts."
-              delay={0.3}
-            />
-            <FeatureCard 
-              icon={<MessageSquare className="text-orange-600 dark:text-orange-400" size={22} />}
-              title="Notice Board"
-              desc="Broadcast updates to everyone instantly."
-              delay={0.4}
-            />
-          </div>
-        </div>
-      </section>
+        {/* --- REVIEWS SECTION --- */}
+        <section id="reviews" className="py-20" aria-labelledby="reviews-heading">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <motion.div {...fadeInUp} className="text-center mb-10 sm:mb-16">
+              <h2 id="reviews-heading" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">Loved by Owners</h2>
+            </motion.div>
 
-      {/* --- REVIEWS SECTION (2x2 Grid on Mobile) --- */}
-      <section id="reviews" className="py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div {...fadeInUp} className="text-center mb-10 sm:mb-16">
-            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">Loved by Owners</h2>
-          </motion.div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
-            {reviews.map((review, index) => (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, scale: 0.9 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.26, delay: Math.min(index * 0.05, 0.1), ease: "easeInOut" }}
-                viewport={{ once: true, margin: "0px" }}
-                className="gpu-animated glass-card p-4 sm:p-8 rounded-2xl flex flex-col h-full dark:bg-white/5 dark:border-white/10"
-              >
-                <div className="flex gap-0.5 mb-2 sm:mb-4">
-                  {[...Array(review.rating)].map((_, i) => (
-                    <Star key={i} size={12} className="fill-yellow-400 text-yellow-400 sm:w-4 sm:h-4" />
-                  ))}
-                </div>
-                <p className="text-slate-700 dark:text-slate-300 mb-4 italic text-[11px] sm:text-base flex-grow">"{review.text}"</p>
-                
-                <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="w-6 h-6 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-[10px] sm:text-sm shrink-0">
-                    {review.name[0]}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+              {reviews.map((review, index) => (
+                <motion.div 
+                  key={index}
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  whileInView={{ opacity: 1, scale: 1 }}
+                  transition={{ duration: 0.26, delay: Math.min(index * 0.05, 0.1), ease: "easeInOut" }}
+                  viewport={{ once: true, margin: "0px" }}
+                  className="gpu-animated glass-card p-4 sm:p-8 rounded-2xl flex flex-col h-full dark:bg-white/5 dark:border-white/10"
+                >
+                  <div className="flex gap-0.5 mb-2 sm:mb-4" aria-label={`Rating: ${review.rating} out of 5 stars`}>
+                    {[...Array(review.rating)].map((_, i) => (
+                      <Star key={i} size={12} className="fill-yellow-400 text-yellow-400 sm:w-4 sm:h-4" aria-hidden="true" />
+                    ))}
                   </div>
-                  <div className="overflow-hidden">
-                    <h4 className="font-bold text-[12px] sm:text-sm text-slate-900 dark:text-white truncate">{review.name}</h4>
-                    <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">{review.role}</p>
+                  <p className="text-slate-700 dark:text-slate-300 mb-4 italic text-[11px] sm:text-base flex-grow">"{review.text}"</p>
+                  
+                  <div className="flex items-center gap-2 sm:gap-3">
+                    <div className="w-6 h-6 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-[10px] sm:text-sm shrink-0" aria-hidden="true">
+                      {review.name[0]}
+                    </div>
+                    <div className="overflow-hidden">
+                      <h4 className="font-bold text-[12px] sm:text-sm text-slate-900 dark:text-white truncate">{review.name}</h4>
+                      <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">{review.role}</p>
+                    </div>
                   </div>
-                </div>
-              </motion.div>
-            ))}
+                </motion.div>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      </main>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800">
+      <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800" aria-label="Site Footer">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="col-span-1 sm:col-span-2 lg:col-span-2">
             <h3 className="text-white font-black text-xl mb-4">EduSmart Pro</h3>
@@ -308,13 +313,19 @@ export default function LandingPage() {
       {/* --- CONTACT US MODAL --- */}
       <AnimatePresence>
         {isContactOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+          <div 
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="modal-title"
+          >
             <motion.div 
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsContactOpen(false)}
               className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm dark:bg-black/60"
+              aria-hidden="true"
             />
             <motion.div 
               variants={modalVariants}
@@ -325,39 +336,40 @@ export default function LandingPage() {
             >
               <div className="p-6 sm:p-8">
                 <div className="flex justify-between items-center mb-6">
-                  <h3 className="text-2xl font-black text-slate-900 dark:text-white">Get in touch</h3>
+                  <h3 id="modal-title" className="text-2xl font-black text-slate-900 dark:text-white">Get in touch</h3>
                   <button 
                     onClick={() => setIsContactOpen(false)}
+                    aria-label="Close contact modal"
                     className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition"
                   >
-                    <X size={20} />
+                    <X size={20} aria-hidden="true" />
                   </button>
                 </div>
                 
                 <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setIsContactOpen(false); }}>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
-                    <input type="text" required className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/50 outline-none transition" placeholder="Your Name" />
+                    <label htmlFor="name-input" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
+                    <input id="name-input" type="text" required className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/50 outline-none transition" placeholder="Your Name" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                    <input type="email" required className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/50 outline-none transition" placeholder="you@example.com" />
+                    <label htmlFor="email-input" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
+                    <input id="email-input" type="email" required className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/50 outline-none transition" placeholder="you@example.com" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Message</label>
-                    <textarea required rows={4} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/50 outline-none transition resize-none" placeholder="How can we help you?"></textarea>
+                    <label htmlFor="msg-input" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Message</label>
+                    <textarea id="msg-input" required rows={4} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/50 outline-none transition resize-none" placeholder="How can we help you?"></textarea>
                   </div>
                   <button type="submit" className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition flex justify-center items-center gap-2">
-                    Send Message <ArrowRight size={18} />
+                    Send Message <ArrowRight size={18} aria-hidden="true" />
                   </button>
                 </form>
 
                 <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 pt-6 border-t border-slate-100 dark:border-slate-800">
                   <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm font-medium">
-                    <Mail size={16} className="text-blue-600 dark:text-blue-400" /> shanibrooo@gmail.com
+                    <Mail size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" /> shanibrooo@gmail.com
                   </div>
                   <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm font-medium">
-                    <Phone size={16} className="text-blue-600 dark:text-blue-400" /> +91 73887-39691
+                    <Phone size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" /> +91 73887-39691
                   </div>
                 </div>
               </div>

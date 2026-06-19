@@ -122,7 +122,10 @@ function LoginPortal() {
                 const dbPass = s.password || "";
 
                 const nameMatch = (dbName === inputName);
-                const passMatch = (dbPass === inputPass) || (dbPhone === inputPass);
+                
+                // If a custom password exists, strictly check against that. 
+                // Otherwise, fallback to the phone number. No more permanent skeleton keys! 
+                const passMatch = dbPass ? (dbPass === inputPass) : (dbPhone === inputPass);
 
                 return nameMatch && passMatch;
             });

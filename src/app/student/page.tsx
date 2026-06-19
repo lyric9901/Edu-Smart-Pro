@@ -36,15 +36,24 @@ const Skeleton = ({ className }) => (
     <div className={`animate-pulse bg-slate-200/75 dark:bg-white/10 backdrop-blur-md rounded-2xl ${className}`} />
 );
 
-const springConfig = { duration: 0.22, ease: "easeInOut" };
-const fastSpringConfig = { duration: 0.16, ease: "easeInOut" };
-const modalSpring = { duration: 0.22, ease: "easeInOut" };
+// Helper: normalize firestore Timestamp / date / number to epoch ms
+function getTimestamp(val: any) {
+    if (!val) return 0;
+    if (typeof val === 'number') return val;
+    if (val?.toDate && typeof val.toDate === 'function') return val.toDate().getTime();
+    return new Date(val).getTime();
+}
+
+// Use framer-motion's predefined easing names with `as const` for proper type narrowing
+const springConfig = { duration: 0.22, ease: "easeInOut" } as const;
+const fastSpringConfig = { duration: 0.16, ease: "easeInOut" } as const;
+const modalSpring = { duration: 0.22, ease: "easeInOut" } as const;
 
 const pageVariants = {
     hidden: { opacity: 0, x: 10, scale: 0.98 },
     visible: { opacity: 1, x: 0, scale: 1, transition: springConfig },
     exit: { opacity: 0, x: -10, scale: 0.98, transition: { duration: 0.15, ease: "easeIn" } }
-};
+} as const;
 
 const viewVariants = {
     hidden: (direction) => ({ opacity: 0, x: direction === 'right' ? 20 : -20 }),
@@ -134,7 +143,7 @@ function StudentContent() {
                 }
 
                 if (data.assignments) {
-                    setAssignments(Object.values(data.assignments).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+                    setAssignments(Object.values(data.assignments).sort((a: any, b: any) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt)));
                 } else {
                     setAssignments([]);
                 }
@@ -145,7 +154,7 @@ function StudentContent() {
         const unsubNotices = onSnapshot(noticesRef, (snapshot) => {
             const list = [];
             snapshot.forEach(docSnap => list.push({ id: docSnap.id, ...docSnap.data(), type: 'notice' }));
-            list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+            list.sort((a: any, b: any) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
             setNotices(list);
         });
 
@@ -160,7 +169,7 @@ function StudentContent() {
             ? currentStudent.notifications.map(val => ({ ...val, isPersonal: true }))
             : [];
         const global = notices || [];
-        return [...personal, ...global].sort((a, b) => new Date(b.date || b.createdAt) - new Date(a.date || a.createdAt));
+        return [...personal, ...global].sort((a: any, b: any) => getTimestamp(b.date || b.createdAt) - getTimestamp(a.date || a.createdAt));
     }, [currentStudent, notices]);
 
 
@@ -227,7 +236,8 @@ function StudentContent() {
 
         } catch (err) {
             if (err instanceof z.ZodError) {
-                setAddError(err.errors[0].message); 
+                const zErr = err as z.ZodError;
+                setAddError(zErr.issues?.[0]?.message || "Invalid input");
             } else {
                 setAddError("Connection failed.");
             }
@@ -318,6 +328,26 @@ function StudentContent() {
 
         return { attPercent, feePaid, monthlyData, monthLabels, attTotal, attPresent, attAbsent };
     }, [currentStudent]);
+
+    // NEW: Dynamic stats for exactly what is showing on the calendar
+    const currentMonthStats = useMemo(() => {
+        if (!currentStudent) return { total: 0, present: 0, absent: 0, percent: 0 };
+        
+        const year = viewDate.getFullYear();
+        const month = viewDate.getMonth();
+
+        const daysInMonth = Object.entries(currentStudent.attendance || {}).filter(([k, v]) => {
+            const kDate = new Date(k);
+            return kDate.getMonth() === month && kDate.getFullYear() === year && (v === 'present' || v === 'absent');
+        });
+
+        const total = daysInMonth.length;
+        const present = daysInMonth.filter(([, v]) => v === 'present').length;
+        const absent = daysInMonth.filter(([, v]) => v === 'absent').length;
+        const percent = total ? Math.round((present / total) * 100) : 0;
+
+        return { total, present, absent, percent };
+    }, [currentStudent, viewDate]);
 
     if (!mounted || loading) return (
         <div className="app-shell min-h-screen p-4 space-y-4 select-none relative overflow-hidden">
@@ -504,25 +534,27 @@ function StudentContent() {
                         {activeTab === 'attendance' && (
                             <motion.div key="att" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="space-y-4 md:space-y-6">
                                 
-                                {/* --- NEW ATTENDANCE SUMMARY CARD --- */}
+                                {/* --- UPDATED DYNAMIC ATTENDANCE SUMMARY CARD --- */}
                                 <div className="bg-white dark:bg-[#0b1120] border border-slate-100 dark:border-white/5 shadow-sm p-5 md:p-8 rounded-[1.5rem] md:rounded-[2.5rem] flex flex-col gap-6">
                                     <div className="flex flex-col md:flex-row justify-between md:items-end gap-4">
                                         <div>
-                                            <h3 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white">Attendance Summary</h3>
-                                            <p className="text-xs md:text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">Your overall attendance record for the session.</p>
+                                            <h3 className="text-lg md:text-2xl font-black text-slate-900 dark:text-white capitalize">
+                                                {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })} Summary
+                                            </h3>
+                                            <p className="text-xs md:text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">Your attendance record for this month.</p>
                                         </div>
                                         <div className="flex gap-4 md:gap-6">
                                             <div className="flex flex-col items-end">
                                                 <span className="text-[10px] md:text-xs font-black text-slate-400 uppercase tracking-widest mb-1">Total Days</span>
-                                                <span className="text-xl md:text-2xl font-black text-slate-700 dark:text-slate-300">{stats.attTotal}</span>
+                                                <span className="text-xl md:text-2xl font-black text-slate-700 dark:text-slate-300">{currentMonthStats.total}</span>
                                             </div>
                                             <div className="flex flex-col items-end">
                                                 <span className="text-[10px] md:text-xs font-black text-emerald-500 uppercase tracking-widest mb-1">Present</span>
-                                                <span className="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400">{stats.attPresent}</span>
+                                                <span className="text-xl md:text-2xl font-black text-emerald-600 dark:text-emerald-400">{currentMonthStats.present}</span>
                                             </div>
                                             <div className="flex flex-col items-end">
                                                 <span className="text-[10px] md:text-xs font-black text-rose-500 uppercase tracking-widest mb-1">Absent</span>
-                                                <span className="text-xl md:text-2xl font-black text-rose-600 dark:text-rose-400">{stats.attAbsent}</span>
+                                                <span className="text-xl md:text-2xl font-black text-rose-600 dark:text-rose-400">{currentMonthStats.absent}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -531,13 +563,13 @@ function StudentContent() {
                                         <div className="flex-1 bg-slate-100 dark:bg-white/5 rounded-full h-3 md:h-4 overflow-hidden relative">
                                             <motion.div 
                                                 initial={{ width: 0 }} 
-                                                animate={{ width: `${stats.attPercent}%` }} 
+                                                animate={{ width: `${currentMonthStats.percent}%` }} 
                                                 transition={{ duration: 1.2, ease: "easeOut" }}
-                                                className={`absolute left-0 top-0 bottom-0 rounded-full ${stats.attPercent >= 75 ? 'bg-emerald-500' : stats.attPercent >= 50 ? 'bg-yellow-500' : 'bg-rose-500'}`}
+                                                className={`absolute left-0 top-0 bottom-0 rounded-full ${currentMonthStats.percent >= 75 ? 'bg-emerald-500' : currentMonthStats.percent >= 50 ? 'bg-yellow-500' : 'bg-rose-500'}`}
                                             />
                                         </div>
-                                        <span className={`text-xl md:text-2xl font-black tracking-tight ${stats.attPercent >= 75 ? 'text-emerald-500' : stats.attPercent >= 50 ? 'text-yellow-500' : 'text-rose-500'}`}>
-                                            {stats.attPercent}%
+                                        <span className={`text-xl md:text-2xl font-black tracking-tight ${currentMonthStats.percent >= 75 ? 'text-emerald-500' : currentMonthStats.percent >= 50 ? 'text-yellow-500' : 'text-rose-500'}`}>
+                                            {currentMonthStats.percent}%
                                         </span>
                                     </div>
                                 </div>

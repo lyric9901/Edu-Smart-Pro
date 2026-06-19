@@ -119,10 +119,10 @@ export default function PricingPage() {
       {/* --- HERO TEXT --- */}
       <div className="text-center pt-16 pb-8 px-4">
         <h1 className="text-4xl md:text-5xl font-black text-slate-900 mb-4">
-          Simple, Transparent Pricing
+          Simple, Monthly Subscriptions
         </h1>
         <p className="text-lg text-slate-500 max-w-2xl mx-auto">
-          Choose the plan that fits your institute's size. No hidden fees. Upgrade anytime as you grow.
+          No lifetime contracts. No weird one-time fees. Just a clean, transparent monthly subscription. Choose the plan that fits your institute and upgrade anytime.
         </p>
       </div>
 
@@ -175,7 +175,7 @@ export default function PricingPage() {
                   </div>
                   {plan.originalPrice ? (
                     <p className="text-slate-400 text-sm">
-                      Normally <span className="line-through">₹{plan.originalPrice}</span>
+                      Normally <span className="line-through">₹{plan.originalPrice}</span> /mo
                     </p>
                   ) : (
                     <p className="text-slate-400 text-sm opacity-0">Spacer</p>
@@ -190,7 +190,7 @@ export default function PricingPage() {
                   </ul>
 
                   <Link
-                    href={`/register?plan=${plan.name.toLowerCase()}`}
+                    href={`https://wa.me/7388739691/?plan=${plan.name.toLowerCase()}`}
                     className={`block w-full py-4 font-bold rounded-xl text-center transition shadow-lg ${
                       plan.popular
                         ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/30"
@@ -222,8 +222,8 @@ export default function PricingPage() {
       </div>
       
       {/* Footer Text */}
-      <div className="text-center mt-16 text-slate-400 text-sm">
-        <p>Prices are subject to change. 18% GST applicable.</p>
+      <div className="text-center mt-16 text-slate-400 text-sm font-medium">
+        <p>This is a recurring monthly subscription. Cancel anytime. 18% GST applicable.</p>
       </div>
     </div>
   );
