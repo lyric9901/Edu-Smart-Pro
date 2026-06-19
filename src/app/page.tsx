@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect, ReactNode } from "react";
-import { motion, AnimatePresence, Variants } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   CheckCircle2, 
   ArrowRight, 
@@ -18,13 +18,6 @@ import {
   MessageSquare
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
-
-interface FeatureCardProps {
-  icon: ReactNode;
-  title: string;
-  desc: string;
-  delay: number;
-}
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -43,10 +36,10 @@ export default function LandingPage() {
     initial: { opacity: 0, y: 20 },
     whileInView: { opacity: 1, y: 0 },
     viewport: { once: true, margin: "0px" },
-    transition: { duration: 0.32, ease: "easeInOut" as const }
+    transition: { duration: 0.32, ease: "easeInOut" }
   };
 
-  const modalVariants: Variants = {
+  const modalVariants = {
     hidden: { opacity: 0, scale: 0.95, y: 20 },
     visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.2 } },
     exit: { opacity: 0, scale: 0.95, y: 20, transition: { duration: 0.2 } }
@@ -175,7 +168,7 @@ export default function LandingPage() {
             <motion.div 
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.32, ease: "easeInOut" as const }}
+              transition={{ duration: 0.32, ease: "easeInOut" }}
               className="gpu-animated"
             >
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold mb-6 sm:mb-8 dark:bg-white/12 dark:border-white/20 dark:text-blue-100">
@@ -256,7 +249,7 @@ export default function LandingPage() {
                   key={index}
                   initial={{ opacity: 0, scale: 0.9 }}
                   whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.26, delay: Math.min(index * 0.05, 0.1), ease: "easeInOut" as const }}
+                  transition={{ duration: 0.26, delay: Math.min(index * 0.05, 0.1), ease: "easeInOut" }}
                   viewport={{ once: true, margin: "0px" }}
                   className="gpu-animated glass-card p-4 sm:p-8 rounded-2xl flex flex-col h-full dark:bg-white/5 dark:border-white/10"
                 >
@@ -389,13 +382,13 @@ export default function LandingPage() {
   );
 }
 
-// Adjusted Feature Card with proper interface to fix TS2322
-function FeatureCard({ icon, title, desc, delay }: FeatureCardProps) {
+// Adjusted Feature Card for smaller 2-column mobile view with Dark Mode
+function FeatureCard({ icon, title, desc, delay }) {
   return (
     <motion.div 
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.26, delay: Math.min(delay, 0.1), ease: "easeInOut" as const }}
+      transition={{ duration: 0.26, delay: Math.min(delay, 0.1), ease: "easeInOut" }}
       viewport={{ once: true, margin: "0px" }}
       className="gpu-animated glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl transition-all group flex flex-col h-full dark:bg-white/5 dark:border-white/10"
     >
