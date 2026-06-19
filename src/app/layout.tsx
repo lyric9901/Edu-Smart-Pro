@@ -1,14 +1,19 @@
 import { Inter } from "next/font/google";
-import { Toaster } from "react-hot-toast";
+import dynamic from "next/dynamic";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
-import PWAManager from "@/components/PWAManager";
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] });
+// 🚀 Performance tweak: display swap is mandatory for text performance
+const inter = Inter({ subsets: ["latin"], display: "swap" });
 
-// --- SEO + META ---
+// 🚀 THE CHEAT CODE: Lazy load non-critical client components
+const Toaster = dynamic(() => import("react-hot-toast").then((mod) => mod.Toaster), { ssr: false });
+const PWAManager = dynamic(() => import("@/components/PWAManager"), { ssr: false });
+const JsonLd = dynamic(() => import("@/context/JsonLd"), { ssr: false });
+
+// --- SEO + META (Fully expanded like the original!) ---
 export const metadata: Metadata = {
   manifest: "/manifest.json", 
   metadataBase: new URL("https://edusmartpro.in"),
@@ -100,9 +105,17 @@ export default function RootLayout({
       <body className={inter.className}>
         <ThemeProvider>
           <AuthProvider>
-            <Toaster position="bottom-right" reverseOrder={false} />
+            
+            {/* W wrapped right here 👇 */}
+            <main>
+              {children}
+            </main>
+
+            {/* These will now load in the background without nuking your mobile score */}
             <PWAManager />
-            {children}
+            <Toaster position="bottom-right" reverseOrder={false} />
+            <JsonLd />
+            
           </AuthProvider>
         </ThemeProvider>
       </body>
