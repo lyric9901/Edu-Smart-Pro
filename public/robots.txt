@@ -1,12 +1,24 @@
-# public/robots.txt
-
+# Let the normal bots in
 User-agent: *
 Allow: /
-
-# Block search engines from indexing internal dashboard routes
 Disallow: /dashboard/
 Disallow: /student/
 Disallow: /super-admin/
 
-# Point crawlers directly to your dynamic Next.js sitemap
+# Let the AI cook (Perplexity, ChatGPT, Claude)
+User-agent: PerplexityBot
+Allow: /
+Disallow: /dashboard/
+
+User-agent: GPTBot
+Allow: /
+Disallow: /dashboard/
+
+User-agent: Claude-Bot
+Allow: /
+Disallow: /dashboard/
+
+User-agent: Google-Extended
+Allow: /
+
 Sitemap: https://edusmartpro.in/sitemap.xml
