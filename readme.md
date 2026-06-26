@@ -82,5 +82,5 @@ To run this project locally, follow these steps:
 
 1. **Clone the repository:**
 ```bash
-   git clone [https://github.com/lyric9901/edu-smart-pro.git](https://github.com/lyric9901/edu-smart-pro.git)
+   git clone https://github.com/lyric9901/edu-smart-pro.git
    cd edu-smart-pro
