@@ -69,7 +69,7 @@ Edu-Smart-Pro doesn't do spaghetti code. Depending on your auth level, the app d
 * **Homework & Notices:** Digital portal for assignments and instant broadcasts to specific batches.
 * **Dynamic Scheduling:** Timetable management that actually makes sense.
 
-### <img src="https://img.icons8.com/3d-fluency/94/backpack.png" width="24" align="center" /> Student Portal (Zero Distractions)
+### <img src="https://img.icons8.com/3d-fluency/94/books.png" width="24" align="center" /> Student Portal (Zero Distractions)
 * **Clean UI:** A personalized dashboard to view performance, pending dues, and classes without getting distracted by a messy interface.
 * **Real-time Sync:** Instant updates from the Admin's notice board straight to the student's screen.
 
