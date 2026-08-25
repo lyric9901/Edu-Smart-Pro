@@ -15,7 +15,13 @@ import {
   Star,
   Mail,
   Phone,
-  MessageSquare
+  MessageSquare,
+  Search,
+  Bell,
+  LayoutDashboard,
+  CreditCard,
+  ChevronRight,
+  TrendingUp
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 
@@ -23,26 +29,39 @@ export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
 
-  // Prevent background scrolling when modal is open
   useEffect(() => {
-    if (isContactOpen) {
+    if (isContactOpen || isMenuOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
-  }, [isContactOpen]);
+  }, [isContactOpen, isMenuOpen]);
 
-  const fadeInUp = {
-    initial: { opacity: 0, y: 20 },
+  // Scroll Appear Animations
+  const scrollReveal = {
+    initial: { opacity: 0, y: 30 },
     whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, margin: "0px" },
-    transition: { duration: 0.32, ease: "easeInOut" }
+    viewport: { once: true, margin: "-40px" },
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
   };
 
-  const modalVariants = {
-    hidden: { opacity: 0, scale: 0.95, y: 20 },
-    visible: { opacity: 1, scale: 1, y: 0, transition: { duration: 0.2 } },
-    exit: { opacity: 0, scale: 0.95, y: 20, transition: { duration: 0.2 } }
+  const staggerContainer = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: { staggerChildren: 0.15 }
+    }
+  };
+
+  const staggerItem = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+  };
+
+  // Floating Animation for Mockups
+  const floatingAnimation = {
+    animate: { y: [0, -12, 0] },
+    transition: { duration: 5, repeat: Infinity, ease: "easeInOut" }
   };
 
   const reviews = [
@@ -73,40 +92,38 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="app-shell min-h-screen font-sans text-slate-900 selection:bg-blue-100 dark:text-slate-100 dark:selection:bg-blue-500/30">
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-900 selection:bg-blue-200 dark:bg-[#0B0F19] dark:text-slate-100 dark:selection:bg-blue-500/30 overflow-x-hidden">
       
+      {/* --- BACKGROUND ELEMENTS --- */}
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMCwgMCwgMCwgMC4wNSkiLz48L3N2Zz4=')] dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wNSkiLz48L3N2Zz4=')] [mask-image:linear-gradient(to_bottom,white,transparent_85%)]"></div>
+      </div>
+
       {/* --- HEADER & NAVBAR --- */}
-      <header className="glass-panel fixed top-0 w-full z-40 border-x-0 border-t-0">
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8" aria-label="Main Navigation">
+      <header className="fixed top-0 w-full z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 dark:bg-[#0B0F19]/80 dark:border-slate-800/80 transition-colors">
+        <nav className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8" aria-label="Main Navigation">
           <div className="flex justify-between h-16 items-center">
-            {/* Logo */}
             <div className="flex items-center gap-2 z-50 relative">
-              <div className="bg-blue-600 p-1.5 rounded-lg">
+              <div className="bg-blue-600 p-1.5 rounded-lg shadow-sm">
                 <Shield className="text-white w-5 h-5" aria-hidden="true" />
               </div>
-              <span className="font-black text-xl tracking-tight text-slate-900 dark:text-white">EduSmart<span className="text-blue-600 dark:text-blue-400">Pro</span></span>
+              <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
+                EduSmart<span className="text-blue-600 dark:text-blue-400">Pro</span>
+              </span>
             </div>
 
             {/* Desktop Links */}
             <div className="hidden lg:flex items-center gap-8">
-              <a href="#features" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition dark:text-slate-300 dark:hover:text-blue-300">Features</a>
-              <a href="#reviews" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition dark:text-slate-300 dark:hover:text-blue-300">Reviews</a>
-              <Link href="/pricing" className="text-sm font-medium text-slate-600 hover:text-blue-600 transition dark:text-slate-300 dark:hover:text-blue-300">Pricing</Link>
-              <button 
-                onClick={() => setIsContactOpen(true)} 
-                className="text-sm font-medium text-slate-600 hover:text-blue-600 transition dark:text-slate-300 dark:hover:text-blue-300"
-              >
+              <a href="#features" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">Features</a>
+              <a href="#reviews" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">Reviews</a>
+              <Link href="/pricing" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">Pricing</Link>
+              <button onClick={() => setIsContactOpen(true)} className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">
                 Contact Us
               </button>
               <ThemeToggle compact />
-              
-              <div className="flex items-center gap-3 ml-2 border-l pl-6 border-slate-200 dark:border-white/10">
-                <Link href="/login" className="touch-target inline-flex items-center px-4 text-sm font-bold text-slate-700 hover:text-slate-900 transition dark:text-slate-200 dark:hover:text-white">
-                  Institute Login
-                </Link>
-                <Link href="/register" className="touch-target inline-flex items-center px-5 text-sm font-bold bg-slate-900 text-white rounded-2xl hover:bg-black transition shadow-lg shadow-slate-200 dark:bg-white dark:text-slate-950 dark:shadow-black/30">
-                  Register Free
-                </Link>
+              <div className="flex items-center gap-3 ml-2 border-l pl-6 border-slate-200 dark:border-slate-800">
+                <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">Institute Login</Link>
+                <Link href="/register" className="inline-flex items-center px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-sm dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100">Register Free</Link>
               </div>
             </div>
 
@@ -114,7 +131,7 @@ export default function LandingPage() {
             <button 
               aria-label={isMenuOpen ? "Close menu" : "Open menu"}
               aria-expanded={isMenuOpen}
-              className="touch-target lg:hidden text-slate-600 hover:bg-white/60 rounded-xl transition z-50 relative dark:text-slate-200 dark:hover:bg-white/10" 
+              className="lg:hidden p-2 -mr-2 text-slate-700 hover:bg-slate-100 rounded-md transition-colors z-50 relative dark:text-slate-200 dark:hover:bg-slate-800" 
               onClick={() => setIsMenuOpen(!isMenuOpen)}
             >
               {isMenuOpen ? <X size={24} aria-hidden="true" /> : <Menu size={24} aria-hidden="true" />}
@@ -127,186 +144,364 @@ export default function LandingPage() {
           {isMenuOpen && (
             <motion.div 
               initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
+              animate={{ height: "100vh", opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
-              className="lg:hidden overflow-hidden absolute w-full top-16 left-0 rounded-b-[1.5rem] border-b border-white/50 bg-white/92 shadow-2xl backdrop-blur-3xl dark:border-white/10 dark:bg-slate-950/92"
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+              className="lg:hidden absolute w-full top-16 left-0 bg-white border-b border-slate-200 shadow-2xl dark:bg-[#0B0F19] dark:border-slate-800 flex flex-col"
             >
-              <div className="p-4 flex flex-col space-y-2">
-                <a href="#features" onClick={() => setIsMenuOpen(false)} className="touch-target px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10">Features</a>
-                <a href="#reviews" onClick={() => setIsMenuOpen(false)} className="touch-target px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10">Reviews</a>
-                <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="touch-target px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10">Pricing</Link>
-                <button 
-                  onClick={() => { setIsContactOpen(true); setIsMenuOpen(false); }} 
-                  className="touch-target text-left px-4 py-3 font-medium text-slate-700 rounded-xl hover:bg-white/60 dark:text-slate-200 dark:hover:bg-white/10"
-                >
+              <div className="p-5 flex flex-col gap-2">
+                <a href="#features" onClick={() => setIsMenuOpen(false)} className="px-4 py-3.5 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800 transition-colors">Features</a>
+                <a href="#reviews" onClick={() => setIsMenuOpen(false)} className="px-4 py-3.5 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800 transition-colors">Reviews</a>
+                <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="px-4 py-3.5 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800 transition-colors">Pricing</Link>
+                <button onClick={() => { setIsContactOpen(true); setIsMenuOpen(false); }} className="px-4 py-3.5 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800 transition-colors text-left">
                   Contact Us
                 </button>
-                
-                <ThemeToggle className="w-full justify-center" />
-                <div className="h-px bg-slate-100 my-2 dark:bg-white/10"></div>
-                
-                <Link href="/login" onClick={() => setIsMenuOpen(false)} className="touch-target flex w-full items-center justify-center rounded-xl border border-slate-200 text-center font-bold text-slate-700 transition hover:bg-white/70 dark:border-white/20 dark:text-slate-100 dark:hover:bg-white/10">
-                  Institute Login
-                </Link>
-                <Link href="/register" onClick={() => setIsMenuOpen(false)} className="touch-target flex w-full items-center justify-center rounded-xl bg-blue-600 text-center font-bold text-white shadow-lg shadow-blue-500/20 transition hover:bg-blue-700">
-                  Register Now
-                </Link>
+                <div className="px-4 mt-2 mb-4"><ThemeToggle className="w-full justify-start" /></div>
+                <div className="flex flex-col gap-3">
+                  <Link href="/login" onClick={() => setIsMenuOpen(false)} className="w-full py-4 rounded-xl border-2 border-slate-200 font-bold text-slate-900 text-center transition-colors dark:border-slate-700 dark:text-white">
+                    Institute Login
+                  </Link>
+                  <Link href="/register" onClick={() => setIsMenuOpen(false)} className="w-full py-4 rounded-xl bg-blue-600 font-bold text-white text-center shadow-lg shadow-blue-500/25 transition-colors">
+                    Register Now
+                  </Link>
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
       </header>
 
-      {/* --- MAIN CONTENT AREA --- */}
-      <main>
+      <main className="relative z-10 pt-24 lg:pt-32">
+        
         {/* --- HERO SECTION --- */}
-        <section className="relative pt-32 pb-20 lg:pt-48 lg:pb-32 overflow-hidden" aria-labelledby="hero-heading">
-          <div className="absolute top-0 right-0 -mr-20 -mt-20 w-[500px] h-[500px] bg-blue-100 rounded-full blur-3xl opacity-50 dark:bg-blue-500/20 dark:opacity-30" aria-hidden="true"></div>
-          <div className="absolute bottom-0 left-0 -ml-20 -mb-20 w-[400px] h-[400px] bg-purple-100 rounded-full blur-3xl opacity-50 dark:bg-fuchsia-500/15 dark:opacity-25" aria-hidden="true"></div>
-
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 text-center">
+        <section className="px-5 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-20" aria-labelledby="hero-heading">
+          <div className="flex flex-col lg:flex-row items-center gap-14 lg:gap-10">
+            
             <motion.div 
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.32, ease: "easeInOut" }}
-              className="gpu-animated"
+              className="flex-1 text-left w-full pt-8 lg:pt-0"
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, ease: "easeOut" }}
             >
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-100 text-blue-700 text-xs font-bold mb-6 sm:mb-8 dark:bg-white/12 dark:border-white/20 dark:text-blue-100">
-                <Zap size={14} fill="currentColor" aria-hidden="true" /> New: Automated WhatsApp Notices
-              </div>
-              <h1 id="hero-heading" className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black tracking-tight text-slate-900 mb-6 leading-[1.1] dark:text-white">
-                Manage your Coaching <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">Like a Pro.</span>
+              <motion.div 
+                animate={{ y: [0, -5, 0] }} 
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200/60 text-blue-700 text-[11px] sm:text-xs font-semibold mb-6 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-300 shadow-sm"
+              >
+                <Zap size={14} className="fill-current" aria-hidden="true" /> 
+                New: Automated WhatsApp Notices
+              </motion.div>
+              
+              <h1 id="hero-heading" className="text-[2.5rem] leading-[1.1] sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 mb-5 dark:text-white">
+                Manage your Coaching <br />
+                <span className="text-blue-600 dark:text-blue-500">Like a Pro.</span>
               </h1>
-              <p className="text-base sm:text-lg md:text-xl text-slate-600 mb-10 max-w-2xl mx-auto leading-relaxed px-2 dark:text-slate-200">
+              
+              <p className="text-base sm:text-lg text-slate-600 mb-8 max-w-xl leading-relaxed dark:text-slate-400">
                 Attendance, Fees, Notices, and Student Tracking—all in one beautiful app. 
                 Give your institute the digital upgrade it deserves.
               </p>
               
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <Link href="/register" className="w-full sm:w-auto px-8 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-xl shadow-blue-200 hover:bg-blue-700 transition flex items-center justify-center gap-2">
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/register" className="w-full sm:w-auto px-6 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
                   Get Started for Free <ArrowRight size={18} aria-hidden="true" />
                 </Link>
-                <Link href="/login" className="w-full sm:w-auto px-8 py-4 bg-white text-slate-700 font-bold border border-slate-200 rounded-xl hover:bg-slate-50 transition text-center dark:bg-slate-900 dark:text-white dark:border-slate-800 dark:hover:bg-slate-800">
+                <Link href="/login" className="w-full sm:w-auto px-6 py-4 bg-white text-slate-800 font-bold border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-center dark:bg-[#111827] dark:text-slate-200 dark:border-slate-700">
                   Existing User Login
                 </Link>
               </div>
 
-              <p className="mt-8 text-xs text-slate-500 font-medium uppercase tracking-wider dark:text-slate-400">
-                Trusted by 100+ Institutes in India
-              </p>
+              <div className="mt-8 flex items-center gap-3">
+                <div className="flex -space-x-2">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-[#0B0F19] bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 shadow-sm">
+                      {String.fromCharCode(64 + i)}
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider dark:text-slate-400">
+                  Trusted by 100+ Institutes in India
+                </p>
+              </div>
+            </motion.div>
+
+            {/* FLOATING HERO MOCKUP */}
+            <motion.div 
+              className="flex-1 w-full relative"
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+            >
+              <motion.div {...floatingAnimation} className="relative z-10">
+                {/* Mobile Specific UI Widget (Hidden on Desktop) */}
+                <div className="lg:hidden w-full max-w-sm mx-auto bg-white rounded-[2rem] border-[6px] border-slate-100 shadow-2xl overflow-hidden dark:bg-[#111827] dark:border-slate-800">
+                  <div className="h-6 bg-slate-100 dark:bg-slate-800 flex justify-center items-center">
+                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
+                  </div>
+                  <div className="p-5">
+                    <div className="flex justify-between items-center mb-6">
+                      <div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Today's Revenue</div>
+                        <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">₹ 24,500</div>
+                      </div>
+                      <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center dark:bg-blue-500/10 dark:text-blue-400">
+                        <TrendingUp size={24} />
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-100 dark:bg-[#1A2235] dark:border-slate-700">
+                          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0"></div>
+                          <div className="flex-1">
+                            <div className="h-3 w-20 bg-slate-300 rounded mb-2 dark:bg-slate-600"></div>
+                            <div className="h-2 w-12 bg-slate-200 rounded dark:bg-slate-700"></div>
+                          </div>
+                          <ChevronRight size={16} className="text-slate-400" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Desktop Specific Mockup (Hidden on Mobile) */}
+                <div className="hidden lg:block w-full bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden dark:bg-[#111827] dark:border-slate-800">
+                  <div className="h-10 bg-slate-50 border-b border-slate-100 flex items-center px-4 gap-2 dark:bg-[#1A2235] dark:border-slate-800">
+                    <div className="flex gap-1.5"><div className="w-3 h-3 rounded-full bg-red-400"></div><div className="w-3 h-3 rounded-full bg-amber-400"></div><div className="w-3 h-3 rounded-full bg-green-400"></div></div>
+                  </div>
+                  <div className="flex h-[400px]">
+                    <div className="w-56 border-r border-slate-100 bg-slate-50/50 p-4 space-y-2 dark:border-slate-800 dark:bg-[#111827]">
+                      {[LayoutDashboard, Users, CreditCard, MessageSquare].map((Icon, i) => (
+                        <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${i === 0 ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400'}`}>
+                          <Icon size={18} />
+                          <div className={`h-2.5 rounded w-20 ${i === 0 ? 'bg-blue-400/50' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex-1 p-8 bg-white dark:bg-[#0B0F19]">
+                      <div className="flex gap-6 mb-8">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="flex-1 p-5 rounded-xl border border-slate-100 dark:border-slate-800">
+                            <div className="w-10 h-10 rounded-lg bg-blue-50 mb-3 dark:bg-blue-500/10"></div>
+                            <div className="w-20 h-3 bg-slate-200 rounded mb-2 dark:bg-slate-700"></div>
+                            <div className="w-12 h-5 bg-slate-800 rounded dark:bg-slate-300"></div>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="border border-slate-100 rounded-xl dark:border-slate-800">
+                        <div className="h-10 bg-slate-50 border-b border-slate-100 dark:bg-[#1A2235] dark:border-slate-800"></div>
+                        {[1, 2].map((i) => (
+                          <div key={i} className="p-4 border-b border-slate-50 flex items-center gap-4 dark:border-slate-800/50">
+                            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+                            <div className="w-32 h-3 bg-slate-200 rounded dark:bg-slate-700"></div>
+                            <div className="ml-auto w-16 h-3 bg-green-100 rounded dark:bg-green-500/20"></div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-blue-500/20 rounded-full blur-[80px] -z-10"></div>
             </motion.div>
           </div>
         </section>
 
         {/* --- FEATURES SECTION --- */}
-        <section id="features" className="py-20" aria-labelledby="features-heading">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-10 sm:mb-16">
-              <h2 id="features-heading" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white mb-4">Everything you need</h2>
-              <p className="text-slate-500 dark:text-slate-400 text-sm sm:text-base">Stop using WhatsApp groups and Excel sheets.</p>
-            </div>
+        <section id="features" className="py-20 lg:py-28 bg-white border-y border-slate-200 dark:bg-[#111827] dark:border-slate-800" aria-labelledby="features-heading">
+          <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+            <motion.div {...scrollReveal} className="text-left md:text-center mb-14 max-w-2xl mx-auto">
+              <h2 id="features-heading" className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-4">
+                Everything you need
+              </h2>
+              <p className="text-lg text-slate-600 dark:text-slate-400">
+                Stop using WhatsApp groups and Excel sheets.
+              </p>
+            </motion.div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-8">
-              <FeatureCard 
-                icon={<Users className="text-blue-600 dark:text-blue-400" size={22} aria-hidden="true" />}
-                title="Student Management"
-                desc="Track academic journeys in one click."
-                delay={0.1}
-              />
-              <FeatureCard 
-                icon={<BarChart3 className="text-purple-600 dark:text-purple-400" size={22} aria-hidden="true" />}
-                title="Smart Attendance"
-                desc="Instant alerts for absent students."
-                delay={0.2}
-              />
-              <FeatureCard 
-                icon={<CheckCircle2 className="text-green-600 dark:text-green-400" size={22} aria-hidden="true" />}
-                title="Fee Tracking"
-                desc="Automated reminders & receipts."
-                delay={0.3}
-              />
-              <FeatureCard 
-                icon={<MessageSquare className="text-orange-600 dark:text-orange-400" size={22} aria-hidden="true" />}
-                title="Notice Board"
-                desc="Broadcast updates to everyone instantly."
-                delay={0.4}
-              />
-            </div>
+            <motion.div 
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-40px" }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8"
+            >
+              {/* Feature 1 */}
+              <motion.div variants={staggerItem} className="bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800">
+                <div className="p-8 pb-6">
+                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-5 dark:bg-blue-500/20">
+                    <Users className="text-blue-600 dark:text-blue-400" size={24} aria-hidden="true" />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2">Student Management</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-base">Track academic journeys in one click.</p>
+                </div>
+                <div className="mt-auto px-8 pb-0">
+                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-5 pb-0 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
+                    {[1, 2, 3].map((i) => (
+                      <div key={i} className="flex items-center gap-4 py-3.5 border-b border-slate-100 last:border-0 dark:border-slate-700/50">
+                        <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+                        <div className="flex-1">
+                          <div className="w-24 h-2.5 bg-slate-300 rounded mb-2 dark:bg-slate-600"></div>
+                          <div className="w-16 h-2 bg-slate-200 rounded dark:bg-slate-700"></div>
+                        </div>
+                      </div>
+                    ))}
+                  </motion.div>
+                </div>
+              </motion.div>
+
+              {/* Feature 2 */}
+              <motion.div variants={staggerItem} className="bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800">
+                <div className="p-8 pb-6">
+                  <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-5 dark:bg-purple-500/20">
+                    <BarChart3 className="text-purple-600 dark:text-purple-400" size={24} aria-hidden="true" />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2">Smart Attendance</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-base">Instant alerts for absent students.</p>
+                </div>
+                <div className="mt-auto px-8 pb-0">
+                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-5 pb-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
+                    <div className="grid grid-cols-7 gap-2">
+                      {[...Array(14)].map((_, i) => (
+                        <div key={i} className={`aspect-square rounded-md ${i === 4 || i === 11 ? 'bg-red-100 dark:bg-red-500/20' : i === 7 ? 'bg-amber-100 dark:bg-amber-500/20' : 'bg-green-100 dark:bg-green-500/20'}`}></div>
+                      ))}
+                    </div>
+                  </motion.div>
+                </div>
+              </motion.div>
+
+              {/* Feature 3 */}
+              <motion.div variants={staggerItem} className="bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800">
+                <div className="p-8 pb-6">
+                  <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mb-5 dark:bg-green-500/20">
+                    <CheckCircle2 className="text-green-600 dark:text-green-400" size={24} aria-hidden="true" />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2">Fee Tracking</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-base">Automated reminders & receipts.</p>
+                </div>
+                <div className="mt-auto px-8 pb-0">
+                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-5 pb-0 flex flex-col gap-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
+                    {[1, 2].map((i) => (
+                      <div key={i} className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-slate-700/50">
+                        <div className="w-28 h-3 bg-slate-200 rounded dark:bg-slate-600"></div>
+                        <div className={`w-20 h-4 rounded-full ${i === 1 ? 'bg-green-100 dark:bg-green-500/20' : 'bg-amber-100 dark:bg-amber-500/20'}`}></div>
+                      </div>
+                    ))}
+                  </motion.div>
+                </div>
+              </motion.div>
+
+              {/* Feature 4 */}
+              <motion.div variants={staggerItem} className="bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800">
+                <div className="p-8 pb-6">
+                  <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mb-5 dark:bg-orange-500/20">
+                    <MessageSquare className="text-orange-600 dark:text-orange-400" size={24} aria-hidden="true" />
+                  </div>
+                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2">Notice Board</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-base">Broadcast updates to everyone instantly.</p>
+                </div>
+                <div className="mt-auto px-8 pb-0">
+                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-5 pb-0 flex flex-col gap-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
+                    <div className="w-[80%] bg-slate-100 rounded-xl rounded-tl-none p-4 dark:bg-slate-700">
+                      <div className="w-full h-2 bg-slate-300 rounded mb-2 dark:bg-slate-500"></div>
+                      <div className="w-2/3 h-2 bg-slate-200 rounded dark:bg-slate-600"></div>
+                    </div>
+                    <div className="w-[70%] bg-blue-50 self-end rounded-xl rounded-tr-none p-4 dark:bg-blue-500/10 mb-4">
+                      <div className="w-full h-2 bg-blue-200 rounded mb-2 dark:bg-blue-500/30"></div>
+                      <div className="w-1/2 h-2 bg-blue-200 rounded dark:bg-blue-500/20"></div>
+                    </div>
+                  </motion.div>
+                </div>
+              </motion.div>
+
+            </motion.div>
           </div>
         </section>
 
         {/* --- REVIEWS SECTION --- */}
-        <section id="reviews" className="py-20" aria-labelledby="reviews-heading">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <motion.div {...fadeInUp} className="text-center mb-10 sm:mb-16">
-              <h2 id="reviews-heading" className="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white">Loved by Owners</h2>
+        <section id="reviews" className="py-20 lg:py-28" aria-labelledby="reviews-heading">
+          <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+            <motion.div {...scrollReveal} className="text-left md:text-center mb-14">
+              <h2 id="reviews-heading" className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
+                Loved by Owners
+              </h2>
             </motion.div>
 
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-6">
+            <motion.div 
+              variants={staggerContainer}
+              initial="hidden"
+              whileInView="show"
+              viewport={{ once: true, margin: "-40px" }}
+              className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-8"
+            >
               {reviews.map((review, index) => (
                 <motion.div 
                   key={index}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  whileInView={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.26, delay: Math.min(index * 0.05, 0.1), ease: "easeInOut" }}
-                  viewport={{ once: true, margin: "0px" }}
-                  className="gpu-animated glass-card p-4 sm:p-8 rounded-2xl flex flex-col h-full dark:bg-white/5 dark:border-white/10"
+                  variants={staggerItem}
+                  className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full dark:bg-[#111827] dark:border-slate-800"
                 >
-                  <div className="flex gap-0.5 mb-2 sm:mb-4" aria-label={`Rating: ${review.rating} out of 5 stars`}>
+                  <div className="flex gap-1.5 mb-5" aria-label={`Rating: ${review.rating} out of 5 stars`}>
                     {[...Array(review.rating)].map((_, i) => (
-                      <Star key={i} size={12} className="fill-yellow-400 text-yellow-400 sm:w-4 sm:h-4" aria-hidden="true" />
+                      <Star key={i} size={18} className="fill-yellow-400 text-yellow-400" aria-hidden="true" />
                     ))}
                   </div>
-                  <p className="text-slate-700 dark:text-slate-300 mb-4 italic text-[11px] sm:text-base flex-grow">"{review.text}"</p>
+                  <p className="text-slate-700 dark:text-slate-300 mb-8 text-base sm:text-lg leading-relaxed flex-grow">
+                    "{review.text}"
+                  </p>
                   
-                  <div className="flex items-center gap-2 sm:gap-3">
-                    <div className="w-6 h-6 sm:w-10 sm:h-10 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold text-[10px] sm:text-sm shrink-0" aria-hidden="true">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-black text-lg shrink-0 dark:bg-slate-800 dark:text-slate-300" aria-hidden="true">
                       {review.name[0]}
                     </div>
                     <div className="overflow-hidden">
-                      <h4 className="font-bold text-[12px] sm:text-sm text-slate-900 dark:text-white truncate">{review.name}</h4>
-                      <p className="text-[9px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">{review.role}</p>
+                      <h4 className="font-bold text-base text-slate-900 dark:text-white truncate">{review.name}</h4>
+                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{review.role}</p>
                     </div>
                   </div>
                 </motion.div>
               ))}
-            </div>
+            </motion.div>
           </div>
         </section>
       </main>
 
       {/* --- FOOTER --- */}
-      <footer className="bg-slate-900 text-slate-400 py-12 border-t border-slate-800" aria-label="Site Footer">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <footer className="bg-white border-t border-slate-200 pt-16 pb-8 dark:bg-[#0B0F19] dark:border-slate-800" aria-label="Site Footer">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-12">
           <div className="col-span-1 sm:col-span-2 lg:col-span-2">
-            <h3 className="text-white font-black text-xl mb-4">EduSmart Pro</h3>
-            <p className="text-sm leading-relaxed max-w-xs">
+            <div className="flex items-center gap-2 mb-5">
+              <div className="bg-slate-900 p-1.5 rounded-lg dark:bg-white">
+                <Shield className="text-white w-5 h-5 dark:text-slate-900" aria-hidden="true" />
+              </div>
+              <h3 className="text-slate-900 font-bold text-xl dark:text-white">EduSmart Pro</h3>
+            </div>
+            <p className="text-base text-slate-500 leading-relaxed max-w-sm dark:text-slate-400">
               The #1 Management Platform for Coaching Institutes, Tuition Centers, and Schools in India.
             </p>
           </div>
           
-          <div>
-            <h4 className="text-white font-bold mb-4">Product</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/login" className="hover:text-white transition">Login</Link></li>
-              <li><Link href="/register" className="hover:text-white transition">Register</Link></li>
-              <li><Link href="/pricing" className="hover:text-white transition">Pricing</Link></li>
-              <li><button onClick={() => setIsContactOpen(true)} className="hover:text-white transition text-left w-full">Contact Us</button></li>
+          <div className="flex flex-col gap-3">
+            <h4 className="text-slate-900 font-bold mb-3 text-base dark:text-white">Product</h4>
+            <ul className="flex flex-col text-base text-slate-500 dark:text-slate-400 font-medium">
+              <li><Link href="/login" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Login</Link></li>
+              <li><Link href="/register" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Register</Link></li>
+              <li><Link href="/pricing" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Pricing</Link></li>
+              <li><button onClick={() => setIsContactOpen(true)} className="block py-2 text-left w-full hover:text-slate-900 transition-colors dark:hover:text-white">Contact Us</button></li>
             </ul>
           </div>
 
-          <div>
-            <h4 className="text-white font-bold mb-4">Legal</h4>
-            <ul className="space-y-2 text-sm">
-              <li><Link href="/legal/privacy" className="hover:text-white transition">Privacy Policy</Link></li>
-              <li><Link href="/legal/term" className="hover:text-white transition">Terms of Service</Link></li>
-              <li><Link href="/legal/refund" className="hover:text-white transition">Refund Policy</Link></li>
+          <div className="flex flex-col gap-3">
+            <h4 className="text-slate-900 font-bold mb-3 text-base dark:text-white">Legal</h4>
+            <ul className="flex flex-col text-base text-slate-500 dark:text-slate-400 font-medium">
+              <li><Link href="/legal/privacy" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Privacy Policy</Link></li>
+              <li><Link href="/legal/term" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Terms of Service</Link></li>
+              <li><Link href="/legal/refund" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Refund Policy</Link></li>
             </ul>
           </div>
         </div>
-        <div className="max-w-7xl mx-auto px-4 mt-12 pt-8 border-t border-slate-800 text-center text-xs">
-          © {new Date().getFullYear()} EduSmart Pro. All rights reserved. Made with ❤️ in India.
+        
+        <div className="max-w-7xl mx-auto px-5 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium text-slate-500 dark:border-slate-800 dark:text-slate-500">
+          <div>© {new Date().getFullYear()} EduSmart Pro. All rights reserved.</div>
+          <div>Made with ❤️ in India.</div>
         </div>
       </footer>
 
@@ -314,7 +509,7 @@ export default function LandingPage() {
       <AnimatePresence>
         {isContactOpen && (
           <div 
-            className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6"
+            className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-6"
             role="dialog"
             aria-modal="true"
             aria-labelledby="modal-title"
@@ -323,53 +518,57 @@ export default function LandingPage() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
               onClick={() => setIsContactOpen(false)}
-              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm dark:bg-black/60"
+              className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm dark:bg-black/70"
               aria-hidden="true"
             />
             <motion.div 
-              variants={modalVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="relative bg-white dark:bg-slate-900 rounded-3xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-100 dark:border-slate-800"
+              initial={{ opacity: 0, y: "100%" }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: "100%" }}
+              transition={{ type: "spring", damping: 25, stiffness: 200 }}
+              className="relative bg-white dark:bg-[#111827] rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-lg border border-slate-200 dark:border-slate-800 mt-20"
             >
-              <div className="p-6 sm:p-8">
-                <div className="flex justify-between items-center mb-6">
+              <div className="p-6 sm:p-8 flex flex-col max-h-[85vh] overflow-y-auto no-scrollbar">
+                <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-6 sm:hidden"></div>
+                
+                <div className="flex justify-between items-center mb-8 shrink-0">
                   <h3 id="modal-title" className="text-2xl font-black text-slate-900 dark:text-white">Get in touch</h3>
                   <button 
                     onClick={() => setIsContactOpen(false)}
                     aria-label="Close contact modal"
-                    className="p-2 bg-slate-50 dark:bg-slate-800 text-slate-500 dark:text-slate-400 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 hover:text-slate-700 dark:hover:text-white transition"
+                    className="p-2 -mr-2 text-slate-400 hover:bg-slate-100 rounded-full transition-colors dark:text-slate-500 dark:hover:bg-slate-800 dark:hover:text-white"
                   >
-                    <X size={20} aria-hidden="true" />
+                    <X size={24} aria-hidden="true" />
                   </button>
                 </div>
                 
-                <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); setIsContactOpen(false); }}>
+                <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); setIsContactOpen(false); }}>
                   <div>
-                    <label htmlFor="name-input" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Name</label>
-                    <input id="name-input" type="text" required className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/50 outline-none transition" placeholder="Your Name" />
+                    <label htmlFor="name-input" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Name</label>
+                    <input id="name-input" type="text" required className="w-full px-5 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-base" placeholder="Your Name" />
                   </div>
                   <div>
-                    <label htmlFor="email-input" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Email</label>
-                    <input id="email-input" type="email" required className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/50 outline-none transition" placeholder="you@example.com" />
+                    <label htmlFor="email-input" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Email</label>
+                    <input id="email-input" type="email" required className="w-full px-5 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-base" placeholder="you@example.com" />
                   </div>
                   <div>
-                    <label htmlFor="msg-input" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">Message</label>
-                    <textarea id="msg-input" required rows={4} className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-200 dark:focus:ring-blue-500/50 outline-none transition resize-none" placeholder="How can we help you?"></textarea>
+                    <label htmlFor="msg-input" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Message</label>
+                    <textarea id="msg-input" required rows={4} className="w-full px-5 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none text-base" placeholder="How can we help you?"></textarea>
                   </div>
-                  <button type="submit" className="w-full py-3.5 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 hover:bg-blue-700 transition flex justify-center items-center gap-2">
+                  <button type="submit" className="w-full py-4 mt-2 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors flex justify-center items-center gap-2">
                     Send Message <ArrowRight size={18} aria-hidden="true" />
                   </button>
                 </form>
 
-                <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 pt-6 border-t border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm font-medium">
-                    <Mail size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" /> shanibrooo@gmail.com
+                <div className="mt-8 flex flex-col items-start sm:flex-row sm:items-center sm:justify-center gap-4 pt-6 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400 font-medium">
+                    <Mail size={18} className="text-slate-400" aria-hidden="true" /> shanibrooo@gmail.com
                   </div>
-                  <div className="flex items-center gap-2 text-slate-600 dark:text-slate-400 text-sm font-medium">
-                    <Phone size={16} className="text-blue-600 dark:text-blue-400" aria-hidden="true" /> +91 73887-39691
+                  <div className="hidden sm:block text-slate-300 dark:text-slate-700">•</div>
+                  <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400 font-medium">
+                    <Phone size={18} className="text-slate-400" aria-hidden="true" /> +91 73887-39691
                   </div>
                 </div>
               </div>
@@ -379,24 +578,5 @@ export default function LandingPage() {
       </AnimatePresence>
 
     </div>
-  );
-}
-
-// Adjusted Feature Card for smaller 2-column mobile view with Dark Mode
-function FeatureCard({ icon, title, desc, delay }) {
-  return (
-    <motion.div 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.26, delay: Math.min(delay, 0.1), ease: "easeInOut" }}
-      viewport={{ once: true, margin: "0px" }}
-      className="gpu-animated glass-card p-4 sm:p-6 rounded-2xl sm:rounded-3xl hover:shadow-xl transition-all group flex flex-col h-full dark:bg-white/5 dark:border-white/10"
-    >
-      <div className="mb-3 sm:mb-5 p-2 sm:p-3 bg-slate-50 dark:bg-slate-800/50 rounded-xl sm:rounded-2xl w-fit group-hover:bg-blue-50 dark:group-hover:bg-slate-700 transition-colors">
-        {icon}
-      </div>
-      <h3 className="text-[13px] sm:text-xl font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-3 leading-tight">{title}</h3>
-      <p className="text-slate-500 dark:text-slate-400 leading-snug text-[11px] sm:text-base flex-grow">{desc}</p>
-    </motion.div>
   );
 }
