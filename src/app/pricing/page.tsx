@@ -223,7 +223,7 @@ export default function PricingPage() {
       
       {/* Footer Text */}
       <div className="text-center mt-16 text-slate-400 text-sm font-medium">
-        <p>This is a recurring monthly subscription. Cancel anytime. 18% GST applicable.</p>
+        <p>This is a recurring monthly subscription. Cancel anytime. <br /> <a href="/register" className="text-blue-600 hover:underline"><b>Try for Free without paying !</b></a></p>
       </div>
     </div>
   );

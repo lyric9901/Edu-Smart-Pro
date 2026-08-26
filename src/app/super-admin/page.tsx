@@ -38,7 +38,7 @@ export default function SuperAdmin() {
   // 2. AUTH
   const handleLogin = (e: any) => {
     e.preventDefault();
-    const secret = process.env.NEXT_PUBLIC_SUPER_ADMIN_KEY || "998357"; 
+    const secret = process.env.NEXT_PUBLIC_SUPER_ADMIN_KEY; 
     if (masterKey === secret) {
       setIsAuthenticated(true);
       localStorage.setItem("superAdminAuth", "true");
