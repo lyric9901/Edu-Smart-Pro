@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   CheckCircle2, 
@@ -24,10 +24,15 @@ import {
   TrendingUp
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import GradientWaves from "@/components/GradientWaves";
 
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
+  const [activeFeature, setActiveFeature] = useState(0);
+  const [activeReview, setActiveReview] = useState(0);
+  const featuresRef = useRef<HTMLDivElement>(null);
+  const reviewsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (isContactOpen || isMenuOpen) {
@@ -36,6 +41,51 @@ export default function LandingPage() {
       document.body.style.overflow = "unset";
     }
   }, [isContactOpen, isMenuOpen]);
+
+  // Subtle auto-advance cue for mobile carousels
+  useEffect(() => {
+    const isMobile = window.innerWidth < 768;
+    if (!isMobile) return;
+
+    const featureTimer = setInterval(() => {
+      if (!featuresRef.current) return;
+      const el = featuresRef.current;
+      const nextIndex = (activeFeature + 1) % 4;
+      const scrollWidth = el.scrollWidth - el.clientWidth;
+      if (scrollWidth > 0) {
+        const itemWidth = el.children[0]?.clientWidth || 300;
+        const targetLeft = nextIndex * (itemWidth + 20);
+        el.scrollTo({ left: targetLeft > scrollWidth ? 0 : targetLeft, behavior: 'smooth' });
+        setActiveFeature(nextIndex);
+      }
+    }, 4000);
+
+    const reviewTimer = setInterval(() => {
+      if (!reviewsRef.current) return;
+      const el = reviewsRef.current;
+      const nextIndex = (activeReview + 1) % reviews.length;
+      const scrollWidth = el.scrollWidth - el.clientWidth;
+      if (scrollWidth > 0) {
+        const itemWidth = el.children[0]?.clientWidth || 300;
+        const targetLeft = nextIndex * (itemWidth + 20);
+        el.scrollTo({ left: targetLeft > scrollWidth ? 0 : targetLeft, behavior: 'smooth' });
+        setActiveReview(nextIndex);
+      }
+    }, 4500);
+
+    return () => {
+      clearInterval(featureTimer);
+      clearInterval(reviewTimer);
+    };
+  }, [activeFeature, activeReview]);
+
+  const handleScroll = (ref: React.RefObject<HTMLDivElement | null>, setIndex: (i: number) => void) => {
+    if (!ref.current) return;
+    const el = ref.current;
+    const itemWidth = el.children[0]?.clientWidth || 300;
+    const index = Math.round(el.scrollLeft / (itemWidth + 20));
+    setIndex(Math.max(0, index));
+  };
 
   // Scroll Appear Animations
   const scrollReveal = {
@@ -174,14 +224,42 @@ export default function LandingPage() {
       <main className="relative z-10 pt-24 lg:pt-32">
         
         {/* --- HERO SECTION --- */}
-        <section className="px-5 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-20" aria-labelledby="hero-heading">
-          <div className="flex flex-col lg:flex-row items-center gap-14 lg:gap-10">
+        <section className="relative px-5 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-20" aria-labelledby="hero-heading">
+          {/* Animated Gradient Waves Background */}
+          <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-screen max-w-none h-[750px] -z-10 overflow-hidden pointer-events-auto opacity-90 dark:opacity-80">
+            <GradientWaves
+              horizonColor="#5227FF"
+              waveColor="#FF9FFC"
+              crestColor="#FFFFFF"
+              speed={0.3}
+              amplitude={2.0}
+              waveScale={0.6}
+              waveRatio={0.9}
+              swell={25}
+              turbulence={15}
+              tilt={1.11}
+              zoom={1.0}
+              height={5.5}
+              fogDepth={15}
+              detail="low"
+              brightness={1.0}
+              opacity={0.9}
+              mouseInteraction={true}
+              parallaxStrength={0.4}
+              grain={false}
+              grainIntensity={0.0}
+            />
+            {/* Soft gradient blend into background */}
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent 60% to-slate-50 dark:to-[#0B0F19] pointer-events-none" />
+          </div>
+
+          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-10">
             
             <motion.div 
-              className="flex-1 text-left w-full pt-8 lg:pt-0"
+              className="flex-1 text-left w-full pt-4 lg:pt-0"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, ease: "easeOut" }}
+              transition={{ duration: 0.5, ease: "easeOut" }}
             >
               <motion.div 
                 animate={{ y: [0, -5, 0] }} 
@@ -192,7 +270,7 @@ export default function LandingPage() {
                 New: Automated WhatsApp Notices
               </motion.div>
               
-              <h1 id="hero-heading" className="text-[2.5rem] leading-[1.1] sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 mb-5 dark:text-white">
+              <h1 id="hero-heading" className="text-[2.25rem] leading-[1.15] sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 mb-5 dark:text-white">
                 Manage your Coaching <br />
                 <span className="text-blue-600 dark:text-blue-500">Like a Pro.</span>
               </h1>
@@ -211,7 +289,7 @@ export default function LandingPage() {
                 </Link>
               </div>
 
-              <div className="mt-8 flex items-center gap-3">
+              <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-3">
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-[#0B0F19] bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 shadow-sm">
@@ -225,46 +303,16 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* FLOATING HERO MOCKUP */}
+            {/* FLOATING HERO MOCKUP (Desktop Only - Mobile Revenue Widget Deleted) */}
             <motion.div 
-              className="flex-1 w-full relative"
+              className="hidden lg:block flex-1 w-full relative"
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
               <motion.div {...floatingAnimation} className="relative z-10">
-                {/* Mobile Specific UI Widget (Hidden on Desktop) */}
-                <div className="lg:hidden w-full max-w-sm mx-auto bg-white rounded-[2rem] border-[6px] border-slate-100 shadow-2xl overflow-hidden dark:bg-[#111827] dark:border-slate-800">
-                  <div className="h-6 bg-slate-100 dark:bg-slate-800 flex justify-center items-center">
-                    <div className="w-12 h-1.5 bg-slate-300 dark:bg-slate-600 rounded-full"></div>
-                  </div>
-                  <div className="p-5">
-                    <div className="flex justify-between items-center mb-6">
-                      <div>
-                        <div className="text-xs text-slate-500 dark:text-slate-400 font-semibold">Today's Revenue</div>
-                        <div className="text-2xl font-black text-slate-900 dark:text-white mt-1">₹ 24,500</div>
-                      </div>
-                      <div className="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center dark:bg-blue-500/10 dark:text-blue-400">
-                        <TrendingUp size={24} />
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      {[1, 2, 3].map((i) => (
-                        <div key={i} className="flex items-center gap-4 p-3 rounded-xl bg-slate-50 border border-slate-100 dark:bg-[#1A2235] dark:border-slate-700">
-                          <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 flex-shrink-0"></div>
-                          <div className="flex-1">
-                            <div className="h-3 w-20 bg-slate-300 rounded mb-2 dark:bg-slate-600"></div>
-                            <div className="h-2 w-12 bg-slate-200 rounded dark:bg-slate-700"></div>
-                          </div>
-                          <ChevronRight size={16} className="text-slate-400" />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Desktop Specific Mockup (Hidden on Mobile) */}
-                <div className="hidden lg:block w-full bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden dark:bg-[#111827] dark:border-slate-800">
+                {/* Desktop Specific Mockup (Preserved) */}
+                <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden dark:bg-[#111827] dark:border-slate-800">
                   <div className="h-10 bg-slate-50 border-b border-slate-100 flex items-center px-4 gap-2 dark:bg-[#1A2235] dark:border-slate-800">
                     <div className="flex gap-1.5"><div className="w-3 h-3 rounded-full bg-red-400"></div><div className="w-3 h-3 rounded-full bg-amber-400"></div><div className="w-3 h-3 rounded-full bg-green-400"></div></div>
                   </div>
@@ -306,42 +354,44 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* --- FEATURES SECTION --- */}
-        <section id="features" className="py-20 lg:py-28 bg-white border-y border-slate-200 dark:bg-[#111827] dark:border-slate-800" aria-labelledby="features-heading">
+        {/* --- FEATURES SECTION ("Everything you need" - Horizontal Carousel on Mobile, Grid on Desktop) --- */}
+        <section id="features" className="py-16 lg:py-28 bg-white border-y border-slate-200 dark:bg-[#111827] dark:border-slate-800" aria-labelledby="features-heading">
           <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-            <motion.div {...scrollReveal} className="text-left md:text-center mb-14 max-w-2xl mx-auto">
-              <h2 id="features-heading" className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-4">
+            <motion.div {...scrollReveal} className="text-left md:text-center mb-8 md:mb-14 max-w-2xl mx-auto">
+              <h2 id="features-heading" className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-3">
                 Everything you need
               </h2>
-              <p className="text-lg text-slate-600 dark:text-slate-400">
+              <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400">
                 Stop using WhatsApp groups and Excel sheets.
               </p>
             </motion.div>
 
             <motion.div 
+              ref={featuresRef}
+              onScroll={() => handleScroll(featuresRef, setActiveFeature)}
               variants={staggerContainer}
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, margin: "-40px" }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8"
+              viewport={{ once: true, margin: "-20px" }}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-5 pb-4 pt-1 no-scrollbar -mx-5 px-5 md:mx-0 md:px-0 md:grid md:grid-cols-2 md:overflow-visible md:gap-6 lg:gap-8"
             >
               {/* Feature 1 */}
-              <motion.div variants={staggerItem} className="bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800">
-                <div className="p-8 pb-6">
-                  <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-5 dark:bg-blue-500/20">
-                    <Users className="text-blue-600 dark:text-blue-400" size={24} aria-hidden="true" />
+              <motion.div variants={staggerItem} className="min-w-[78vw] sm:min-w-[340px] md:min-w-0 snap-center bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800 shrink-0 md:shrink shadow-sm">
+                <div className="p-6 sm:p-8 pb-5">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4 sm:mb-5 dark:bg-blue-500/20">
+                    <Users className="text-blue-600 dark:text-blue-400" size={22} aria-hidden="true" />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2">Student Management</h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-base">Track academic journeys in one click.</p>
+                  <h3 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-2">Student Management</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-base">Track academic journeys in one click.</p>
                 </div>
-                <div className="mt-auto px-8 pb-0">
-                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-5 pb-0 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
+                <div className="mt-auto px-5 sm:px-8 pb-0">
+                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-3.5 sm:p-5 pb-0 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
                     {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex items-center gap-4 py-3.5 border-b border-slate-100 last:border-0 dark:border-slate-700/50">
-                        <div className="w-10 h-10 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0"></div>
+                      <div key={i} className="flex items-center gap-3 sm:gap-4 py-2.5 sm:py-3 border-b border-slate-100 last:border-0 dark:border-slate-700/50">
+                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0"></div>
                         <div className="flex-1">
-                          <div className="w-24 h-2.5 bg-slate-300 rounded mb-2 dark:bg-slate-600"></div>
-                          <div className="w-16 h-2 bg-slate-200 rounded dark:bg-slate-700"></div>
+                          <div className="w-20 sm:w-24 h-2 sm:h-2.5 bg-slate-300 rounded mb-1.5 sm:mb-2 dark:bg-slate-600"></div>
+                          <div className="w-14 sm:w-16 h-1.5 sm:h-2 bg-slate-200 rounded dark:bg-slate-700"></div>
                         </div>
                       </div>
                     ))}
@@ -350,17 +400,17 @@ export default function LandingPage() {
               </motion.div>
 
               {/* Feature 2 */}
-              <motion.div variants={staggerItem} className="bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800">
-                <div className="p-8 pb-6">
-                  <div className="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-5 dark:bg-purple-500/20">
-                    <BarChart3 className="text-purple-600 dark:text-purple-400" size={24} aria-hidden="true" />
+              <motion.div variants={staggerItem} className="min-w-[78vw] sm:min-w-[340px] md:min-w-0 snap-center bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800 shrink-0 md:shrink shadow-sm">
+                <div className="p-6 sm:p-8 pb-5">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-4 sm:mb-5 dark:bg-purple-500/20">
+                    <BarChart3 className="text-purple-600 dark:text-purple-400" size={22} aria-hidden="true" />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2">Smart Attendance</h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-base">Instant alerts for absent students.</p>
+                  <h3 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-2">Smart Attendance</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-base">Instant alerts for absent students.</p>
                 </div>
-                <div className="mt-auto px-8 pb-0">
-                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-5 pb-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
-                    <div className="grid grid-cols-7 gap-2">
+                <div className="mt-auto px-5 sm:px-8 pb-0">
+                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-3.5 sm:p-5 pb-3.5 sm:pb-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
+                    <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
                       {[...Array(14)].map((_, i) => (
                         <div key={i} className={`aspect-square rounded-md ${i === 4 || i === 11 ? 'bg-red-100 dark:bg-red-500/20' : i === 7 ? 'bg-amber-100 dark:bg-amber-500/20' : 'bg-green-100 dark:bg-green-500/20'}`}></div>
                       ))}
@@ -370,20 +420,20 @@ export default function LandingPage() {
               </motion.div>
 
               {/* Feature 3 */}
-              <motion.div variants={staggerItem} className="bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800">
-                <div className="p-8 pb-6">
-                  <div className="w-12 h-12 rounded-xl bg-green-100 flex items-center justify-center mb-5 dark:bg-green-500/20">
-                    <CheckCircle2 className="text-green-600 dark:text-green-400" size={24} aria-hidden="true" />
+              <motion.div variants={staggerItem} className="min-w-[78vw] sm:min-w-[340px] md:min-w-0 snap-center bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800 shrink-0 md:shrink shadow-sm">
+                <div className="p-6 sm:p-8 pb-5">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-green-100 flex items-center justify-center mb-4 sm:mb-5 dark:bg-green-500/20">
+                    <CheckCircle2 className="text-green-600 dark:text-green-400" size={22} aria-hidden="true" />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2">Fee Tracking</h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-base">Automated reminders & receipts.</p>
+                  <h3 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-2">Fee Tracking</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-base">Automated reminders & receipts.</p>
                 </div>
-                <div className="mt-auto px-8 pb-0">
-                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-5 pb-0 flex flex-col gap-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
+                <div className="mt-auto px-5 sm:px-8 pb-0">
+                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-3.5 sm:p-5 pb-0 flex flex-col gap-2.5 sm:gap-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
                     {[1, 2].map((i) => (
-                      <div key={i} className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-slate-700/50">
-                        <div className="w-28 h-3 bg-slate-200 rounded dark:bg-slate-600"></div>
-                        <div className={`w-20 h-4 rounded-full ${i === 1 ? 'bg-green-100 dark:bg-green-500/20' : 'bg-amber-100 dark:bg-amber-500/20'}`}></div>
+                      <div key={i} className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-700/50">
+                        <div className="w-20 sm:w-28 h-2.5 sm:h-3 bg-slate-200 rounded dark:bg-slate-600"></div>
+                        <div className={`w-14 sm:w-20 h-3.5 sm:h-4 rounded-full ${i === 1 ? 'bg-green-100 dark:bg-green-500/20' : 'bg-amber-100 dark:bg-amber-500/20'}`}></div>
                       </div>
                     ))}
                   </motion.div>
@@ -391,82 +441,119 @@ export default function LandingPage() {
               </motion.div>
 
               {/* Feature 4 */}
-              <motion.div variants={staggerItem} className="bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800">
-                <div className="p-8 pb-6">
-                  <div className="w-12 h-12 rounded-xl bg-orange-100 flex items-center justify-center mb-5 dark:bg-orange-500/20">
-                    <MessageSquare className="text-orange-600 dark:text-orange-400" size={24} aria-hidden="true" />
+              <motion.div variants={staggerItem} className="min-w-[78vw] sm:min-w-[340px] md:min-w-0 snap-center bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800 shrink-0 md:shrink shadow-sm">
+                <div className="p-6 sm:p-8 pb-5">
+                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-orange-100 flex items-center justify-center mb-4 sm:mb-5 dark:bg-orange-500/20">
+                    <MessageSquare className="text-orange-600 dark:text-orange-400" size={22} aria-hidden="true" />
                   </div>
-                  <h3 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white mb-2">Notice Board</h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-base">Broadcast updates to everyone instantly.</p>
+                  <h3 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-2">Notice Board</h3>
+                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-base">Broadcast updates to everyone instantly.</p>
                 </div>
-                <div className="mt-auto px-8 pb-0">
-                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-5 pb-0 flex flex-col gap-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
-                    <div className="w-[80%] bg-slate-100 rounded-xl rounded-tl-none p-4 dark:bg-slate-700">
-                      <div className="w-full h-2 bg-slate-300 rounded mb-2 dark:bg-slate-500"></div>
-                      <div className="w-2/3 h-2 bg-slate-200 rounded dark:bg-slate-600"></div>
+                <div className="mt-auto px-5 sm:px-8 pb-0">
+                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-3.5 sm:p-5 pb-0 flex flex-col gap-2.5 sm:gap-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
+                    <div className="w-[90%] sm:w-[80%] bg-slate-100 rounded-xl rounded-tl-none p-3 sm:p-4 dark:bg-slate-700">
+                      <div className="w-full h-1.5 sm:h-2 bg-slate-300 rounded mb-1.5 sm:mb-2 dark:bg-slate-500"></div>
+                      <div className="w-2/3 h-1.5 sm:h-2 bg-slate-200 rounded dark:bg-slate-600"></div>
                     </div>
-                    <div className="w-[70%] bg-blue-50 self-end rounded-xl rounded-tr-none p-4 dark:bg-blue-500/10 mb-4">
-                      <div className="w-full h-2 bg-blue-200 rounded mb-2 dark:bg-blue-500/30"></div>
-                      <div className="w-1/2 h-2 bg-blue-200 rounded dark:bg-blue-500/20"></div>
+                    <div className="w-[85%] sm:w-[70%] bg-blue-50 self-end rounded-xl rounded-tr-none p-3 sm:p-4 dark:bg-blue-500/10 mb-3 sm:mb-4">
+                      <div className="w-full h-1.5 sm:h-2 bg-blue-200 rounded mb-1.5 sm:mb-2 dark:bg-blue-500/30"></div>
+                      <div className="w-1/2 h-1.5 sm:h-2 bg-blue-200 rounded dark:bg-blue-500/20"></div>
                     </div>
                   </motion.div>
                 </div>
               </motion.div>
 
             </motion.div>
+
+            {/* Mobile Carousel Indicators & Swipe Hint */}
+            <div className="md:hidden flex items-center justify-center gap-2 mt-4">
+              {[0, 1, 2, 3].map((i) => (
+                <button
+                  key={i}
+                  aria-label={`Go to feature slide ${i + 1}`}
+                  onClick={() => {
+                    if (!featuresRef.current) return;
+                    const itemWidth = featuresRef.current.children[0]?.clientWidth || 300;
+                    featuresRef.current.scrollTo({ left: i * (itemWidth + 16), behavior: 'smooth' });
+                    setActiveFeature(i);
+                  }}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${activeFeature === i ? 'w-6 bg-blue-600 dark:bg-blue-400' : 'w-1.5 bg-slate-300 dark:bg-slate-700'}`}
+                />
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* --- REVIEWS SECTION --- */}
-        <section id="reviews" className="py-20 lg:py-28" aria-labelledby="reviews-heading">
+        {/* --- REVIEWS / TESTIMONIALS SECTION (Horizontal Carousel on Mobile, Grid on Desktop) --- */}
+        <section id="reviews" className="py-16 lg:py-28" aria-labelledby="reviews-heading">
           <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-            <motion.div {...scrollReveal} className="text-left md:text-center mb-14">
+            <motion.div {...scrollReveal} className="text-left md:text-center mb-8 md:mb-14">
               <h2 id="reviews-heading" className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
                 Loved by Owners
               </h2>
             </motion.div>
 
             <motion.div 
+              ref={reviewsRef}
+              onScroll={() => handleScroll(reviewsRef, setActiveReview)}
               variants={staggerContainer}
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, margin: "-40px" }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-5 lg:gap-8"
+              viewport={{ once: true, margin: "-20px" }}
+              className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-5 pb-4 pt-1 no-scrollbar -mx-5 px-5 md:mx-0 md:px-0 md:grid md:grid-cols-2 md:overflow-visible md:gap-5 lg:gap-8"
             >
               {reviews.map((review, index) => (
                 <motion.div 
                   key={index}
                   variants={staggerItem}
-                  className="bg-white p-6 sm:p-8 rounded-3xl border border-slate-200 shadow-sm flex flex-col h-full dark:bg-[#111827] dark:border-slate-800"
+                  className="min-w-[82vw] sm:min-w-[360px] md:min-w-0 snap-center bg-white px-5 py-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col dark:bg-[#111827] dark:border-slate-800 shrink-0 md:shrink"
                 >
-                  <div className="flex gap-1.5 mb-5" aria-label={`Rating: ${review.rating} out of 5 stars`}>
-                    {[...Array(review.rating)].map((_, i) => (
-                      <Star key={i} size={18} className="fill-yellow-400 text-yellow-400" aria-hidden="true" />
-                    ))}
+                  <div className="flex items-center justify-between mb-2.5">
+                    <div className="flex gap-0.5" aria-label={`Rating: ${review.rating} out of 5 stars`}>
+                      {[...Array(review.rating)].map((_, i) => (
+                        <Star key={i} size={13} className="fill-yellow-400 text-yellow-400" aria-hidden="true" />
+                      ))}
+                    </div>
                   </div>
-                  <p className="text-slate-700 dark:text-slate-300 mb-8 text-base sm:text-lg leading-relaxed flex-grow">
-                    "{review.text}"
+                  <p className="text-slate-700 dark:text-slate-300 mb-3 text-xs sm:text-sm leading-relaxed line-clamp-3">
+                    &ldquo;{review.text}&rdquo;
                   </p>
-                  
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-black text-lg shrink-0 dark:bg-slate-800 dark:text-slate-300" aria-hidden="true">
+                  <div className="flex items-center gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold text-xs shrink-0 dark:bg-slate-800 dark:text-slate-300" aria-hidden="true">
                       {review.name[0]}
                     </div>
                     <div className="overflow-hidden">
-                      <h4 className="font-bold text-base text-slate-900 dark:text-white truncate">{review.name}</h4>
-                      <p className="text-sm text-slate-500 dark:text-slate-400 truncate">{review.role}</p>
+                      <h4 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white truncate">{review.name}</h4>
+                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">{review.role}</p>
                     </div>
                   </div>
                 </motion.div>
               ))}
             </motion.div>
+
+            {/* Mobile Carousel Indicators */}
+            <div className="md:hidden flex items-center justify-center gap-2 mt-4">
+              {reviews.map((_, i) => (
+                <button
+                  key={i}
+                  aria-label={`Go to review slide ${i + 1}`}
+                  onClick={() => {
+                    if (!reviewsRef.current) return;
+                    const itemWidth = reviewsRef.current.children[0]?.clientWidth || 300;
+                    reviewsRef.current.scrollTo({ left: i * (itemWidth + 16), behavior: 'smooth' });
+                    setActiveReview(i);
+                  }}
+                  className={`h-1.5 rounded-full transition-all duration-300 ${activeReview === i ? 'w-6 bg-blue-600 dark:bg-blue-400' : 'w-1.5 bg-slate-300 dark:bg-slate-700'}`}
+                />
+              ))}
+            </div>
           </div>
         </section>
       </main>
 
       {/* --- FOOTER --- */}
       <footer className="bg-white border-t border-slate-200 pt-16 pb-8 dark:bg-[#0B0F19] dark:border-slate-800" aria-label="Site Footer">
-        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-12 lg:gap-8 mb-12">
+        <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-12">
           <div className="col-span-1 sm:col-span-2 lg:col-span-2">
             <div className="flex items-center gap-2 mb-5">
               <div className="bg-slate-900 p-1.5 rounded-lg dark:bg-white">

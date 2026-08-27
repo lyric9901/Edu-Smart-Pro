@@ -6,6 +6,7 @@ import JsonLd from "@/context/JsonLd"; // JSON is so small it doesn't need lazy 
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 
+
 // 🚀 Performance tweak: display swap is mandatory for text performance
 const inter = Inter({ subsets: ["latin"], display: "swap" });
 
@@ -13,44 +14,66 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 const Toaster = dynamic(() => import("react-hot-toast").then((mod) => mod.Toaster));
 const PWAManager = dynamic(() => import("@/components/PWAManager"));
 
-// --- SEO + META (Fully expanded like the original!) ---
+// --- SEO + META (Comprehensive configuration for maximum ranking and visibility) ---
 export const metadata: Metadata = {
   manifest: "/manifest.json", 
   metadataBase: new URL("https://edusmartpro.in"),
 
   title: {
-    default: "EduSmart Pro | #1 Coaching Management App",
+    default: "EduSmart Pro | #1 Coaching Institute Management Software & App",
     template: "%s | EduSmart Pro",
   },
 
   description:
-    "Automate attendance, fees, and student management. The smartest app for coaching centers in India.",
+    "Empower your coaching institute with EduSmart Pro. Automate student attendance, fee tracking, instant WhatsApp notices, digital receipts, and parent communication across India.",
 
   keywords: [
-    "Coaching App",
-    "Attendance Tracker",
-    "Fee Manager",
-    "Tuition App India",
+    "Coaching Institute Management Software",
+    "Coaching App India",
+    "Tuition Management App",
+    "Student Attendance Tracker",
+    "Coaching Fee Management System",
+    "WhatsApp Attendance Notices",
+    "Institute Management ERP",
     "EduSmart Pro",
     "Edu Smart Pro",
-    "Edu Smart",
-    "EduSmart",
-    "Godhra Coaching",
+    "Tuition Classes App",
+    "Coaching ERP India",
+    "Godhra Coaching Classes",
+    "Lucknow Tuition Software",
   ],
 
-  authors: [{ name: "Shah Nawaz Ali" }],
+  authors: [{ name: "Shah Nawaz Ali", url: "https://edusmartpro.in" }],
   creator: "Shah Nawaz Ali",
+  publisher: "EduSmart Pro",
+
+  alternates: {
+    canonical: "https://edusmartpro.in",
+  },
+
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 
   openGraph: {
-    title: "EduSmart Pro - Digital Coaching Management",
-    description: "Manage fees & attendance in seconds. Try it now!",
+    title: "EduSmart Pro - Smart Coaching Institute Management Platform",
+    description: "Automate attendance, fees, and instant WhatsApp notices in seconds. Loved by 100+ institutes across India.",
     url: "https://edusmartpro.in",
     siteName: "EduSmart Pro",
     images: [
       {
-        url: "/icons/icon-384x384.png", 
-        width: 384,
-        height: 384,
+        url: "/icons/icon-512x512.png", 
+        width: 512,
+        height: 512,
+        alt: "EduSmart Pro - Coaching Management Platform Logo",
       },
     ],
     locale: "en_IN",
@@ -59,25 +82,34 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "EduSmart Pro | Smart Coaching App",
-    description: "Automate your coaching center today.",
-    images: ["/icons/icon-384x384.png"],
+    title: "EduSmart Pro | #1 Smart Coaching App",
+    description: "Automate your coaching center, fee collection & WhatsApp notices.",
+    images: ["/icons/icon-512x512.png"],
+    creator: "@edusmartpro",
   },
 
   icons: {
     icon: [
-      { url: "/favicon.ico" },
-      { url: "/icons/icon-48x48.png", sizes: "48x48", type: "image/png" },
-      { url: "/icons/icon-72x72.png", sizes: "72x72", type: "image/png" },
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icons/icon-96x96.png", sizes: "96x96", type: "image/png" },
+      { url: "/favicon.ico", sizes: "any" },
     ],
     apple: [
+      { url: "/icons/icon-192x192.png", sizes: "192x192", type: "image/png" },
       { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+    shortcut: [
+      { url: "/icons/icon-512x512.png", sizes: "512x512", type: "image/png" },
     ],
   },
 };
 
 export const viewport: Viewport = {
-  themeColor: "#000000",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#0B0F19" },
+  ],
   width: "device-width",
   initialScale: 1,
 };
