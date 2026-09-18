@@ -1,24 +1,41 @@
-# Let the normal bots in
+# Robots.txt for EduSmart Pro - Search & AI Engines
 User-agent: *
 Allow: /
 Disallow: /dashboard/
 Disallow: /student/
 Disallow: /super-admin/
 
-# Let the AI cook (Perplexity, ChatGPT, Claude)
-User-agent: PerplexityBot
-Allow: /
-Disallow: /dashboard/
-
+# AI Crawlers & LLM Search (OpenAI, Anthropic, Perplexity, Google, Apple, Cohere)
 User-agent: GPTBot
 Allow: /
 Disallow: /dashboard/
 
-User-agent: Claude-Bot
+User-agent: ChatGPT-User
+Allow: /
+Disallow: /dashboard/
+
+User-agent: PerplexityBot
+Allow: /
+Disallow: /dashboard/
+
+User-agent: ClaudeBot
+Allow: /
+Disallow: /dashboard/
+
+User-agent: anthropic-ai
 Allow: /
 Disallow: /dashboard/
 
 User-agent: Google-Extended
 Allow: /
+Disallow: /dashboard/
+
+User-agent: Applebot-Extended
+Allow: /
+Disallow: /dashboard/
+
+User-agent: cohere-ai
+Allow: /
+Disallow: /dashboard/
 
 Sitemap: https://edusmartpro.in/sitemap.xml

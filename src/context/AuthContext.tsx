@@ -9,6 +9,7 @@ export interface AuthUser {
   role: 'admin' | 'student';
   username: string;
   institutionCode: string;
+  schoolId?: string;
 }
 
 // Define what the Context provides

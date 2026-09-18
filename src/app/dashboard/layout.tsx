@@ -32,7 +32,7 @@ export default function DashboardLayout({ children }) {
   const [schoolName, setSchoolName] = useState("Loading...");
   const [showSettingsModal, setShowSettingsModal] = useState(false);
 
-  const modalSpring = { duration: 0.22, ease: "easeInOut" };
+  const modalSpring = { duration: 0.22, ease: "easeInOut" } as const;
 
   useEffect(() => {
     if (!loading && !user) {

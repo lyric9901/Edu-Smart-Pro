@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { 
   CheckCircle2, 
   ArrowRight, 
@@ -11,17 +11,19 @@ import {
   Shield, 
   Zap, 
   Menu, 
-  X,
-  Star,
-  Mail,
-  Phone,
-  MessageSquare,
-  Search,
-  Bell,
-  LayoutDashboard,
-  CreditCard,
-  ChevronRight,
-  TrendingUp
+  X, 
+  Star, 
+  Mail, 
+  Phone, 
+  MessageSquare, 
+  Clock, 
+  FileSpreadsheet, 
+  BookOpen, 
+  Check, 
+  HelpCircle, 
+  HeartHandshake, 
+  LayoutDashboard, 
+  CreditCard 
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import GradientWaves from "@/components/GradientWaves";
@@ -50,7 +52,7 @@ export default function LandingPage() {
     const featureTimer = setInterval(() => {
       if (!featuresRef.current) return;
       const el = featuresRef.current;
-      const nextIndex = (activeFeature + 1) % 4;
+      const nextIndex = (activeFeature + 1) % 6;
       const scrollWidth = el.scrollWidth - el.clientWidth;
       if (scrollWidth > 0) {
         const itemWidth = el.children[0]?.clientWidth || 300;
@@ -92,52 +94,102 @@ export default function LandingPage() {
     initial: { opacity: 0, y: 30 },
     whileInView: { opacity: 1, y: 0 },
     viewport: { once: true, margin: "-40px" },
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const }
   };
 
-  const staggerContainer = {
+  const staggerContainer: Variants = {
     hidden: { opacity: 0 },
     show: {
       opacity: 1,
-      transition: { staggerChildren: 0.15 }
+      transition: { staggerChildren: 0.12 }
     }
   };
 
-  const staggerItem = {
+  const staggerItem: Variants = {
     hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
+    show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } }
   };
 
-  // Floating Animation for Mockups
   const floatingAnimation = {
     animate: { y: [0, -12, 0] },
-    transition: { duration: 5, repeat: Infinity, ease: "easeInOut" }
+    transition: { duration: 5, repeat: Infinity, ease: "easeInOut" as const }
   };
 
   const reviews = [
     {
       name: "Rahul Sharma",
-      role: "Director, Sharma Classes",
-      text: "EduSmart Pro transformed how we manage fees. Parents love the instant updates!",
+      role: "Director, Sharma Classes (Lucknow)",
+      text: "EduSmart Pro replaced our old expensive ERP. WhatsApp fee receipts and absentee alerts save us hours each day.",
       rating: 5
     },
     {
       name: "Priya Verma",
-      role: "Tutor, Excel Academy",
-      text: "So clean and easy to use. I manage my entire coaching from my phone now.",
+      role: "Founder, Excel Academy (Delhi)",
+      text: "7-day free trial got us started without any friction. Importing 200+ students from Excel took less than 2 minutes.",
       rating: 5
     },
     {
       name: "Amit Patel",
-      role: "Institute Owner",
-      text: "Best decision for my business. It looks professional and students find it cool.",
-      rating: 4
+      role: "Institute Owner (Gujarat)",
+      text: "Proud to support a homegrown Indian startup. No hidden fees, cancel anytime, and the support on WhatsApp is super fast.",
+      rating: 5
     },
     {
       name: "Sneha Iyer",
-      role: "Math Educator",
-      text: "The WhatsApp automation saves me hours every week. Highly recommended!",
+      role: "Educator, Apex Tutorial (Bengaluru)",
+      text: "Parents love the student portal and instant digital receipts. Best school and coaching ERP software in India.",
       rating: 5
+    }
+  ];
+
+  const erpComparison = [
+    {
+      feature: "Pricing & Contracts",
+      legacy: "₹30,000 – ₹80,000 upfront with locked yearly contracts",
+      edusmart: "Starting at ₹299/mo, cancel subscription anytime"
+    },
+    {
+      feature: "Free Trial",
+      legacy: "No trial, only scripted sales demos",
+      edusmart: "Full 7 Days Free Trial, zero hidden charges, no card required"
+    },
+    {
+      feature: "Data Ownership & Portability",
+      legacy: "Vendor lock-in; hard or costly to export database",
+      edusmart: "100% data ownership; 1-click CSV/Excel import & export"
+    },
+    {
+      feature: "WhatsApp Automation",
+      legacy: "Requires costly third-party SMS/WhatsApp gateway APIs",
+      edusmart: "Built-in 1-click WhatsApp attendance & fee notifications"
+    },
+    {
+      feature: "App Experience",
+      legacy: "Heavy, sluggish desktop software from the 2010s",
+      edusmart: "Ultra-fast modern Web & Mobile PWA for Admin, Students & Parents"
+    }
+  ];
+
+  const faqs = [
+    {
+      q: "What makes EduSmart Pro better than other School & Coaching ERP software?",
+      a: "EduSmart Pro delivers an enterprise-grade ERP without the enterprise price tag or vendor lock-in. You get full student management, smart attendance with WhatsApp absentee alerts, digital fee receipts, homework, notices, and timetable management. Plus, our flexible monthly plans start at just ₹299/month with zero setup fees."
+    },
+    {
+      q: "How does the 7-day free trial work? Are there any hidden charges?",
+      a: "Our 7-day trial gives you 100% access to all core features with zero hidden charges. No credit card is required to register. You can test it with your actual batches and cancel anytime without paying a single rupee."
+    },
+    {
+      q: "Can I easily import my existing students from Excel or CSV?",
+      a: "Yes! You can import your entire student list from Excel/CSV in seconds. We also offer free one-on-one migration assistance over WhatsApp (+91 7388739691) to help you switch smoothly from your old software."
+    },
+    {
+      q: "How does choosing EduSmart Pro help Indian startups and Help India Grow?",
+      a: "EduSmart Pro is an independent, homegrown Indian EdTech software startup. By choosing EduSmart Pro, you empower Indian software creators, retain data within privacy-first secure cloud servers, and provide grassroots coaching centers with world-class digital tools to elevate Indian education."
+    },
+    {
+      q: "How do I get customer support if I have a question?",
+      a: "We offer dedicated phone and WhatsApp support directly from our core team at +91 7388739691 and email support at shanibrooo@gmail.com."
     }
   ];
 
@@ -149,8 +201,15 @@ export default function LandingPage() {
         <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMCwgMCwgMCwgMC4wNSkiLz48L3N2Zz4=')] dark:bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMSIgY3k9IjEiIHI9IjEiIGZpbGw9InJnYmEoMjU1LCAyNTUsIDI1NSwgMC4wNSkiLz48L3N2Zz4=')] [mask-image:linear-gradient(to_bottom,white,transparent_85%)]"></div>
       </div>
 
+      {/* --- TOP BANNER --- */}
+      <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white text-xs py-2 px-4 text-center font-bold relative z-50">
+        <span>🇮🇳 Proudly Homegrown Indian Startup — Help India Grow</span>
+        <span className="mx-2 hidden sm:inline">•</span>
+        <span className="hidden sm:inline">7 Days Free Trial • No Hidden Charges • Cancel Subscription Anytime • Easy CSV/Excel Data Import & Export</span>
+      </div>
+
       {/* --- HEADER & NAVBAR --- */}
-      <header className="fixed top-0 w-full z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 dark:bg-[#0B0F19]/80 dark:border-slate-800/80 transition-colors">
+      <header className="sticky top-0 w-full z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/80 dark:bg-[#0B0F19]/80 dark:border-slate-800/80 transition-colors">
         <nav className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8" aria-label="Main Navigation">
           <div className="flex justify-between h-16 items-center">
             <div className="flex items-center gap-2 z-50 relative">
@@ -160,20 +219,27 @@ export default function LandingPage() {
               <span className="font-bold text-xl tracking-tight text-slate-900 dark:text-white">
                 EduSmart<span className="text-blue-600 dark:text-blue-400">Pro</span>
               </span>
+              <span className="hidden md:inline-block px-2 py-0.5 text-[10px] font-bold bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 rounded-full ml-1">
+                ERP Software
+              </span>
             </div>
 
             {/* Desktop Links */}
-            <div className="hidden lg:flex items-center gap-8">
+            <div className="hidden lg:flex items-center gap-7">
               <a href="#features" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">Features</a>
+              <a href="#comparison" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">Why EduSmart</a>
               <a href="#reviews" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">Reviews</a>
+              <a href="#faq" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">FAQ</a>
               <Link href="/pricing" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">Pricing</Link>
               <button onClick={() => setIsContactOpen(true)} className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">
-                Contact Us
+                Contact
               </button>
               <ThemeToggle compact />
-              <div className="flex items-center gap-3 ml-2 border-l pl-6 border-slate-200 dark:border-slate-800">
+              <div className="flex items-center gap-3 ml-2 border-l pl-5 border-slate-200 dark:border-slate-800">
                 <Link href="/login" className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white">Institute Login</Link>
-                <Link href="/register" className="inline-flex items-center px-4 py-2 text-sm font-medium bg-slate-900 text-white rounded-lg hover:bg-slate-800 transition-colors shadow-sm dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100">Register Free</Link>
+                <Link href="/register" className="inline-flex items-center px-4 py-2 text-sm font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm">
+                  Start 7-Day Free Trial
+                </Link>
               </div>
             </div>
 
@@ -200,19 +266,21 @@ export default function LandingPage() {
               className="lg:hidden absolute w-full top-16 left-0 bg-white border-b border-slate-200 shadow-2xl dark:bg-[#0B0F19] dark:border-slate-800 flex flex-col"
             >
               <div className="p-5 flex flex-col gap-2">
-                <a href="#features" onClick={() => setIsMenuOpen(false)} className="px-4 py-3.5 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800 transition-colors">Features</a>
-                <a href="#reviews" onClick={() => setIsMenuOpen(false)} className="px-4 py-3.5 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800 transition-colors">Reviews</a>
-                <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="px-4 py-3.5 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800 transition-colors">Pricing</Link>
-                <button onClick={() => { setIsContactOpen(true); setIsMenuOpen(false); }} className="px-4 py-3.5 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800 transition-colors text-left">
-                  Contact Us
+                <a href="#features" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800">Features</a>
+                <a href="#comparison" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800">Why EduSmart</a>
+                <a href="#reviews" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800">Reviews</a>
+                <a href="#faq" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800">FAQ</a>
+                <Link href="/pricing" onClick={() => setIsMenuOpen(false)} className="px-4 py-3 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800">Pricing</Link>
+                <button onClick={() => { setIsContactOpen(true); setIsMenuOpen(false); }} className="px-4 py-3 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800 text-left">
+                  Contact Support (+91 7388739691)
                 </button>
                 <div className="px-4 mt-2 mb-4"><ThemeToggle className="w-full justify-start" /></div>
                 <div className="flex flex-col gap-3">
-                  <Link href="/login" onClick={() => setIsMenuOpen(false)} className="w-full py-4 rounded-xl border-2 border-slate-200 font-bold text-slate-900 text-center transition-colors dark:border-slate-700 dark:text-white">
+                  <Link href="/login" onClick={() => setIsMenuOpen(false)} className="w-full py-3.5 rounded-xl border-2 border-slate-200 font-bold text-slate-900 text-center dark:border-slate-700 dark:text-white">
                     Institute Login
                   </Link>
-                  <Link href="/register" onClick={() => setIsMenuOpen(false)} className="w-full py-4 rounded-xl bg-blue-600 font-bold text-white text-center shadow-lg shadow-blue-500/25 transition-colors">
-                    Register Now
+                  <Link href="/register" onClick={() => setIsMenuOpen(false)} className="w-full py-3.5 rounded-xl bg-blue-600 font-bold text-white text-center shadow-lg shadow-blue-500/25">
+                    Start 7-Day Free Trial
                   </Link>
                 </div>
               </div>
@@ -221,10 +289,10 @@ export default function LandingPage() {
         </AnimatePresence>
       </header>
 
-      <main className="relative z-10 pt-24 lg:pt-32">
+      <main className="relative z-10 pt-16 lg:pt-24">
         
         {/* --- HERO SECTION --- */}
-        <section className="relative px-5 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-20" aria-labelledby="hero-heading">
+        <section className="relative px-5 sm:px-6 lg:px-8 max-w-7xl mx-auto pb-16" aria-labelledby="hero-heading">
           {/* Animated Gradient Waves Background */}
           <div className="absolute -top-24 left-1/2 -translate-x-1/2 w-screen max-w-none h-[750px] -z-10 overflow-hidden pointer-events-auto opacity-90 dark:opacity-80">
             <GradientWaves
@@ -249,47 +317,61 @@ export default function LandingPage() {
               grain={false}
               grainIntensity={0.0}
             />
-            {/* Soft gradient blend into background */}
             <div className="absolute inset-0 bg-gradient-to-b from-transparent via-transparent 60% to-slate-50 dark:to-[#0B0F19] pointer-events-none" />
           </div>
 
-          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-10">
+          <div className="flex flex-col lg:flex-row items-center gap-10 lg:gap-12">
             
             <motion.div 
-              className="flex-1 text-left w-full pt-4 lg:pt-0"
+              className="flex-1 text-left w-full pt-2 lg:pt-0"
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
             >
-              <motion.div 
-                animate={{ y: [0, -5, 0] }} 
-                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200/60 text-blue-700 text-[11px] sm:text-xs font-semibold mb-6 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-300 shadow-sm"
-              >
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-blue-50 border border-blue-200/70 text-blue-700 text-xs font-bold mb-5 dark:bg-blue-500/10 dark:border-blue-500/20 dark:text-blue-300 shadow-sm">
                 <Zap size={14} className="fill-current" aria-hidden="true" /> 
-                New: Automated WhatsApp Notices
-              </motion.div>
+                School & Coaching Management App and ERP Software
+              </div>
               
-              <h1 id="hero-heading" className="text-[2.25rem] leading-[1.15] sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 mb-5 dark:text-white">
-                Manage your Coaching <br />
-                <span className="text-blue-600 dark:text-blue-500">Like a Pro.</span>
+              <h1 id="hero-heading" className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 mb-4 dark:text-white leading-[1.15]">
+                Smart Institute ERP. <br />
+                <span className="text-blue-600 dark:text-blue-400">Help India Grow.</span>
               </h1>
               
-              <p className="text-base sm:text-lg text-slate-600 mb-8 max-w-xl leading-relaxed dark:text-slate-400">
-                Attendance, Fees, Notices, and Student Tracking—all in one beautiful app. 
-                Give your institute the digital upgrade it deserves.
+              <p className="text-base sm:text-lg text-slate-600 mb-6 max-w-xl leading-relaxed dark:text-slate-300">
+                Replace bulky legacy software with India's fastest School & Coaching Management ERP. Automated WhatsApp attendance, fee tracking with digital receipts, homework & timetable management.
               </p>
+
+              {/* CORE TRUST HIGHLIGHTS */}
+              <div className="grid grid-cols-2 sm:grid-cols-2 gap-2.5 mb-7 max-w-lg text-xs sm:text-sm font-semibold text-slate-700 dark:text-slate-300">
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/70 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60 shadow-xs">
+                  <Check size={16} className="text-green-600 shrink-0" />
+                  <span>7 Days Free Trial</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/70 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60 shadow-xs">
+                  <Check size={16} className="text-green-600 shrink-0" />
+                  <span>No Hidden Charges</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/70 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60 shadow-xs">
+                  <Check size={16} className="text-green-600 shrink-0" />
+                  <span>Cancel Anytime</span>
+                </div>
+                <div className="flex items-center gap-2 p-2 rounded-lg bg-white/70 dark:bg-slate-800/70 border border-slate-200/70 dark:border-slate-700/60 shadow-xs">
+                  <FileSpreadsheet size={16} className="text-blue-600 shrink-0" />
+                  <span>Easy Excel Import/Export</span>
+                </div>
+              </div>
               
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/register" className="w-full sm:w-auto px-6 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
-                  Get Started for Free <ArrowRight size={18} aria-hidden="true" />
+              <div className="flex flex-col sm:flex-row gap-3.5">
+                <Link href="/register" className="w-full sm:w-auto px-7 py-4 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors flex items-center justify-center gap-2">
+                  Start 7-Day Free Trial <ArrowRight size={18} aria-hidden="true" />
                 </Link>
-                <Link href="/login" className="w-full sm:w-auto px-6 py-4 bg-white text-slate-800 font-bold border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-center dark:bg-[#111827] dark:text-slate-200 dark:border-slate-700">
-                  Existing User Login
+                <Link href="/login" className="w-full sm:w-auto px-7 py-4 bg-white text-slate-800 font-bold border-2 border-slate-200 rounded-xl hover:bg-slate-50 transition-colors text-center dark:bg-[#111827] dark:text-slate-200 dark:border-slate-700">
+                  Institute Login
                 </Link>
               </div>
 
-              <div className="mt-8 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+              <div className="mt-7 flex items-center gap-3">
                 <div className="flex -space-x-2">
                   {[1, 2, 3, 4].map((i) => (
                     <div key={i} className="w-8 h-8 rounded-full border-2 border-white dark:border-[#0B0F19] bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-[10px] font-bold text-slate-500 dark:text-slate-400 shadow-sm">
@@ -297,13 +379,13 @@ export default function LandingPage() {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-slate-500 font-semibold uppercase tracking-wider dark:text-slate-400">
-                  Trusted by 100+ Institutes in India
+                <p className="text-xs text-slate-600 dark:text-slate-400 font-bold">
+                  Trusted by 100+ Coaching Centers & Schools across India • Homegrown Startup
                 </p>
               </div>
             </motion.div>
 
-            {/* FLOATING HERO MOCKUP (Desktop Only - Mobile Revenue Widget Deleted) */}
+            {/* HERO MOCKUP */}
             <motion.div 
               className="hidden lg:block flex-1 w-full relative"
               initial={{ opacity: 0, scale: 0.95 }}
@@ -311,37 +393,53 @@ export default function LandingPage() {
               transition={{ duration: 0.8, ease: "easeOut" }}
             >
               <motion.div {...floatingAnimation} className="relative z-10">
-                {/* Desktop Specific Mockup (Preserved) */}
                 <div className="w-full bg-white rounded-2xl border border-slate-200 shadow-2xl overflow-hidden dark:bg-[#111827] dark:border-slate-800">
                   <div className="h-10 bg-slate-50 border-b border-slate-100 flex items-center px-4 gap-2 dark:bg-[#1A2235] dark:border-slate-800">
                     <div className="flex gap-1.5"><div className="w-3 h-3 rounded-full bg-red-400"></div><div className="w-3 h-3 rounded-full bg-amber-400"></div><div className="w-3 h-3 rounded-full bg-green-400"></div></div>
+                    <span className="text-xs font-mono text-slate-400 ml-2">EduSmart Pro ERP - Live Dashboard</span>
                   </div>
-                  <div className="flex h-[400px]">
+                  <div className="flex h-[380px]">
                     <div className="w-56 border-r border-slate-100 bg-slate-50/50 p-4 space-y-2 dark:border-slate-800 dark:bg-[#111827]">
-                      {[LayoutDashboard, Users, CreditCard, MessageSquare].map((Icon, i) => (
-                        <div key={i} className={`flex items-center gap-3 p-3 rounded-lg ${i === 0 ? 'bg-blue-600 text-white shadow-md' : 'text-slate-500 dark:text-slate-400'}`}>
-                          <Icon size={18} />
-                          <div className={`h-2.5 rounded w-20 ${i === 0 ? 'bg-blue-400/50' : 'bg-slate-200 dark:bg-slate-700'}`}></div>
+                      {[
+                        { label: "Overview", icon: LayoutDashboard, active: true },
+                        { label: "Students", icon: Users, active: false },
+                        { label: "Attendance", icon: CheckCircle2, active: false },
+                        { label: "Fee Ledger", icon: CreditCard, active: false },
+                        { label: "Notices", icon: MessageSquare, active: false }
+                      ].map((item, i) => (
+                        <div key={i} className={`flex items-center gap-3 p-2.5 rounded-lg text-xs font-bold ${item.active ? 'bg-blue-600 text-white shadow-md' : 'text-slate-600 dark:text-slate-400'}`}>
+                          <item.icon size={16} />
+                          <span>{item.label}</span>
                         </div>
                       ))}
                     </div>
-                    <div className="flex-1 p-8 bg-white dark:bg-[#0B0F19]">
-                      <div className="flex gap-6 mb-8">
-                        {[1, 2, 3].map((i) => (
-                          <div key={i} className="flex-1 p-5 rounded-xl border border-slate-100 dark:border-slate-800">
-                            <div className="w-10 h-10 rounded-lg bg-blue-50 mb-3 dark:bg-blue-500/10"></div>
-                            <div className="w-20 h-3 bg-slate-200 rounded mb-2 dark:bg-slate-700"></div>
-                            <div className="w-12 h-5 bg-slate-800 rounded dark:bg-slate-300"></div>
-                          </div>
-                        ))}
+                    <div className="flex-1 p-6 bg-white dark:bg-[#0B0F19]">
+                      <div className="grid grid-cols-3 gap-4 mb-6">
+                        <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-blue-50/40 dark:bg-blue-900/10">
+                          <p className="text-[10px] uppercase font-bold text-slate-400">Active Students</p>
+                          <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">248</p>
+                        </div>
+                        <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-green-50/40 dark:bg-green-900/10">
+                          <p className="text-[10px] uppercase font-bold text-slate-400">Today Attendance</p>
+                          <p className="text-2xl font-black text-green-600 mt-1">96.4%</p>
+                        </div>
+                        <div className="p-4 rounded-xl border border-slate-100 dark:border-slate-800 bg-purple-50/40 dark:bg-purple-900/10">
+                          <p className="text-[10px] uppercase font-bold text-slate-400">Fee Collected</p>
+                          <p className="text-2xl font-black text-purple-600 mt-1">₹84,500</p>
+                        </div>
                       </div>
-                      <div className="border border-slate-100 rounded-xl dark:border-slate-800">
-                        <div className="h-10 bg-slate-50 border-b border-slate-100 dark:bg-[#1A2235] dark:border-slate-800"></div>
-                        {[1, 2].map((i) => (
-                          <div key={i} className="p-4 border-b border-slate-50 flex items-center gap-4 dark:border-slate-800/50">
-                            <div className="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700"></div>
-                            <div className="w-32 h-3 bg-slate-200 rounded dark:bg-slate-700"></div>
-                            <div className="ml-auto w-16 h-3 bg-green-100 rounded dark:bg-green-500/20"></div>
+                      <div className="border border-slate-100 rounded-xl p-4 dark:border-slate-800">
+                        <div className="flex justify-between items-center mb-3">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Recent Automated WhatsApp Notices</span>
+                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full dark:bg-green-900/20">Delivered</span>
+                        </div>
+                        {[
+                          { name: "Aarav Patel", batch: "Class 10 Physics", status: "Fee Receipt Sent" },
+                          { name: "Sneha Reddy", batch: "IIT-JEE Morning", status: "Absent Notice Sent" },
+                        ].map((row, i) => (
+                          <div key={i} className="py-2 border-b border-slate-50 last:border-0 flex justify-between text-xs dark:border-slate-800/40">
+                            <span className="font-semibold text-slate-800 dark:text-slate-200">{row.name} ({row.batch})</span>
+                            <span className="text-slate-500 dark:text-slate-400 font-mono text-[11px]">{row.status}</span>
                           </div>
                         ))}
                       </div>
@@ -354,15 +452,18 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* --- FEATURES SECTION ("Everything you need" - Horizontal Carousel on Mobile, Grid on Desktop) --- */}
-        <section id="features" className="py-16 lg:py-28 bg-white border-y border-slate-200 dark:bg-[#111827] dark:border-slate-800" aria-labelledby="features-heading">
+        {/* --- ALL ERP FEATURES SECTION --- */}
+        <section id="features" className="py-16 lg:py-24 bg-white border-y border-slate-200 dark:bg-[#111827] dark:border-slate-800" aria-labelledby="features-heading">
           <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-            <motion.div {...scrollReveal} className="text-left md:text-center mb-8 md:mb-14 max-w-2xl mx-auto">
+            <motion.div {...scrollReveal} className="text-left md:text-center mb-10 md:mb-14 max-w-3xl mx-auto">
+              <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
+                All Features Included
+              </div>
               <h2 id="features-heading" className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white mb-3">
-                Everything you need
+                Everything Your School & Coaching Needs
               </h2>
               <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400">
-                Stop using WhatsApp groups and Excel sheets.
+                A single unified ERP application. Zero clunky Excel spreadsheets or manual paper registers.
               </p>
             </motion.div>
 
@@ -373,179 +474,205 @@ export default function LandingPage() {
               initial="hidden"
               whileInView="show"
               viewport={{ once: true, margin: "-20px" }}
-              className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-5 pb-4 pt-1 no-scrollbar -mx-5 px-5 md:mx-0 md:px-0 md:grid md:grid-cols-2 md:overflow-visible md:gap-6 lg:gap-8"
+              className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
             >
               {/* Feature 1 */}
-              <motion.div variants={staggerItem} className="min-w-[78vw] sm:min-w-[340px] md:min-w-0 snap-center bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800 shrink-0 md:shrink shadow-sm">
-                <div className="p-6 sm:p-8 pb-5">
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-blue-100 flex items-center justify-center mb-4 sm:mb-5 dark:bg-blue-500/20">
-                    <Users className="text-blue-600 dark:text-blue-400" size={22} aria-hidden="true" />
-                  </div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-2">Student Management</h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-base">Track academic journeys in one click.</p>
+              <motion.div variants={staggerItem} className="bg-slate-50 dark:bg-[#0B0F19] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+                <div className="w-12 h-12 rounded-xl bg-blue-100 dark:bg-blue-500/20 flex items-center justify-center text-blue-600 dark:text-blue-400 mb-4">
+                  <Users size={24} />
                 </div>
-                <div className="mt-auto px-5 sm:px-8 pb-0">
-                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-3.5 sm:p-5 pb-0 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
-                    {[1, 2, 3].map((i) => (
-                      <div key={i} className="flex items-center gap-3 sm:gap-4 py-2.5 sm:py-3 border-b border-slate-100 last:border-0 dark:border-slate-700/50">
-                        <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-slate-200 dark:bg-slate-700 shrink-0"></div>
-                        <div className="flex-1">
-                          <div className="w-20 sm:w-24 h-2 sm:h-2.5 bg-slate-300 rounded mb-1.5 sm:mb-2 dark:bg-slate-600"></div>
-                          <div className="w-14 sm:w-16 h-1.5 sm:h-2 bg-slate-200 rounded dark:bg-slate-700"></div>
-                        </div>
-                      </div>
-                    ))}
-                  </motion.div>
-                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Student & Batch Management</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Manage hundreds of students across multiple batches, courses, and classes with student IDs, parent contact info, and academic history.
+                </p>
               </motion.div>
 
               {/* Feature 2 */}
-              <motion.div variants={staggerItem} className="min-w-[78vw] sm:min-w-[340px] md:min-w-0 snap-center bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800 shrink-0 md:shrink shadow-sm">
-                <div className="p-6 sm:p-8 pb-5">
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-purple-100 flex items-center justify-center mb-4 sm:mb-5 dark:bg-purple-500/20">
-                    <BarChart3 className="text-purple-600 dark:text-purple-400" size={22} aria-hidden="true" />
-                  </div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-2">Smart Attendance</h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-base">Instant alerts for absent students.</p>
+              <motion.div variants={staggerItem} className="bg-slate-50 dark:bg-[#0B0F19] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+                <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-4">
+                  <BarChart3 size={24} />
                 </div>
-                <div className="mt-auto px-5 sm:px-8 pb-0">
-                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-3.5 sm:p-5 pb-3.5 sm:pb-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
-                    <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
-                      {[...Array(14)].map((_, i) => (
-                        <div key={i} className={`aspect-square rounded-md ${i === 4 || i === 11 ? 'bg-red-100 dark:bg-red-500/20' : i === 7 ? 'bg-amber-100 dark:bg-amber-500/20' : 'bg-green-100 dark:bg-green-500/20'}`}></div>
-                      ))}
-                    </div>
-                  </motion.div>
-                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Smart Attendance & WhatsApp Alerts</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Mark daily attendance in seconds. Instantly dispatch automated WhatsApp notifications to parents when a student is absent.
+                </p>
               </motion.div>
 
               {/* Feature 3 */}
-              <motion.div variants={staggerItem} className="min-w-[78vw] sm:min-w-[340px] md:min-w-0 snap-center bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800 shrink-0 md:shrink shadow-sm">
-                <div className="p-6 sm:p-8 pb-5">
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-green-100 flex items-center justify-center mb-4 sm:mb-5 dark:bg-green-500/20">
-                    <CheckCircle2 className="text-green-600 dark:text-green-400" size={22} aria-hidden="true" />
-                  </div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-2">Fee Tracking</h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-base">Automated reminders & receipts.</p>
+              <motion.div variants={staggerItem} className="bg-slate-50 dark:bg-[#0B0F19] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+                <div className="w-12 h-12 rounded-xl bg-green-100 dark:bg-green-500/20 flex items-center justify-center text-green-600 dark:text-green-400 mb-4">
+                  <CreditCard size={24} />
                 </div>
-                <div className="mt-auto px-5 sm:px-8 pb-0">
-                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-3.5 sm:p-5 pb-0 flex flex-col gap-2.5 sm:gap-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
-                    {[1, 2].map((i) => (
-                      <div key={i} className="flex justify-between items-center pb-3 border-b border-slate-100 dark:border-slate-700/50">
-                        <div className="w-20 sm:w-28 h-2.5 sm:h-3 bg-slate-200 rounded dark:bg-slate-600"></div>
-                        <div className={`w-14 sm:w-20 h-3.5 sm:h-4 rounded-full ${i === 1 ? 'bg-green-100 dark:bg-green-500/20' : 'bg-amber-100 dark:bg-amber-500/20'}`}></div>
-                      </div>
-                    ))}
-                  </motion.div>
-                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Fee Tracking & Digital Receipts</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Track fee installments, pending dues, and send WhatsApp payment reminders. Instantly generate official digital receipts with one tap.
+                </p>
               </motion.div>
 
               {/* Feature 4 */}
-              <motion.div variants={staggerItem} className="min-w-[78vw] sm:min-w-[340px] md:min-w-0 snap-center bg-slate-50 rounded-3xl border border-slate-200 overflow-hidden flex flex-col dark:bg-[#0B0F19] dark:border-slate-800 shrink-0 md:shrink shadow-sm">
-                <div className="p-6 sm:p-8 pb-5">
-                  <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-orange-100 flex items-center justify-center mb-4 sm:mb-5 dark:bg-orange-500/20">
-                    <MessageSquare className="text-orange-600 dark:text-orange-400" size={22} aria-hidden="true" />
-                  </div>
-                  <h3 className="text-lg sm:text-2xl font-bold text-slate-900 dark:text-white mb-1.5 sm:mb-2">Notice Board</h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-xs sm:text-base">Broadcast updates to everyone instantly.</p>
+              <motion.div variants={staggerItem} className="bg-slate-50 dark:bg-[#0B0F19] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+                <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4">
+                  <Clock size={24} />
                 </div>
-                <div className="mt-auto px-5 sm:px-8 pb-0">
-                  <motion.div whileHover={{ y: -5 }} className="w-full bg-white rounded-t-2xl border-x border-t border-slate-200 shadow-md p-3.5 sm:p-5 pb-0 flex flex-col gap-2.5 sm:gap-4 dark:bg-[#1A2235] dark:border-slate-700 transition-transform">
-                    <div className="w-[90%] sm:w-[80%] bg-slate-100 rounded-xl rounded-tl-none p-3 sm:p-4 dark:bg-slate-700">
-                      <div className="w-full h-1.5 sm:h-2 bg-slate-300 rounded mb-1.5 sm:mb-2 dark:bg-slate-500"></div>
-                      <div className="w-2/3 h-1.5 sm:h-2 bg-slate-200 rounded dark:bg-slate-600"></div>
-                    </div>
-                    <div className="w-[85%] sm:w-[70%] bg-blue-50 self-end rounded-xl rounded-tr-none p-3 sm:p-4 dark:bg-blue-500/10 mb-3 sm:mb-4">
-                      <div className="w-full h-1.5 sm:h-2 bg-blue-200 rounded mb-1.5 sm:mb-2 dark:bg-blue-500/30"></div>
-                      <div className="w-1/2 h-1.5 sm:h-2 bg-blue-200 rounded dark:bg-blue-500/20"></div>
-                    </div>
-                  </motion.div>
-                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Timetable & Schedule Management</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Organize faculty schedules, room allocations, and batch timings. Students can check their updated timetable directly in the app.
+                </p>
               </motion.div>
 
+              {/* Feature 5 */}
+              <motion.div variants={staggerItem} className="bg-slate-50 dark:bg-[#0B0F19] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+                <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-500/20 flex items-center justify-center text-red-600 dark:text-red-400 mb-4">
+                  <BookOpen size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Homework & Assignment Tracker</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Post daily homework tasks, study notes, and syllabus updates. Parents can supervise assignments to guarantee consistent progress.
+                </p>
+              </motion.div>
+
+              {/* Feature 6 */}
+              <motion.div variants={staggerItem} className="bg-slate-50 dark:bg-[#0B0F19] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col">
+                <div className="w-12 h-12 rounded-xl bg-teal-100 dark:bg-teal-500/20 flex items-center justify-center text-teal-600 dark:text-teal-400 mb-4">
+                  <FileSpreadsheet size={24} />
+                </div>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Easy CSV Import & Export (Zero Lock-in)</h3>
+                <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                  Full data freedom. Import your entire student directory from Excel in seconds and export reports anytime with zero vendor lock-in.
+                </p>
+              </motion.div>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* --- COMPARISON: WHY EDUSMART BEATS OTHER ERPS --- */}
+        <section id="comparison" className="py-16 lg:py-24" aria-labelledby="comparison-heading">
+          <div className="max-w-5xl mx-auto px-5 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
+                Transparent Comparison
+              </div>
+              <h2 id="comparison-heading" className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                Why Educators Choose EduSmart Pro Over Legacy ERPs
+              </h2>
+              <p className="text-base text-slate-600 dark:text-slate-400 mt-2 max-w-xl mx-auto">
+                Compare what traditional ERP vendors charge versus what you get with EduSmart Pro.
+              </p>
+            </div>
+
+            <div className="bg-white dark:bg-[#111827] rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl overflow-hidden">
+              <div className="grid grid-cols-1 md:grid-cols-3 bg-slate-100 dark:bg-[#1A2235] p-4 text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                <div>Comparison Aspect</div>
+                <div className="text-red-500 mt-2 md:mt-0">Traditional Legacy ERPs</div>
+                <div className="text-blue-600 dark:text-blue-400 mt-2 md:mt-0">EduSmart Pro ERP</div>
+              </div>
+              <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                {erpComparison.map((item, idx) => (
+                  <div key={idx} className="grid grid-cols-1 md:grid-cols-3 p-5 gap-3 text-sm">
+                    <div className="font-bold text-slate-900 dark:text-white">{item.feature}</div>
+                    <div className="text-slate-500 dark:text-slate-400 flex items-start gap-2">
+                      <X size={16} className="text-red-500 shrink-0 mt-0.5" />
+                      <span>{item.legacy}</span>
+                    </div>
+                    <div className="text-slate-900 dark:text-slate-200 font-medium flex items-start gap-2">
+                      <Check size={16} className="text-green-600 shrink-0 mt-0.5" />
+                      <span>{item.edusmart}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* --- REVIEWS / TESTIMONIALS SECTION --- */}
+        <section id="reviews" className="py-16 lg:py-24 bg-white border-y border-slate-200 dark:bg-[#111827] dark:border-slate-800" aria-labelledby="reviews-heading">
+          <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
+            <motion.div {...scrollReveal} className="text-left md:text-center mb-10 md:mb-14">
+              <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
+                Client Success Stories
+              </div>
+              <h2 id="reviews-heading" className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                Loved by 100+ Coaching Institutes & Schools
+              </h2>
             </motion.div>
 
-            {/* Mobile Carousel Indicators & Swipe Hint */}
-            <div className="md:hidden flex items-center justify-center gap-2 mt-4">
-              {[0, 1, 2, 3].map((i) => (
-                <button
-                  key={i}
-                  aria-label={`Go to feature slide ${i + 1}`}
-                  onClick={() => {
-                    if (!featuresRef.current) return;
-                    const itemWidth = featuresRef.current.children[0]?.clientWidth || 300;
-                    featuresRef.current.scrollTo({ left: i * (itemWidth + 16), behavior: 'smooth' });
-                    setActiveFeature(i);
-                  }}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${activeFeature === i ? 'w-6 bg-blue-600 dark:bg-blue-400' : 'w-1.5 bg-slate-300 dark:bg-slate-700'}`}
-                />
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {reviews.map((review, index) => (
+                <div 
+                  key={index}
+                  className="bg-slate-50 dark:bg-[#0B0F19] p-6 rounded-2xl border border-slate-200 dark:border-slate-800 shadow-sm flex flex-col justify-between"
+                >
+                  <div>
+                    <div className="flex gap-1 mb-3">
+                      {[...Array(review.rating)].map((_, i) => (
+                        <Star key={i} size={14} className="fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="text-slate-700 dark:text-slate-300 text-sm leading-relaxed mb-4">
+                      &ldquo;{review.text}&rdquo;
+                    </p>
+                  </div>
+                  <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
+                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">{review.name}</h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">{review.role}</p>
+                  </div>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
-        {/* --- REVIEWS / TESTIMONIALS SECTION (Horizontal Carousel on Mobile, Grid on Desktop) --- */}
-        <section id="reviews" className="py-16 lg:py-28" aria-labelledby="reviews-heading">
-          <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8">
-            <motion.div {...scrollReveal} className="text-left md:text-center mb-8 md:mb-14">
-              <h2 id="reviews-heading" className="text-3xl sm:text-4xl lg:text-5xl font-black tracking-tight text-slate-900 dark:text-white">
-                Loved by Owners
+        {/* --- FAQ SECTION FOR GOOGLE & AI ENGINES --- */}
+        <section id="faq" className="py-16 lg:py-24" aria-labelledby="faq-heading">
+          <div className="max-w-4xl mx-auto px-5 sm:px-6 lg:px-8">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
+                Got Questions?
+              </div>
+              <h2 id="faq-heading" className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white">
+                Frequently Asked Questions
               </h2>
-            </motion.div>
+            </div>
 
-            <motion.div 
-              ref={reviewsRef}
-              onScroll={() => handleScroll(reviewsRef, setActiveReview)}
-              variants={staggerContainer}
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: true, margin: "-20px" }}
-              className="flex overflow-x-auto snap-x snap-mandatory gap-4 sm:gap-5 pb-4 pt-1 no-scrollbar -mx-5 px-5 md:mx-0 md:px-0 md:grid md:grid-cols-2 md:overflow-visible md:gap-5 lg:gap-8"
-            >
-              {reviews.map((review, index) => (
-                <motion.div 
-                  key={index}
-                  variants={staggerItem}
-                  className="min-w-[82vw] sm:min-w-[360px] md:min-w-0 snap-center bg-white px-5 py-4 sm:p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col dark:bg-[#111827] dark:border-slate-800 shrink-0 md:shrink"
-                >
-                  <div className="flex items-center justify-between mb-2.5">
-                    <div className="flex gap-0.5" aria-label={`Rating: ${review.rating} out of 5 stars`}>
-                      {[...Array(review.rating)].map((_, i) => (
-                        <Star key={i} size={13} className="fill-yellow-400 text-yellow-400" aria-hidden="true" />
-                      ))}
-                    </div>
-                  </div>
-                  <p className="text-slate-700 dark:text-slate-300 mb-3 text-xs sm:text-sm leading-relaxed line-clamp-3">
-                    &ldquo;{review.text}&rdquo;
+            <div className="space-y-4">
+              {faqs.map((faq, idx) => (
+                <div key={idx} className="bg-white dark:bg-[#111827] rounded-2xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+                  <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mb-2 flex items-start gap-3">
+                    <HelpCircle size={20} className="text-blue-600 shrink-0 mt-0.5" />
+                    <span>{faq.q}</span>
+                  </h3>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed pl-8">
+                    {faq.a}
                   </p>
-                  <div className="flex items-center gap-2.5 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-600 font-bold text-xs shrink-0 dark:bg-slate-800 dark:text-slate-300" aria-hidden="true">
-                      {review.name[0]}
-                    </div>
-                    <div className="overflow-hidden">
-                      <h4 className="font-semibold text-xs sm:text-sm text-slate-900 dark:text-white truncate">{review.name}</h4>
-                      <p className="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 truncate">{review.role}</p>
-                    </div>
-                  </div>
-                </motion.div>
+                </div>
               ))}
-            </motion.div>
+            </div>
+          </div>
+        </section>
 
-            {/* Mobile Carousel Indicators */}
-            <div className="md:hidden flex items-center justify-center gap-2 mt-4">
-              {reviews.map((_, i) => (
-                <button
-                  key={i}
-                  aria-label={`Go to review slide ${i + 1}`}
-                  onClick={() => {
-                    if (!reviewsRef.current) return;
-                    const itemWidth = reviewsRef.current.children[0]?.clientWidth || 300;
-                    reviewsRef.current.scrollTo({ left: i * (itemWidth + 16), behavior: 'smooth' });
-                    setActiveReview(i);
-                  }}
-                  className={`h-1.5 rounded-full transition-all duration-300 ${activeReview === i ? 'w-6 bg-blue-600 dark:bg-blue-400' : 'w-1.5 bg-slate-300 dark:bg-slate-700'}`}
-                />
-              ))}
+        {/* --- HELP INDIA GROW CTA BANNER --- */}
+        <section className="py-12 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white">
+          <div className="max-w-5xl mx-auto px-5 text-center">
+            <HeartHandshake size={36} className="mx-auto mb-3 text-blue-200" />
+            <h2 className="text-2xl sm:text-4xl font-black mb-3">
+              Help India Grow • Digitally Empower Your Institute
+            </h2>
+            <p className="text-sm sm:text-base text-blue-100 max-w-2xl mx-auto mb-6 leading-relaxed">
+              Join hundreds of proud Indian educators upgrading to homegrown software. 7 days full free trial, no hidden charges, cancel subscription anytime.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link href="/register" className="w-full sm:w-auto px-8 py-3.5 bg-white text-blue-700 font-bold rounded-xl shadow-lg hover:bg-blue-50 transition">
+                Start Your 7-Day Free Trial
+              </Link>
+              <a
+                href="https://wa.me/917388739691?text=Hello%20Shah,%20I%20want%20support%20for%20EduSmart%20Pro%20ERP"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full sm:w-auto px-6 py-3.5 bg-blue-800/80 text-white font-bold rounded-xl border border-blue-400/40 hover:bg-blue-800 transition flex items-center justify-center gap-2"
+              >
+                <Phone size={16} /> WhatsApp: +91 73887-39691
+              </a>
             </div>
           </div>
         </section>
@@ -555,40 +682,44 @@ export default function LandingPage() {
       <footer className="bg-white border-t border-slate-200 pt-16 pb-8 dark:bg-[#0B0F19] dark:border-slate-800" aria-label="Site Footer">
         <div className="max-w-7xl mx-auto px-5 sm:px-6 lg:px-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 lg:gap-8 mb-12">
           <div className="col-span-1 sm:col-span-2 lg:col-span-2">
-            <div className="flex items-center gap-2 mb-5">
+            <div className="flex items-center gap-2 mb-4">
               <div className="bg-slate-900 p-1.5 rounded-lg dark:bg-white">
                 <Shield className="text-white w-5 h-5 dark:text-slate-900" aria-hidden="true" />
               </div>
               <h3 className="text-slate-900 font-bold text-xl dark:text-white">EduSmart Pro</h3>
             </div>
-            <p className="text-base text-slate-500 leading-relaxed max-w-sm dark:text-slate-400">
-              The #1 Management Platform for Coaching Institutes, Tuition Centers, and Schools in India.
+            <p className="text-sm text-slate-500 leading-relaxed max-w-sm dark:text-slate-400 mb-4">
+              India's #1 School & Coaching Management App and ERP Software. 7 days free trial, zero hidden charges, cancel subscription anytime, and easy CSV/Excel data import & export.
             </p>
+            <div className="flex flex-col gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
+              <div>📞 Phone/WhatsApp: <a href="tel:+917388739691" className="text-blue-600 font-bold hover:underline">+91 73887-39691</a></div>
+              <div>✉️ Official Email: <a href="mailto:shanibrooo@gmail.com" className="text-blue-600 font-bold hover:underline">shanibrooo@gmail.com</a></div>
+            </div>
           </div>
           
           <div className="flex flex-col gap-3">
-            <h4 className="text-slate-900 font-bold mb-3 text-base dark:text-white">Product</h4>
-            <ul className="flex flex-col text-base text-slate-500 dark:text-slate-400 font-medium">
-              <li><Link href="/login" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Login</Link></li>
-              <li><Link href="/register" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Register</Link></li>
-              <li><Link href="/pricing" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Pricing</Link></li>
-              <li><button onClick={() => setIsContactOpen(true)} className="block py-2 text-left w-full hover:text-slate-900 transition-colors dark:hover:text-white">Contact Us</button></li>
+            <h4 className="text-slate-900 font-bold mb-2 text-sm dark:text-white uppercase tracking-wider">Product & Plans</h4>
+            <ul className="flex flex-col text-sm text-slate-500 dark:text-slate-400 font-medium space-y-1">
+              <li><Link href="/login" className="hover:text-slate-900 dark:hover:text-white transition">Institute Login</Link></li>
+              <li><Link href="/register" className="hover:text-slate-900 dark:hover:text-white transition">Register (7-Day Trial)</Link></li>
+              <li><Link href="/pricing" className="hover:text-slate-900 dark:hover:text-white transition">Pricing (From ₹299/mo)</Link></li>
+              <li><button onClick={() => setIsContactOpen(true)} className="text-left hover:text-slate-900 dark:hover:text-white transition">Contact Support</button></li>
             </ul>
           </div>
 
           <div className="flex flex-col gap-3">
-            <h4 className="text-slate-900 font-bold mb-3 text-base dark:text-white">Legal</h4>
-            <ul className="flex flex-col text-base text-slate-500 dark:text-slate-400 font-medium">
-              <li><Link href="/legal/privacy" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Privacy Policy</Link></li>
-              <li><Link href="/legal/term" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Terms of Service</Link></li>
-              <li><Link href="/legal/refund" className="block py-2 hover:text-slate-900 transition-colors dark:hover:text-white">Refund Policy</Link></li>
+            <h4 className="text-slate-900 font-bold mb-2 text-sm dark:text-white uppercase tracking-wider">Legal & Trust</h4>
+            <ul className="flex flex-col text-sm text-slate-500 dark:text-slate-400 font-medium space-y-1">
+              <li><Link href="/legal/privacy" className="hover:text-slate-900 dark:hover:text-white transition">Privacy Policy (Help India Grow)</Link></li>
+              <li><Link href="/legal/term" className="hover:text-slate-900 dark:hover:text-white transition">Terms of Service</Link></li>
+              <li><Link href="/legal/refund" className="hover:text-slate-900 dark:hover:text-white transition">Refund Policy</Link></li>
             </ul>
           </div>
         </div>
         
-        <div className="max-w-7xl mx-auto px-5 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 text-sm font-medium text-slate-500 dark:border-slate-800 dark:text-slate-500">
-          <div>© {new Date().getFullYear()} EduSmart Pro. All rights reserved.</div>
-          <div>Made with ❤️ in India.</div>
+        <div className="max-w-7xl mx-auto px-5 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500 dark:border-slate-800 dark:text-slate-500">
+          <div>© {new Date().getFullYear()} EduSmart Pro ERP. All rights reserved.</div>
+          <div>🇮🇳 Proudly Homegrown in India • Dedicated to Indian Educators</div>
         </div>
       </footer>
 
@@ -620,8 +751,11 @@ export default function LandingPage() {
               <div className="p-6 sm:p-8 flex flex-col max-h-[85vh] overflow-y-auto no-scrollbar">
                 <div className="w-12 h-1.5 bg-slate-200 dark:bg-slate-700 rounded-full mx-auto mb-6 sm:hidden"></div>
                 
-                <div className="flex justify-between items-center mb-8 shrink-0">
-                  <h3 id="modal-title" className="text-2xl font-black text-slate-900 dark:text-white">Get in touch</h3>
+                <div className="flex justify-between items-center mb-6 shrink-0">
+                  <div>
+                    <h3 id="modal-title" className="text-2xl font-black text-slate-900 dark:text-white">Contact Founder & Support</h3>
+                    <p className="text-xs text-slate-500 mt-1">We respond within minutes on WhatsApp and phone</p>
+                  </div>
                   <button 
                     onClick={() => setIsContactOpen(false)}
                     aria-label="Close contact modal"
@@ -631,32 +765,45 @@ export default function LandingPage() {
                   </button>
                 </div>
                 
-                <form className="space-y-5" onSubmit={(e) => { e.preventDefault(); setIsContactOpen(false); }}>
-                  <div>
-                    <label htmlFor="name-input" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Name</label>
-                    <input id="name-input" type="text" required className="w-full px-5 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-base" placeholder="Your Name" />
-                  </div>
-                  <div>
-                    <label htmlFor="email-input" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Email</label>
-                    <input id="email-input" type="email" required className="w-full px-5 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all text-base" placeholder="you@example.com" />
-                  </div>
-                  <div>
-                    <label htmlFor="msg-input" className="block text-sm font-semibold text-slate-700 dark:text-slate-300 mb-2">Message</label>
-                    <textarea id="msg-input" required rows={4} className="w-full px-5 py-3.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-[#0B0F19] text-slate-900 dark:text-white focus:border-blue-500 dark:focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none transition-all resize-none text-base" placeholder="How can we help you?"></textarea>
-                  </div>
-                  <button type="submit" className="w-full py-4 mt-2 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 hover:bg-blue-700 transition-colors flex justify-center items-center gap-2">
-                    Send Message <ArrowRight size={18} aria-hidden="true" />
-                  </button>
-                </form>
+                <div className="space-y-3 mb-6">
+                  <a 
+                    href="https://wa.me/917388739691?text=Hello%20Shah,%20I%20need%20assistance%20with%20EduSmart%20Pro"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full p-4 rounded-xl bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 flex items-center justify-between group hover:bg-green-100 dark:hover:bg-green-900/30 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-green-500 text-white flex items-center justify-center">
+                        <Phone size={20} />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-bold text-sm text-slate-900 dark:text-white">Call / WhatsApp Support</p>
+                        <p className="text-xs text-green-700 dark:text-green-400 font-mono font-semibold">+91 73887-39691</p>
+                      </div>
+                    </div>
+                    <ArrowRight size={18} className="text-green-600 group-hover:translate-x-1 transition-transform" />
+                  </a>
 
-                <div className="mt-8 flex flex-col items-start sm:flex-row sm:items-center sm:justify-center gap-4 pt-6 border-t border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400 font-medium">
-                    <Mail size={18} className="text-slate-400" aria-hidden="true" /> shanibrooo@gmail.com
-                  </div>
-                  <div className="hidden sm:block text-slate-300 dark:text-slate-700">•</div>
-                  <div className="flex items-center gap-3 text-slate-600 dark:text-slate-400 font-medium">
-                    <Phone size={18} className="text-slate-400" aria-hidden="true" /> +91 73887-39691
-                  </div>
+                  <a 
+                    href="mailto:shanibrooo@gmail.com"
+                    className="w-full p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-center justify-between group hover:bg-blue-100 dark:hover:bg-blue-900/30 transition"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center">
+                        <Mail size={20} />
+                      </div>
+                      <div className="text-left">
+                        <p className="font-bold text-sm text-slate-900 dark:text-white">Email Us</p>
+                        <p className="text-xs text-blue-700 dark:text-blue-400 font-mono font-semibold">shanibrooo@gmail.com</p>
+                      </div>
+                    </div>
+                    <ArrowRight size={18} className="text-blue-600 group-hover:translate-x-1 transition-transform" />
+                  </a>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-slate-800 text-center text-xs text-slate-500">
+                  <p className="font-semibold text-slate-700 dark:text-slate-300">Switching from an existing ERP or Excel sheet?</p>
+                  <p className="mt-1">Call us directly at <strong>+91 73887-39691</strong> for free 1-on-1 migration assistance.</p>
                 </div>
               </div>
             </motion.div>

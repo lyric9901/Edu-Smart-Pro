@@ -14,33 +14,37 @@ const inter = Inter({ subsets: ["latin"], display: "swap" });
 const Toaster = dynamic(() => import("react-hot-toast").then((mod) => mod.Toaster));
 const PWAManager = dynamic(() => import("@/components/PWAManager"));
 
-// --- SEO + META (Comprehensive configuration for maximum ranking and visibility) ---
+// --- SEO + META (Comprehensive configuration for maximum ranking, AI discovery & Google visibility) ---
 export const metadata: Metadata = {
   manifest: "/manifest.json", 
   metadataBase: new URL("https://edusmartpro.in"),
 
   title: {
-    default: "EduSmart Pro | #1 Coaching Institute Management Software & App",
-    template: "%s | EduSmart Pro",
+    default: "EduSmart Pro | #1 School & Coaching Management App & ERP Software in India",
+    template: "%s | EduSmart Pro ERP",
   },
 
   description:
-    "Empower your coaching institute with EduSmart Pro. Automate student attendance, fee tracking, instant WhatsApp notices, digital receipts, and parent communication across India.",
+    "India's best School & Coaching Management App and modern ERP software. 7 days free trial, no hidden charges, cancel subscription anytime, easy CSV/Excel data import & export. Automate WhatsApp attendance, fees tracking, receipts, homework, and timetable. Support Indian startups and help India grow.",
 
   keywords: [
-    "Coaching Institute Management Software",
-    "Coaching App India",
+    "School Management ERP Software",
+    "Coaching Institute Management App",
+    "Coaching Management Software India",
+    "School ERP Software India",
     "Tuition Management App",
-    "Student Attendance Tracker",
-    "Coaching Fee Management System",
-    "WhatsApp Attendance Notices",
+    "Student Attendance Tracker App",
+    "Coaching Fee Management System with Receipts",
+    "WhatsApp Attendance Notices for School",
     "Institute Management ERP",
     "EduSmart Pro",
     "Edu Smart Pro",
-    "Tuition Classes App",
+    "Tuition Classes Management Software",
     "Coaching ERP India",
-    "Godhra Coaching Classes",
-    "Lucknow Tuition Software",
+    "Best School ERP App India",
+    "Help India Grow Indian Startup",
+    "Coaching Software Free Trial 7 Days",
+    "Easy Data Import Export School Software"
   ],
 
   authors: [{ name: "Shah Nawaz Ali", url: "https://edusmartpro.in" }],
@@ -64,16 +68,16 @@ export const metadata: Metadata = {
   },
 
   openGraph: {
-    title: "EduSmart Pro - Smart Coaching Institute Management Platform",
-    description: "Automate attendance, fees, and instant WhatsApp notices in seconds. Loved by 100+ institutes across India.",
+    title: "EduSmart Pro - School & Coaching Management App and ERP Software",
+    description: "Modern ERP software for schools & coaching centers. 7 days free trial, zero hidden charges, cancel anytime, easy data import/export, and automated WhatsApp notices. Help India grow with homegrown tech.",
     url: "https://edusmartpro.in",
-    siteName: "EduSmart Pro",
+    siteName: "EduSmart Pro ERP",
     images: [
       {
         url: "/icons/icon-512x512.png", 
         width: 512,
         height: 512,
-        alt: "EduSmart Pro - Coaching Management Platform Logo",
+        alt: "EduSmart Pro - School & Coaching Management App and ERP Software",
       },
     ],
     locale: "en_IN",
@@ -82,8 +86,8 @@ export const metadata: Metadata = {
 
   twitter: {
     card: "summary_large_image",
-    title: "EduSmart Pro | #1 Smart Coaching App",
-    description: "Automate your coaching center, fee collection & WhatsApp notices.",
+    title: "EduSmart Pro | #1 School & Coaching ERP Software",
+    description: "7-day free trial, no hidden charges, cancel anytime, easy data import/export. Automated WhatsApp fees, attendance, and receipts.",
     images: ["/icons/icon-512x512.png"],
     creator: "@edusmartpro",
   },
