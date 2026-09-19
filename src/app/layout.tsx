@@ -20,14 +20,18 @@ export const metadata: Metadata = {
   metadataBase: new URL("https://edusmartpro.in"),
 
   title: {
-    default: "EduSmart Pro | #1 School & Coaching Management App & ERP Software in India",
+    default: "EduSmart Pro - Digital Coaching & Tuition Management Platform for Student Enrollment, Batch Attendance, Fee Tracking, and Parent Updates.",
     template: "%s | EduSmart Pro ERP",
   },
 
   description:
-    "India's best School & Coaching Management App and modern ERP software. 7 days free trial, no hidden charges, cancel subscription anytime, easy CSV/Excel data import & export. Automate WhatsApp attendance, fees tracking, receipts, homework, and timetable. Support Indian startups and help India grow.",
+    "EduSmart Pro - Digital Coaching & Tuition Management Platform for Student Enrollment, Batch Attendance, Fee Tracking, and Parent Updates. 7 days free trial, no hidden charges, cancel subscription anytime, easy CSV/Excel data import & export.",
 
   keywords: [
+    "coaching management system",
+    "tuition attendance tracker",
+    "student fee logs",
+    "batch timetable management",
     "School Management ERP Software",
     "Coaching Institute Management App",
     "Coaching Management Software India",
@@ -35,7 +39,6 @@ export const metadata: Metadata = {
     "Tuition Management App",
     "Student Attendance Tracker App",
     "Coaching Fee Management System with Receipts",
-    "WhatsApp Attendance Notices for School",
     "Institute Management ERP",
     "EduSmart Pro",
     "Edu Smart Pro",
@@ -142,10 +145,7 @@ export default function RootLayout({
         <ThemeProvider>
           <AuthProvider>
             
-            {/* W wrapped right here 👇 */}
-            <main>
-              {children}
-            </main>
+            {children}
 
             {/* These will load without crashing Vercel */}
             <PWAManager />

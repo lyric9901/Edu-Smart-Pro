@@ -26,7 +26,7 @@ export default function ThemeToggle({ compact = false, className = "" }: ThemeTo
         onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
         aria-label="Toggle theme"
         title="Toggle theme"
-        className={`touch-target gpu-animated inline-flex items-center justify-center rounded-2xl glass-card text-slate-700 transition-transform duration-300 ease-in-out hover:scale-105 dark:text-slate-100 ${className}`}
+        className={`touch-target gpu-animated inline-flex items-center justify-center rounded-2xl bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-slate-200 hover:bg-slate-200 dark:hover:bg-zinc-700 transition-all duration-300 ease-in-out hover:scale-105 ${className}`}
       >
         <CurrentIcon className="h-5 w-5 transition-transform duration-300 ease-in-out" />
       </button>
@@ -35,7 +35,7 @@ export default function ThemeToggle({ compact = false, className = "" }: ThemeTo
 
   return (
     <div
-      className={`glass-card inline-flex items-center gap-1 rounded-2xl p-1 ${className}`}
+      className={`bg-slate-100/80 dark:bg-zinc-900/80 border border-slate-200 dark:border-zinc-800 backdrop-blur-md inline-flex items-center gap-1 rounded-2xl p-1 ${className}`}
       role="group"
       aria-label="Theme preference"
     >
@@ -50,8 +50,8 @@ export default function ThemeToggle({ compact = false, className = "" }: ThemeTo
             title={`${label} theme`}
             className={`touch-target gpu-animated inline-flex items-center justify-center gap-2 rounded-xl px-3 text-xs font-black transition-all duration-300 ${
               isActive
-                ? "bg-slate-950 text-white shadow-lg shadow-slate-900/20 dark:bg-white dark:text-slate-950"
-                : "text-slate-500 hover:bg-white/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-white/10 dark:hover:text-white"
+                ? "bg-slate-950 text-white shadow-lg shadow-slate-900/20 dark:bg-zinc-800 dark:text-white dark:border dark:border-zinc-700"
+                : "text-slate-500 hover:bg-white/60 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-zinc-800/60 dark:hover:text-white"
             }`}
           >
             <Icon className={`h-4 w-4 transition-transform duration-300 ${isActive ? "rotate-12" : "rotate-0"}`} />

@@ -25,7 +25,7 @@ I don't just write boilerplate code; I build actual businesses. I engineered Edu
 <img src="https://img.icons8.com/3d-fluency/94/brain.png" width="24" align="center" /> **Investor Psychology Check (Why you should care):**
 You aren't just looking at a codebase. You're looking at a product built by a dev who understands *distribution, Monthly Recurring Revenue (MRR), and unit economics*. 
 * **Enterprise Architecture:** I built a bulletproof Role-Based Access Control (RBAC) system (Super Admin > Admin > Student) because I know how B2B hierarchies actually function.
-* **Modern State Management:** I dropped legacy bloat and used Zustand + React Context. Re-renders are minimal, the app is snappy, and the UX keeps churn rates low.
+* **Modern State Management:** I dropped legacy bloat and used React Context. Re-renders are minimal, the app is snappy, and the UX keeps churn rates low.
 * **Zero-Cost Scaling:** Serverless Firebase architecture means you pay pennies for database reads until you are scaling to the moon. 
 
 ---
@@ -57,7 +57,7 @@ Edu-Smart-Pro doesn't do spaghetti code. Depending on your auth level, the app d
    * **Super Admin (`/super-admin`):** The God Mode. Oversees the entire SaaS ecosystem and manages client onboarding.
    * **Institute Admin (`/dashboard/admin`):** The Coaching Owner. Manages day-to-day chaos for their specific center.
    * **Student (`/student`):** The End User. A personalized, distraction-free portal to check their own stats.
-3. **Global State & UI:** `useAppStore` keeps the data flowing smoothly, while the `ThemeContext` keeps the UI looking aesthetic AF (Dark mode included, because we aren't psychopaths).
+3. **Global State & UI:** React Context keeps the data flowing smoothly, while the `ThemeContext` keeps the UI looking aesthetic AF (Dark mode included, because we aren't psychopaths).
 
 ---
 
@@ -86,7 +86,7 @@ Edu-Smart-Pro doesn't do spaghetti code. Depending on your auth level, the app d
 * **Framework:** Next.js 14 (App Router)
 * **Language:** TypeScript (Strict mode, obviously)
 * **Backend:** Google Firebase
-* **State:** Zustand (`useAppStore`)
+* **State:** React Context API
 * **Styling:** Tailwind CSS
 * **Animations:** Framer Motion
 

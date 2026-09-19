@@ -132,7 +132,8 @@ function StudentContent() {
                         batchName: data.name,
                         batchId: currentStudent.batchId,
                         institutionCode: currentStudent.institutionCode,
-                        batchTiming: data.timing
+                        batchTiming: data.timing,
+                        timetable: Array.isArray(data.timetable) ? data.timetable : []
                     };
                     setStudents(prev => {
                         const newStudents = [...prev];
@@ -256,8 +257,9 @@ function StudentContent() {
                 return toast.error("New password must be at least 6 characters.");
             }
 
-            const actualCurrentPass = currentStudent?.password || currentStudent?.phone;
-            if (passForm.current !== actualCurrentPass) {
+            const isFirstTimeSetup = !currentStudent?.password;
+            const validCurrent = isFirstTimeSetup ? currentStudent?.phone : currentStudent?.password;
+            if (!validCurrent || passForm.current !== validCurrent) {
                 return toast.error("Incorrect current password.");
             }
 
@@ -278,6 +280,14 @@ function StudentContent() {
                     if (studentIndex > -1) {
                         studentsArr[studentIndex].password = passForm.new;
                         await updateDoc(batchRef, { students: studentsArr });
+
+                        const updatedCurrent = { ...currentStudent, password: passForm.new };
+                        setStudents(prev => {
+                            const newStudents = [...prev];
+                            newStudents[activeStudentIndex] = updatedCurrent;
+                            localStorage.setItem("eduSmartStudentsList", JSON.stringify(newStudents));
+                            return newStudents;
+                        });
 
                         toast.success("Password changed successfully!");
                         setPassForm({ current: "", new: "", confirm: "" });
@@ -676,7 +686,11 @@ function StudentContent() {
                                     <div className="h-56 md:h-72 w-full">
                                         {currentStudent.performanceHistory && currentStudent.performanceHistory.length > 0 ? (
                                             <ResponsiveContainer width="100%" height="100%">
-                                                <LineChart data={currentStudent.performanceHistory}>
+                                                <LineChart data={(currentStudent.performanceHistory || []).map((t: any) => ({
+                                                    ...t,
+                                                    name: t.testName || t.name || "Test",
+                                                    score: Number(t.score || 0)
+                                                }))}>
                                                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(150,150,150,0.1)" vertical={false} />
                                                     <XAxis dataKey="name" stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} />
                                                     <YAxis stroke="#94a3b8" fontSize={10} tickLine={false} axisLine={false} domain={[0, 100]} />
@@ -733,6 +747,40 @@ function StudentContent() {
                                         <div className="text-lg md:text-2xl font-black text-slate-900 dark:text-white">{currentStudent.batchTiming?.end ? new Date(`1970-01-01T${currentStudent.batchTiming.end}`).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : "--:--"}</div>
                                     </div>
                                 </div>
+
+                                {currentStudent.timetable && currentStudent.timetable.length > 0 && (
+                                    <div className="w-full max-w-2xl mt-10">
+                                        <h3 className="text-xs font-black text-slate-500 dark:text-zinc-400 uppercase tracking-widest mb-4 text-center sm:text-left">
+                                            Weekly Subject Timetable
+                                        </h3>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                            {currentStudent.timetable.map((slot: any, idx: number) => (
+                                                <div 
+                                                    key={slot.id || idx}
+                                                    className="bg-white dark:bg-[#0b1120] border border-slate-100 dark:border-white/5 p-4 rounded-2xl shadow-sm flex items-center justify-between"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-xl bg-purple-50 dark:bg-purple-900/20 text-purple-600 dark:text-purple-400 flex items-center justify-center font-bold text-xs uppercase">
+                                                            {(slot.day || "Day").slice(0, 3)}
+                                                        </div>
+                                                        <div>
+                                                            <div className="font-bold text-sm text-slate-900 dark:text-white">{slot.subject}</div>
+                                                            <div className="text-xs text-slate-500 dark:text-zinc-400">
+                                                                {slot.startTime && slot.endTime ? `${slot.startTime} - ${slot.endTime}` : (slot.time || "Regular")}
+                                                                {slot.room ? ` • ${slot.room}` : ""}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    {slot.teacher && (
+                                                        <span className="text-[10px] font-bold px-2 py-1 bg-slate-50 dark:bg-white/5 rounded-lg text-slate-600 dark:text-zinc-400">
+                                                            {slot.teacher}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
                             </motion.div>
                         )}
                     </AnimatePresence>

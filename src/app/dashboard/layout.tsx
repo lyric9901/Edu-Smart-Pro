@@ -19,7 +19,8 @@ import {
   MessageCircleQuestion,
   Settings as SettingsIcon,
   User,
-  Users // <-- Added Users icon here
+  Users,
+  Shield
 } from "lucide-react";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -72,13 +73,16 @@ export default function DashboardLayout({ children }) {
 
   if (loading || !user) return null;
 
+  const isSuperAdmin = (user as any)?.role === "superadmin" || (user as any)?.username === "master";
+
   const navItems = [
     { href: "/dashboard/admin", label: "Dashboard", icon: <LayoutDashboard size={20} /> },
     { href: "/dashboard/attendance", label: "Attendance", icon: <CheckSquare size={20} /> },
     { href: "/dashboard/fees", label: "Fees", icon: <IndianRupee size={20} /> },
     { href: "/dashboard/notices", label: "Notifications", icon: <Bell size={20} /> },
     { href: "/dashboard/timing", label: "Schedule", icon: <Clock size={20} /> },
-    { href: "/dashboard/homework", label: "Homework", icon: <BookOpen size={20} /> }
+    { href: "/dashboard/homework", label: "Homework", icon: <BookOpen size={20} /> },
+    ...(isSuperAdmin ? [{ href: "/super-admin", label: "Super Admin", icon: <Shield size={20} /> }] : [])
   ];
 
   return (
@@ -223,6 +227,24 @@ export default function DashboardLayout({ children }) {
                                   <div className="text-left"><p className="font-bold text-slate-950 dark:text-white text-lg">Switch to Student View</p><p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Test as a student</p></div>
                               </div>
                           </button>
+
+                          {isSuperAdmin && (
+                            <Link 
+                              href="/super-admin" 
+                              onClick={() => setShowSettingsModal(false)} 
+                              className="glass-card w-full flex items-center justify-between p-5 rounded-[1.5rem] transition-colors group border border-white/40 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/5"
+                            >
+                              <div className="flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
+                                  <Shield size={24} />
+                                </div>
+                                <div className="text-left">
+                                  <p className="font-bold text-slate-950 dark:text-white text-lg">Super Admin</p>
+                                  <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Platform Master Control</p>
+                                </div>
+                              </div>
+                            </Link>
+                          )}
 
                           <button onClick={logout} className="w-full flex items-center justify-between p-5 bg-red-500/10 hover:bg-red-500/20 rounded-[1.5rem] border border-red-500/20 backdrop-blur-md transition-all mt-6">
                               <div className="flex items-center gap-4">

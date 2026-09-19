@@ -36,14 +36,23 @@ export default function SuperAdmin() {
   }, []);
 
   // 2. AUTH
-  const handleLogin = (e: any) => {
+  const handleLogin = async (e: any) => {
     e.preventDefault();
-    const secret = process.env.NEXT_PUBLIC_SUPER_ADMIN_KEY; 
-    if (masterKey === secret) {
-      setIsAuthenticated(true);
-      localStorage.setItem("superAdminAuth", "true");
-    } else {
-      alert("Invalid Master Key");
+    try {
+      const res = await fetch("/api/super-admin/verify", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: masterKey })
+      });
+      const data = await res.json();
+      if (res.ok && data.success) {
+        setIsAuthenticated(true);
+        localStorage.setItem("superAdminAuth", "true");
+      } else {
+        alert(data.message || "Invalid Master Key");
+      }
+    } catch (err: any) {
+      alert("Verification failed: " + (err?.message || "Unknown error"));
     }
   };
 
@@ -86,7 +95,7 @@ export default function SuperAdmin() {
           phone: val.phone,
           createdAt: val.createdAt,
           username: adminEntry ? adminEntry[0] : null,
-          password: adminEntry ? adminEntry[1].password : null
+          password: adminEntry ? (adminEntry[1] as any).password : null
         };
       });
       list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));

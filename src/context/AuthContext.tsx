@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 
 // Define the User structure
 export interface AuthUser {
-  role: 'admin' | 'student';
+  role: 'admin' | 'student' | 'superadmin';
   username: string;
   institutionCode: string;
   schoolId?: string;

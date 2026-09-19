@@ -119,7 +119,7 @@ export default function LandingPage() {
     {
       name: "Rahul Sharma",
       role: "Director, Sharma Classes (Lucknow)",
-      text: "EduSmart Pro replaced our old expensive ERP. WhatsApp fee receipts and absentee alerts save us hours each day.",
+      text: "EduSmart Pro replaced our old expensive ERP. Digital fee receipts and parent notice updates save us hours each day.",
       rating: 5
     },
     {
@@ -159,9 +159,9 @@ export default function LandingPage() {
       edusmart: "100% data ownership; 1-click CSV/Excel import & export"
     },
     {
-      feature: "WhatsApp Automation",
+      feature: "Batch Attendance & Notices",
       legacy: "Requires costly third-party SMS/WhatsApp gateway APIs",
-      edusmart: "Built-in 1-click WhatsApp attendance & fee notifications"
+      edusmart: "Built-in 1-click batch attendance & digital parent updates"
     },
     {
       feature: "App Experience",
@@ -173,7 +173,7 @@ export default function LandingPage() {
   const faqs = [
     {
       q: "What makes EduSmart Pro better than other School & Coaching ERP software?",
-      a: "EduSmart Pro delivers an enterprise-grade ERP without the enterprise price tag or vendor lock-in. You get full student management, smart attendance with WhatsApp absentee alerts, digital fee receipts, homework, notices, and timetable management. Plus, our flexible monthly plans start at just ₹299/month with zero setup fees."
+      a: "EduSmart Pro delivers an enterprise-grade ERP without the enterprise price tag or vendor lock-in. You get full student management, 1-click batch attendance, digital fee receipts, homework, notices, and timetable management. Plus, our flexible monthly plans start at just ₹299/month with zero setup fees."
     },
     {
       q: "How does the 7-day free trial work? Are there any hidden charges?",
@@ -339,7 +339,7 @@ export default function LandingPage() {
               </h1>
               
               <p className="text-base sm:text-lg text-slate-600 mb-6 max-w-xl leading-relaxed dark:text-slate-300">
-                Replace bulky legacy software with India's fastest School & Coaching Management ERP. Automated WhatsApp attendance, fee tracking with digital receipts, homework & timetable management.
+                Replace bulky legacy software with India's fastest School & Coaching Management ERP. 1-Click batch attendance, fee tracking with digital receipts, homework & timetable management.
               </p>
 
               {/* CORE TRUST HIGHLIGHTS */}
@@ -430,12 +430,12 @@ export default function LandingPage() {
                       </div>
                       <div className="border border-slate-100 rounded-xl p-4 dark:border-slate-800">
                         <div className="flex justify-between items-center mb-3">
-                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Recent Automated WhatsApp Notices</span>
-                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full dark:bg-green-900/20">Delivered</span>
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">Recent Student & Notice Updates</span>
+                          <span className="text-[10px] text-green-600 font-bold bg-green-50 px-2 py-0.5 rounded-full dark:bg-green-900/20">Updated</span>
                         </div>
                         {[
-                          { name: "Aarav Patel", batch: "Class 10 Physics", status: "Fee Receipt Sent" },
-                          { name: "Sneha Reddy", batch: "IIT-JEE Morning", status: "Absent Notice Sent" },
+                          { name: "Aarav Patel", batch: "Class 10 Physics", status: "Fee Receipt Generated" },
+                          { name: "Sneha Reddy", batch: "IIT-JEE Morning", status: "Attendance Logged" },
                         ].map((row, i) => (
                           <div key={i} className="py-2 border-b border-slate-50 last:border-0 flex justify-between text-xs dark:border-slate-800/40">
                             <span className="font-semibold text-slate-800 dark:text-slate-200">{row.name} ({row.batch})</span>
@@ -492,9 +492,9 @@ export default function LandingPage() {
                 <div className="w-12 h-12 rounded-xl bg-purple-100 dark:bg-purple-500/20 flex items-center justify-center text-purple-600 dark:text-purple-400 mb-4">
                   <BarChart3 size={24} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Smart Attendance & WhatsApp Alerts</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">1-Click Batch Attendance</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Mark daily attendance in seconds. Instantly dispatch automated WhatsApp notifications to parents when a student is absent.
+                  Mark attendance in seconds with quick filters and send WhatsApp updates to parents in a single click.
                 </p>
               </motion.div>
 
@@ -514,9 +514,9 @@ export default function LandingPage() {
                 <div className="w-12 h-12 rounded-xl bg-amber-100 dark:bg-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400 mb-4">
                   <Clock size={24} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Timetable & Schedule Management</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Real-Time Parent Portal & Notice Board</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Organize faculty schedules, room allocations, and batch timings. Students can check their updated timetable directly in the app.
+                  Parents view attendance records, fee payment history, homework, and institute notices directly on their mobile portal.
                 </p>
               </motion.div>
 
@@ -525,9 +525,9 @@ export default function LandingPage() {
                 <div className="w-12 h-12 rounded-xl bg-red-100 dark:bg-red-500/20 flex items-center justify-center text-red-600 dark:text-red-400 mb-4">
                   <BookOpen size={24} />
                 </div>
-                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Homework & Assignment Tracker</h3>
+                <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Digital Assignment Manager</h3>
                 <p className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-                  Post daily homework tasks, study notes, and syllabus updates. Parents can supervise assignments to guarantee consistent progress.
+                  Post homework tasks, share syllabus notes, and manage class assignments without clunky paper sheets.
                 </p>
               </motion.div>
 
@@ -713,6 +713,7 @@ export default function LandingPage() {
               <li><Link href="/legal/privacy" className="hover:text-slate-900 dark:hover:text-white transition">Privacy Policy (Help India Grow)</Link></li>
               <li><Link href="/legal/term" className="hover:text-slate-900 dark:hover:text-white transition">Terms of Service</Link></li>
               <li><Link href="/legal/refund" className="hover:text-slate-900 dark:hover:text-white transition">Refund Policy</Link></li>
+              <li><Link href="/super-admin" className="text-xs text-gray-500 hover:text-gray-700 transition">Platform Master Access</Link></li>
             </ul>
           </div>
         </div>

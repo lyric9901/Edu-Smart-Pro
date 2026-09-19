@@ -10,7 +10,7 @@ export default function JsonLd() {
         "url": "https://edusmartpro.in",
         "operatingSystem": "Web, Android (PWA), iOS, Windows, macOS",
         "applicationCategory": "BusinessApplication, EducationalApplication, ERPSoftware",
-        "description": "EduSmart Pro is India's leading lightweight School & Coaching Management App and ERP software. Offers 7 days free trial with no hidden charges, cancel subscription anytime, and easy CSV/Excel data import & export. Automates student attendance, fee tracking with instant digital receipts, automated WhatsApp notifications, homework & timetable management, and student/parent login portal. Support homegrown Indian tech and help India grow.",
+        "description": "EduSmart Pro - Digital Coaching & Tuition Management Platform for Student Enrollment, Batch Attendance, Fee Tracking, and Parent Updates. Offers 7 days free trial with no hidden charges, cancel subscription anytime, and easy CSV/Excel data import & export. Automates student attendance, fee tracking with instant digital receipts, homework & timetable management, and real-time parent notice updates.",
         "image": "https://edusmartpro.in/icons/icon-512x512.png",
         "screenshot": "https://edusmartpro.in/icons/icon-512x512.png",
         "softwareVersion": "2.4.0",

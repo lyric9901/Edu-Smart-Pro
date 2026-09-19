@@ -1,6 +1,5 @@
-// src/app/dashboard/admin/page.js
 "use client";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useSyncExternalStore } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { firestore } from "@/lib/firebase"; 
 import { doc, collection, getDocs, setDoc, updateDoc, onSnapshot, deleteDoc } from "firebase/firestore"; 
@@ -37,8 +36,10 @@ const Skeleton = ({ className }) => (
   <div className={`animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl ${className}`} />
 );
 
+const emptySubscribe = () => () => {};
+
 export default function AdminDashboard() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
    
   const [batches, setBatches] = useState([]);
   const [selectedBatch, setSelectedBatch] = useState(null);
@@ -46,7 +47,7 @@ export default function AdminDashboard() {
   const [batchTab, setBatchTab] = useState("students"); 
    
   const [loading, setLoading] = useState(true);
-  const [mounted, setMounted] = useState(false);
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
   const [toast, setToast] = useState(null); 
    
   const [showAllBatches, setShowAllBatches] = useState(false);
@@ -68,10 +69,6 @@ export default function AdminDashboard() {
   const [editBatchName, setEditBatchName] = useState("");
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  useEffect(() => {
     setIsEditingBatch(false);
   }, [selectedBatch?.id]);
 
@@ -80,8 +77,8 @@ export default function AdminDashboard() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const cleanUpOldHomework = async (batchId, assignments) => {
-    if (!assignments || Object.keys(assignments).length === 0) return;
+  const cleanUpOldHomework = useCallback(async (batchId, assignments) => {
+    if (!assignments || Object.keys(assignments).length === 0 || !user?.institutionCode) return;
     
     const now = new Date();
     const FORTY_FIVE_DAYS = 45 * 24 * 60 * 60 * 1000;
@@ -105,7 +102,7 @@ export default function AdminDashboard() {
             console.error("Cleanup error:", error);
         }
     }
-  };
+  }, [user?.institutionCode]);
 
   useEffect(() => {
     if (!user?.institutionCode) return;
@@ -133,7 +130,7 @@ export default function AdminDashboard() {
     };
 
     fetchBatches();
-  }, [user?.institutionCode]);
+  }, [user?.institutionCode, cleanUpOldHomework]);
 
   useEffect(() => {
     if (!user?.institutionCode || !selectedBatch?.id) return;
@@ -150,14 +147,15 @@ export default function AdminDashboard() {
             };
             setSelectedBatch(updatedBatch);
             setBatches(prev => prev.map(b => b.id === updatedBatch.id ? updatedBatch : b));
-            if (selectedStudent) {
-                const updatedStudent = updatedBatch.students.find(s => s.id === selectedStudent.id);
-                if (updatedStudent) setSelectedStudent(updatedStudent);
-            }
+            setSelectedStudent(prevStudent => {
+                if (!prevStudent) return null;
+                const updatedStudent = updatedBatch.students.find(s => s.id === prevStudent.id);
+                return updatedStudent || prevStudent;
+            });
         }
     });
     return () => unsub();
-  }, [user?.institutionCode, selectedBatch?.id, selectedStudent?.id]);
+  }, [user?.institutionCode, selectedBatch?.id]);
 
   const globalFeeStats = useMemo(() => {
       let total = 0;
@@ -1187,7 +1185,7 @@ export default function AdminDashboard() {
                                               <div className="flex items-center justify-between sm:justify-end gap-3 w-full sm:w-auto border-t sm:border-t-0 border-slate-100 dark:border-slate-700/50 pt-3 sm:pt-0">
                                                   <div className={`px-3 py-1 rounded-lg text-sm font-black border ${
                                                       test.score >= 80 ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400 border-green-200 dark:border-green-800/50' 
-                                                      : test.score >= 50 ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/50'
+                                                      : test.score >= 50 ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-600 dark:text-yellow-400 border-yellow-200 dark:border-yellow-800/50' 
                                                       : 'bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/50'
                                                   }`}>
                                                       {test.score}%

@@ -6,6 +6,7 @@ import { useAuth } from "@/context/AuthContext";
 import { firestore } from "@/lib/firebase";
 import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
 import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
 
 import {
     Calendar,
@@ -219,7 +220,49 @@ export default function AttendancePage() {
         setSelectedDate(newDate);
     };
 
-    const downloadCSV = () => { };
+    const downloadCSV = () => {
+        try {
+            if (!filteredStudents || filteredStudents.length === 0) {
+                toast.error("No student records available to export.");
+                return;
+            }
+
+            const headers = ["Student ID", "Roll Number", "Name", "Batch", "Phone", "Status", "Date"];
+            const escapeCsvCell = (val) => {
+                if (val === null || val === undefined) return '""';
+                const str = String(val).replace(/"/g, '""');
+                return `"${str}"`;
+            };
+
+            const rows = filteredStudents.map((s) => {
+                const status = s.attendance?.[selectedDate] || "not-marked";
+                return [
+                    escapeCsvCell(s.id || ""),
+                    escapeCsvCell(s.rollNumber || s.rollNo || "N/A"),
+                    escapeCsvCell(s.name || ""),
+                    escapeCsvCell(s.batch || "General"),
+                    escapeCsvCell(s.phone || "N/A"),
+                    escapeCsvCell(status.toUpperCase()),
+                    escapeCsvCell(selectedDate)
+                ].join(",");
+            });
+
+            const csvContent = [headers.join(","), ...rows].join("\r\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", `attendance_${selectedDate}_batch_${selectedBatch || "all"}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            toast.success("Attendance CSV exported successfully!");
+        } catch (err) {
+            console.error("Failed to export attendance CSV:", err);
+            toast.error("Failed to export CSV. Please try again.");
+        }
+    };
 
     const getStatus = (student) =>
         student.attendance?.[selectedDate] || "not-marked";

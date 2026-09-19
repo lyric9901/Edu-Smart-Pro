@@ -1,11 +1,11 @@
 # Edu Smart Pro
-> The ultimate AI-powered app to automate attendance, fees, and student management for coaching centers.
+> The ultimate app to streamline attendance, fees, and student management for coaching centers.
 
 ## Core Features
 - [Dashboard](/dashboard/): Smart dashboards for Admins and Students.
-- [Attendance Tracking](/dashboard/attendance/): Automated attendance logging.
+- [Attendance Tracking](/dashboard/attendance/): Daily attendance logging.
 - [Fee Management](/dashboard/fees/): Track payments and dues instantly.
-- [Homework AI](/dashboard/homework/): AI-driven homework assistance.
+- [Homework Management](/dashboard/homework/): Digital homework assignment and management.
 
 ## Legal & Info
 - [Privacy Policy](/legal/privacy/): How we protect your data.

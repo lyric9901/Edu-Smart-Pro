@@ -36,6 +36,11 @@ export default function TermsConditions() {
                 <h2 className="text-xl font-bold mb-2 text-slate-900">4. Termination</h2>
                 <p className="text-slate-600">We reserve the right to suspend accounts that violate these terms or engage in fraudulent activity.</p>
             </section>
+
+            <section>
+                <h2 className="text-xl font-bold mb-2 text-slate-900">5. Student Tuition & Offline Fee Disclaimers</h2>
+                <p className="text-slate-600">EduSmart Pro operates solely as a digital record-keeping and communication management platform for coaching centers and schools. EduSmart Pro does not collect, hold, or process student tuition fees directly. Any fee disputes, cancellations, or refund requests concerning tuition, classes, or institute charges remain strictly between the student/guardian and the institute management offline.</p>
+            </section>
         </div>
       </div>
     </div>

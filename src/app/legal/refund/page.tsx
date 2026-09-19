@@ -40,6 +40,11 @@ export default function RefundPolicy() {
                 <h2 className="text-xl font-bold mb-2 text-slate-900">3. Processing Time</h2>
                 <p className="text-slate-600">Approved refunds are processed within 7-14 business days to the original payment method.</p>
             </section>
+
+            <section>
+                <h2 className="text-xl font-bold mb-2 text-slate-900">4. Student & Coaching Tuition Fee Settlements</h2>
+                <p className="text-slate-600">EduSmart Pro provides software tools to track student fees, dues, and receipts. All tuition fees, admission payments, and coaching dues collected from students or parents are transactions directly between the student/parent and the coaching institute. EduSmart Pro does not process, hold, or arbitrate student tuition fees, and any dispute or refund regarding coaching fees must be settled directly with the respective institute administration offline.</p>
+            </section>
         </div>
       </div>
     </div>
