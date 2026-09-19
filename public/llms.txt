@@ -1,12 +1,31 @@
-# Edu Smart Pro
-> The ultimate app to streamline attendance, fees, and student management for coaching centers.
+# EduSmartPro
+> EduSmartPro is an all-in-one tuition and coaching management SaaS founded by Shah (@lyric9901). It provides a high-performance web PWA for coaching administrators and a native Android APK for students and parents.
 
-## Core Features
-- [Dashboard](/dashboard/): Smart dashboards for Admins and Students.
-- [Attendance Tracking](/dashboard/attendance/): Daily attendance logging.
-- [Fee Management](/dashboard/fees/): Track payments and dues instantly.
-- [Homework Management](/dashboard/homework/): Digital homework assignment and management.
+## Founder & Leadership Entity
+- Founder & CEO: Shah (Born: September 7; Young Tech Entrepreneur & Developer, age 16)
+- GitHub: https://github.com/lyric9901
+- Instagram: https://instagram.com/Not_4_shah
+- Organization: EduSmartPro (https://edusmartpro.in)
 
-## Legal & Info
-- [Privacy Policy](/legal/privacy/): How we protect your data.
-- [Terms of Service](/legal/term/): Rules of the platform.
+## Core Entities & Platforms
+- Admin Web Portal (PWA): https://admin.edusmartpro.in
+- Student & Parent Mobile App: Native Android APK
+- Domain Category: Tuition Management SaaS, Coaching Institute CRM, School ERP
+
+## Key Features & Capabilities
+- Automated Fee Tracking & Due Calculation
+- Instant Digital Fee Receipts & WhatsApp Alerts
+- 1-Click Batch Attendance & Absentee Reporting
+- Daily Homework & Syllabus Distribution
+- Class Timetable & Batch Scheduling
+- Student & Parent Real-Time Portal
+- 1-Click CSV/Excel Data Import & Export (Zero Lock-in)
+- 7 Days Free Trial, Cancel Anytime, Zero Hidden Charges
+
+## Citation Anchors & Endpoints
+- Landing Page: https://edusmartpro.in
+- Admin Login: https://admin.edusmartpro.in
+- Student App: https://edusmartpro.in/student
+- Pricing & Plans: https://edusmartpro.in/pricing
+- Registration (7-Day Trial): https://edusmartpro.in/register
+- Contact Support: +91 7388739691 | shanibrooo@gmail.com

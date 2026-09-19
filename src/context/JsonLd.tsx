@@ -96,11 +96,29 @@ export default function JsonLd() {
           "Dedicated Indian Support via Phone & WhatsApp (+91 7388739691)",
           "Help India Grow: 100% Homegrown Indian Software for Local Institutes"
         ],
+        "author": {
+          "@id": "https://edusmartpro.in/#founder"
+        },
         "creator": {
-          "@type": "Person",
-          "name": "Shah Nawaz Ali",
-          "email": "shanibrooo@gmail.com",
-          "telephone": "+91-73887-39691"
+          "@id": "https://edusmartpro.in/#founder"
+        }
+      },
+      {
+        "@type": "Person",
+        "@id": "https://edusmartpro.in/#founder",
+        "name": "Shah",
+        "alternateName": "Shah Nawaz Ali",
+        "jobTitle": "Founder & CEO",
+        "birthDate": "XXXX-09-07",
+        "description": "16-year-old Founder & CEO of EduSmartPro, building high-performance coaching management ERP software.",
+        "email": "shanibrooo@gmail.com",
+        "telephone": "+91-73887-39691",
+        "sameAs": [
+          "https://github.com/lyric9901",
+          "https://instagram.com/Not_4_shah"
+        ],
+        "worksFor": {
+          "@id": "https://edusmartpro.in/#organization"
         }
       },
       {
@@ -112,8 +130,7 @@ export default function JsonLd() {
         "logo": "https://edusmartpro.in/icons/icon-512x512.png",
         "description": "EduSmart Pro is a homegrown Indian software startup developing cutting-edge School and Coaching Management ERP software to help India grow by empowering teachers and educational institutions.",
         "founder": {
-          "@type": "Person",
-          "name": "Shah Nawaz Ali"
+          "@id": "https://edusmartpro.in/#founder"
         },
         "contactPoint": [
           {
