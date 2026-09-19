@@ -28,6 +28,58 @@ import {
 import ThemeToggle from "@/components/ThemeToggle";
 import GradientWaves from "@/components/GradientWaves";
 
+const scrollReveal = {
+  initial: { opacity: 0, y: 30 },
+  whileInView: { opacity: 1, y: 0 },
+  viewport: { once: true, margin: "-40px" },
+  transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const }
+};
+
+const staggerContainer: Variants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: { staggerChildren: 0.12 }
+  }
+};
+
+const staggerItem: Variants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } }
+};
+
+const floatingAnimation = {
+  animate: { y: [0, -12, 0] },
+  transition: { duration: 5, repeat: Infinity, ease: "easeInOut" as const }
+};
+
+const reviews = [
+  {
+    name: "Rahul Sharma",
+    role: "Director, Sharma Classes (Lucknow)",
+    text: "EduSmart Pro replaced our old expensive ERP. Digital fee receipts and parent notice updates save us hours each day.",
+    rating: 5
+  },
+  {
+    name: "Priya Verma",
+    role: "Founder, Excel Academy (Delhi)",
+    text: "7-day free trial got us started without any friction. Importing 200+ students from Excel took less than 2 minutes.",
+    rating: 5
+  },
+  {
+    name: "Amit Patel",
+    role: "Institute Owner (Gujarat)",
+    text: "Proud to support a homegrown Indian startup. No hidden fees, cancel anytime, and the support on WhatsApp is super fast.",
+    rating: 5
+  },
+  {
+    name: "Sneha Iyer",
+    role: "Educator, Apex Tutorial (Bengaluru)",
+    text: "Parents love the student portal and instant digital receipts. Best school and coaching ERP software in India.",
+    rating: 5
+  }
+];
+
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isContactOpen, setIsContactOpen] = useState(false);
@@ -88,59 +140,6 @@ export default function LandingPage() {
     const index = Math.round(el.scrollLeft / (itemWidth + 20));
     setIndex(Math.max(0, index));
   };
-
-  // Scroll Appear Animations
-  const scrollReveal = {
-    initial: { opacity: 0, y: 30 },
-    whileInView: { opacity: 1, y: 0 },
-    viewport: { once: true, margin: "-40px" },
-    transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] as const }
-  };
-
-  const staggerContainer: Variants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.12 }
-    }
-  };
-
-  const staggerItem: Variants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { duration: 0.45, ease: "easeOut" } }
-  };
-
-  const floatingAnimation = {
-    animate: { y: [0, -12, 0] },
-    transition: { duration: 5, repeat: Infinity, ease: "easeInOut" as const }
-  };
-
-  const reviews = [
-    {
-      name: "Rahul Sharma",
-      role: "Director, Sharma Classes (Lucknow)",
-      text: "EduSmart Pro replaced our old expensive ERP. Digital fee receipts and parent notice updates save us hours each day.",
-      rating: 5
-    },
-    {
-      name: "Priya Verma",
-      role: "Founder, Excel Academy (Delhi)",
-      text: "7-day free trial got us started without any friction. Importing 200+ students from Excel took less than 2 minutes.",
-      rating: 5
-    },
-    {
-      name: "Amit Patel",
-      role: "Institute Owner (Gujarat)",
-      text: "Proud to support a homegrown Indian startup. No hidden fees, cancel anytime, and the support on WhatsApp is super fast.",
-      rating: 5
-    },
-    {
-      name: "Sneha Iyer",
-      role: "Educator, Apex Tutorial (Bengaluru)",
-      text: "Parents love the student portal and instant digital receipts. Best school and coaching ERP software in India.",
-      rating: 5
-    }
-  ];
 
   const erpComparison = [
     {
@@ -339,7 +338,7 @@ export default function LandingPage() {
               </h1>
               
               <p className="text-base sm:text-lg text-slate-600 mb-6 max-w-xl leading-relaxed dark:text-slate-300">
-                Replace bulky legacy software with India's fastest School & Coaching Management ERP. 1-Click batch attendance, fee tracking with digital receipts, homework & timetable management.
+                Replace bulky legacy software with India&apos;s fastest School & Coaching Management ERP. 1-Click batch attendance, fee tracking with digital receipts, homework & timetable management.
               </p>
 
               {/* CORE TRUST HIGHLIGHTS */}
@@ -689,7 +688,7 @@ export default function LandingPage() {
               <h3 className="text-slate-900 font-bold text-xl dark:text-white">EduSmart Pro</h3>
             </div>
             <p className="text-sm text-slate-500 leading-relaxed max-w-sm dark:text-slate-400 mb-4">
-              India's #1 School & Coaching Management App and ERP Software. 7 days free trial, zero hidden charges, cancel subscription anytime, and easy CSV/Excel data import & export.
+              India&apos;s #1 School & Coaching Management App and ERP Software. 7 days free trial, zero hidden charges, cancel subscription anytime, and easy CSV/Excel data import & export.
             </p>
             <div className="flex flex-col gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
               <div>📞 Phone/WhatsApp: <a href="tel:+917388739691" className="text-blue-600 font-bold hover:underline">+91 73887-39691</a></div>
