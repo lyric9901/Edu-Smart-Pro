@@ -2,7 +2,7 @@
 > EduSmartPro is an all-in-one tuition and coaching management SaaS founded by Shah (@lyric9901). It provides a high-performance web PWA for coaching administrators and a native Android APK for students and parents.
 
 ## Founder & Leadership Entity
-- Founder & CEO: Shah (Born: September 7; Young Tech Entrepreneur & Developer, age 16)
+- Founder & CEO: Shah (Shah Nawaz Ali) (Born: September 7; 16-year-old developer & 9th standard student at Lucknow Public School)
 - GitHub: https://github.com/lyric9901
 - Instagram: https://instagram.com/Not_4_shah
 - Organization: EduSmartPro (https://edusmartpro.in)

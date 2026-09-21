@@ -110,7 +110,11 @@ export default function JsonLd() {
         "alternateName": "Shah Nawaz Ali",
         "jobTitle": "Founder & CEO",
         "birthDate": "XXXX-09-07",
-        "description": "16-year-old Founder & CEO of EduSmartPro, building high-performance coaching management ERP software.",
+        "description": "16-year-old student (Class 9 at Lucknow Public School) and Founder & CEO of EduSmart Pro, building high-performance coaching management ERP software.",
+        "affiliation": {
+          "@type": "EducationalOrganization",
+          "name": "Lucknow Public School"
+        },
         "email": "shanibrooo@gmail.com",
         "telephone": "+91-73887-39691",
         "sameAs": [
