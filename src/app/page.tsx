@@ -126,27 +126,27 @@ const features = [
 
 const reviews = [
   {
-    name: "Zero Hidden Costs",
-    role: "Transparent Monthly Billing",
-    text: "Start with a 7-day full free trial. No surprise maintenance fees or locked contracts. Cancel anytime directly from your dashboard.",
+    name: "Streamlined Administration",
+    role: "Core Institute Advantage",
+    text: "Eliminate manual paperwork with automated attendance tracking, instant digital fee receipts, and structured batch organization in one place.",
     rating: 5
   },
   {
-    name: "Complete Data Freedom",
-    role: "Excel & CSV Portability",
-    text: "Import your student rosters from Excel in minutes and export attendance, marks, and fee records anytime with zero vendor lock-in.",
+    name: "Zero Lock-In & Easy Migration",
+    role: "Full Data Ownership",
+    text: "Import your existing student lists from Excel/CSV in minutes and export your complete records anytime with zero vendor lock-in.",
     rating: 5
   },
   {
-    name: "Homegrown for Institutes",
-    role: "Help India Grow",
-    text: "Independent software crafted specifically for Indian coaching institutes, tuition centers, and schools with direct WhatsApp support.",
+    name: "Affordable & Transparent",
+    role: "Flexible Monthly Plans",
+    text: "Built specifically for Indian coaching centers and schools with straightforward monthly pricing, 7-day free trial, and no hidden contracts.",
     rating: 5
   },
   {
-    name: "Parent & Student Ready",
-    role: "Instant Digital Updates",
-    text: "Automated digital receipts, fee status alerts, timetable access, and notice board broadcasts that keep students and parents informed.",
+    name: "Seamless Parent Communication",
+    role: "Student & Parent Portals",
+    text: "Keep parents informed with 1-click WhatsApp alerts, digital fee receipts, homework updates, and dedicated mobile access.",
     rating: 5
   }
 ];
@@ -282,8 +282,8 @@ export default function LandingPage() {
       a: "Yes! You can import your entire student list from Excel/CSV in seconds. We also offer free one-on-one migration assistance over WhatsApp (+91 7388739691) to help you switch smoothly from your old software."
     },
     {
-      q: "How does choosing EduSmart Pro support Indian educational institutes and Help India Grow?",
-      a: "EduSmart Pro is an independent, homegrown Indian EdTech platform built for educational institutes. By choosing EduSmart Pro, you empower indigenous software innovation, retain data within privacy-first secure cloud servers, and provide grassroots coaching centers and schools with world-class digital tools to elevate Indian education."
+      q: "How is EduSmart Pro designed specifically for Indian institutes?",
+      a: "EduSmart Pro is built specifically for Indian coaching centers, tuition classes, and schools. It provides localized workflows like 1-click WhatsApp attendance, instant fee receipts, and simple CSV/Excel import to give institutes world-class digital tools without high enterprise costs."
     },
     {
       q: "How do I get customer support if I have a question?",
@@ -308,7 +308,7 @@ export default function LandingPage() {
 
       {/* --- TOP BANNER --- */}
       <div className="bg-gradient-to-r from-blue-700 via-indigo-700 to-blue-800 text-white text-xs py-2 px-4 text-center font-bold relative z-50">
-        <span></span>
+        <span>🇮🇳 Built for Indian Institutes — Modern Coaching & School ERP</span>
         <span className="mx-2 hidden sm:inline">•</span>
         <span className="hidden sm:inline">
           7 Days Free Trial • No Hidden Charges • Cancel Subscription Anytime •
@@ -354,7 +354,7 @@ export default function LandingPage() {
                 href="#reviews"
                 className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white"
               >
-                Key Benefits
+                Institute Highlights
               </a>
               <a
                 href="#faq"
@@ -437,7 +437,7 @@ export default function LandingPage() {
                   onClick={() => setIsMenuOpen(false)}
                   className="px-4 py-3 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800"
                 >
-                  Key Benefits
+                  Institute Highlights
                 </a>
                 <a
                   href="#faq"
@@ -538,7 +538,7 @@ export default function LandingPage() {
               >
                 Smart Institute ERP. <br />
                 <span className="text-blue-600 dark:text-blue-400">
-                  Simplifying Education Management.
+                  Built for Indian Institutes.
                 </span>
               </h1>
 
@@ -599,7 +599,8 @@ export default function LandingPage() {
                   ))}
                 </div>
                 <p className="text-xs text-slate-600 dark:text-slate-400 font-bold">
-                  Simplifying Education Management
+                  Built for Coaching Centers & Schools across India •
+                  Dedicated Institute ERP
                 </p>
               </div>
             </motion.div>
@@ -877,13 +878,13 @@ export default function LandingPage() {
               className="text-left md:text-center mb-10 md:mb-14"
             >
               <div className="inline-flex items-center gap-2 text-xs font-bold text-blue-600 uppercase tracking-wider mb-2">
-                Built For Indian Institutes
+                Built For Institutes
               </div>
               <h2
                 id="reviews-heading"
                 className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white"
               >
-                Designed for Coaching Institutes & Schools
+                Engineered for Indian Coaching Centers & Schools
               </h2>
             </motion.div>
 
@@ -912,9 +913,9 @@ export default function LandingPage() {
                     </p>
                   </div>
                   <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
-                    <h4 className="font-bold text-sm text-slate-900 dark:text-white">
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">
                       {review.name}
-                    </h4>
+                    </h3>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
                       {review.role}
                     </p>
@@ -1002,16 +1003,16 @@ export default function LandingPage() {
           </div>
         </section>
 
-        {/* --- HELP INDIA GROW CTA BANNER --- */}
+        {/* --- INSTITUTE EMPOWERMENT CTA BANNER --- */}
         <section className="py-12 bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white">
           <div className="max-w-5xl mx-auto px-5 text-center">
             <HeartHandshake size={36} className="mx-auto mb-3 text-blue-200" />
             <h2 className="text-2xl sm:text-4xl font-black mb-3">
-              Help India Grow • Digitally Empower Your Institute
+              Digitally Empower Your Institute with EduSmart Pro
             </h2>
             <p className="text-sm sm:text-base text-blue-100 max-w-2xl mx-auto mb-6 leading-relaxed">
-              Upgrade your coaching institute with modern homegrown
-              software. 7 days full free trial, no hidden charges, cancel
+              Designed for ambitious Indian educators upgrading their institute
+              management. 7 days full free trial, no hidden charges, cancel
               subscription anytime.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -1053,7 +1054,7 @@ export default function LandingPage() {
               </h3>
             </div>
             <p className="text-sm text-slate-500 leading-relaxed max-w-sm dark:text-slate-400 mb-4">
-              Modern School & Coaching Management App and ERP Software.
+              India&apos;s #1 School & Coaching Management App and ERP Software.
               7 days free trial, zero hidden charges, cancel subscription
               anytime, and easy CSV/Excel data import & export.
             </p>
@@ -1129,7 +1130,7 @@ export default function LandingPage() {
                   href="/legal/privacy"
                   className="hover:text-slate-900 dark:hover:text-white transition"
                 >
-                  Privacy Policy (Help India Grow)
+                  Privacy Policy
                 </Link>
               </li>
               <li>
@@ -1165,7 +1166,7 @@ export default function LandingPage() {
             © {new Date().getFullYear()} EduSmart Pro ERP. All rights reserved.
           </div>
           <div>
-            🇮🇳 Proudly Homegrown in India • Dedicated to Indian Educators
+            🇮🇳 Dedicated to Indian Institutes & Educators
           </div>
         </div>
       </footer>

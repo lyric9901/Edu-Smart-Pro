@@ -176,6 +176,21 @@ export default function AttendancePage() {
                 students: updatedBatch.students,
             }
         );
+
+        if (newStatus === "absent") {
+            const studentId = student.id || student.phone || student.rollNumber || student.name;
+            if (studentId) {
+                fetch("/api/notifications/attendance-alert", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        studentId: String(studentId),
+                        studentName: student.name || "Student",
+                        date: selectedDate,
+                    }),
+                }).catch((err) => console.error("Failed to dispatch absent alert:", err));
+            }
+        }
     };
 
     const markAll = async (status) => {
@@ -204,6 +219,23 @@ export default function AttendancePage() {
                 students: updatedBatch.students,
             }
         );
+
+        if (status === "absent") {
+            updatedBatch.students.forEach((student) => {
+                const studentId = student.id || student.phone || student.rollNumber || student.name;
+                if (studentId) {
+                    fetch("/api/notifications/attendance-alert", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            studentId: String(studentId),
+                            studentName: student.name || "Student",
+                            date: selectedDate,
+                        }),
+                    }).catch((err) => console.error("Failed to dispatch absent alert:", err));
+                }
+            });
+        }
     };
 
     const changeDate = (days) => {
@@ -222,7 +254,8 @@ export default function AttendancePage() {
 
     const downloadCSV = () => {
         try {
-            if (!filteredStudents || filteredStudents.length === 0) {
+            const studentsToExport = selectedBatch?.students || [];
+            if (!studentsToExport || studentsToExport.length === 0) {
                 toast.error("No student records available to export.");
                 return;
             }
@@ -234,7 +267,7 @@ export default function AttendancePage() {
                 return `"${str}"`;
             };
 
-            const rows = filteredStudents.map((s) => {
+            const rows = studentsToExport.map((s) => {
                 const status = s.attendance?.[selectedDate] || "not-marked";
                 return [
                     escapeCsvCell(s.id || ""),

@@ -51,10 +51,10 @@ export default function PrivacyPolicy() {
             <section className="p-5 rounded-2xl bg-blue-50 border border-blue-200">
                 <div className="flex items-center gap-2 mb-2 text-blue-900 font-bold text-lg">
                   <HeartHandshake size={22} className="text-blue-600" />
-                  <span>5. Supporting Homegrown Innovation — Help India Grow</span>
+                  <span>5. Dedicated to Indian Institutes & Educators</span>
                 </div>
                 <p className="text-slate-700 text-sm leading-relaxed">
-                  EduSmart Pro is an independent, homegrown Indian software platform founded with the core mission to digitally empower grassroots educators, tuition centers, and schools nationwide. By choosing our platform, you directly champion indigenous software development for educational institutes and help India grow into a self-reliant technological leader. Please note: EduSmart Pro is a privately developed commercial software platform with no governmental affiliation, ensuring complete operational neutrality, privacy, and dedicated institute-first innovation.
+                  EduSmart Pro is an independent software platform developed with the core mission to digitally empower tuition centers, coaching academies, and schools nationwide with reliable, modern management tools. By choosing our platform, you equip your institute with privacy-first digital infrastructure. Please note: EduSmart Pro is a privately developed commercial software platform with no governmental affiliation, ensuring complete operational neutrality, privacy, and dedicated institute-first innovation.
                 </p>
             </section>
 

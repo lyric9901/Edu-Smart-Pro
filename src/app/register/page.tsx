@@ -144,7 +144,7 @@ export default function Register() {
 
         <motion.div variants={fadeInUp} className="relative z-10">
             <span className="bg-yellow-400 text-blue-900 text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider mb-4 inline-block shadow-lg">
-                Lucknow's #1 Coaching App
+                Modern Coaching & Institute ERP
             </span>
             <h1 className="text-4xl lg:text-6xl font-black mb-6 leading-tight">
                 Ab Coaching Chalegi <br/> <span className="text-yellow-300">Digital.</span>

@@ -87,7 +87,7 @@ export default function JsonLd() {
           "Dedicated Student & Parent Portal (Android PWA & Web)",
           "Dark Mode & High-Performance Modern Interface",
           "Dedicated Indian Support via Phone & WhatsApp (+91 7388739691)",
-          "Help India Grow: 100% Homegrown Indian Software for Local Institutes"
+          "Dedicated Indian Software for Coaching Institutes & Schools"
         ],
         "author": {
           "@id": "https://edusmartpro.in/#founder"
@@ -125,7 +125,7 @@ export default function JsonLd() {
         "alternateName": "EduSmart Pro ERP",
         "url": "https://edusmartpro.in",
         "logo": "https://edusmartpro.in/icons/icon-512x512.png",
-        "description": "EduSmart Pro is a homegrown Indian software platform developing cutting-edge School and Coaching Management ERP software to help India grow by empowering teachers and educational institutions.",
+        "description": "EduSmart Pro develops modern School and Coaching Management ERP software tailored for Indian coaching institutes and schools.",
         "founder": {
           "@id": "https://edusmartpro.in/#founder"
         },
@@ -181,10 +181,10 @@ export default function JsonLd() {
           },
           {
             "@type": "Question",
-            "name": "How does EduSmart Pro support Indian educational institutes and help India grow?",
+            "name": "How is EduSmart Pro designed specifically for Indian institutes?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "EduSmart Pro is proudly developed in India as an independent educational technology platform. By choosing EduSmart Pro, coaching institutes and schools support homegrown Indian innovation, promote local economic growth, and empower teachers with world-class digital tools to help India grow into a global education powerhouse."
+              "text": "EduSmart Pro is built specifically for Indian coaching centers, tuition classes, and schools. It provides localized workflows like 1-click WhatsApp attendance, instant fee receipts, and simple CSV/Excel import to give institutes world-class digital tools without high enterprise costs."
             }
           }
         ]

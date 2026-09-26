@@ -16,6 +16,7 @@ import {
     Home, BookOpen, Users, Palette
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
+import { initPushNotifications } from "@/lib/notifications";
 
 // --- ZOD SCHEMAS ---
 const childSchema = z.object({
@@ -108,6 +109,15 @@ function StudentContent() {
     }, [router]);
 
     const currentStudent = students[activeStudentIndex];
+
+    useEffect(() => {
+        if (currentStudent) {
+            const studentId = currentStudent.id || currentStudent.phone || currentStudent.name;
+            if (studentId) {
+                initPushNotifications(String(studentId)).catch(() => {});
+            }
+        }
+    }, [currentStudent]);
 
     useEffect(() => {
         if (currentStudent?.institutionCode) {

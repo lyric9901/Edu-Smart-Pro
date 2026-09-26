@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect, ReactNode } from "react
 import { firestore } from "@/lib/firebase";
 import { doc, getDoc, DocumentData } from "firebase/firestore";
 import { useRouter } from "next/navigation";
+import { initPushNotifications } from "@/lib/notifications";
 
 // Define the User structure
 export interface AuthUser {
@@ -32,8 +33,30 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const savedUser = localStorage.getItem("eduSmartUser");
     if (savedUser) {
-      setUser(JSON.parse(savedUser));
+      try {
+        const parsed = JSON.parse(savedUser);
+        setUser(parsed);
+        if (parsed?.username) {
+          initPushNotifications(parsed.username).catch(() => {});
+        }
+      } catch (e) {
+        console.error("Error reading saved user session:", e);
+      }
     }
+
+    const savedStudent = localStorage.getItem("eduSmartStudent");
+    if (savedStudent) {
+      try {
+        const student = JSON.parse(savedStudent);
+        const studentId = student.id || student.phone || student.name;
+        if (studentId) {
+          initPushNotifications(studentId).catch(() => {});
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
     setLoading(false);
   }, []);
 
@@ -64,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         setUser(userData);
         localStorage.setItem("eduSmartUser", JSON.stringify(userData));
+        initPushNotifications(username).catch(() => {});
         router.push("/dashboard/admin"); 
         return { success: true };
       }

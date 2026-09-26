@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     "Tuition Classes Management Software",
     "Coaching ERP India",
     "Best School ERP App India",
-    "Help India Grow Indian Institute Software",
+    "Dedicated Indian Institute ERP Software",
     "Coaching Software Free Trial 7 Days",
     "Easy Data Import Export School Software"
   ],
@@ -72,7 +72,7 @@ export const metadata: Metadata = {
 
   openGraph: {
     title: "EduSmart Pro - School & Coaching Management App and ERP Software",
-    description: "Modern ERP software for schools & coaching centers. 7 days free trial, zero hidden charges, cancel anytime, easy data import/export, and automated WhatsApp notices. Help India grow with homegrown tech.",
+    description: "Modern ERP software for schools & coaching centers. 7 days free trial, zero hidden charges, cancel anytime, easy data import/export, and automated WhatsApp notices. Built for Indian educational institutes.",
     url: "https://edusmartpro.in",
     siteName: "EduSmart Pro ERP",
     images: [

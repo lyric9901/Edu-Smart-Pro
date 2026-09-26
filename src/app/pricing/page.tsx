@@ -124,9 +124,9 @@ export default function PricingPage() {
         </div>
       </nav>
 
-      {/* --- TRUST BANNER: HELP INDIA GROW --- */}
+      {/* --- TRUST BANNER --- */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-xs sm:text-sm py-2.5 px-4 text-center font-bold">
-        <span>🇮🇳 Proudly Homegrown Indian Institute Software — Help India Grow by Empowering Educators</span>
+        <span>🇮🇳 Dedicated Indian Institute Software — Built for Coaching Centers & Schools</span>
         <span className="mx-2 hidden md:inline">•</span>
         <span className="hidden md:inline">7 Days Free Trial • No Hidden Charges • Cancel Anytime</span>
       </div>
@@ -267,7 +267,7 @@ export default function PricingPage() {
         <div className="bg-white rounded-3xl p-6 sm:p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="text-center md:text-left">
             <div className="inline-flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider mb-1">
-              <HeartHandshake size={16} /> Help India Grow • Dedicated Local Support
+              <HeartHandshake size={16} /> Dedicated Local Support for Your Institute
             </div>
             <h3 className="text-xl font-black text-slate-900 mb-1">
               Switching from another ERP or Excel sheet?
