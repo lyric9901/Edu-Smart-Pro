@@ -15,13 +15,6 @@ export default function JsonLd() {
         "screenshot": "https://edusmartpro.in/icons/icon-512x512.png",
         "softwareVersion": "2.4.0",
         "inLanguage": ["en-IN", "hi-IN"],
-        "aggregateRating": {
-          "@type": "AggregateRating",
-          "ratingValue": "4.9",
-          "ratingCount": "142",
-          "bestRating": "5",
-          "worstRating": "1"
-        },
         "offers": [
           {
             "@type": "Offer",
@@ -132,7 +125,7 @@ export default function JsonLd() {
         "alternateName": "EduSmart Pro ERP",
         "url": "https://edusmartpro.in",
         "logo": "https://edusmartpro.in/icons/icon-512x512.png",
-        "description": "EduSmart Pro is a homegrown Indian software startup developing cutting-edge School and Coaching Management ERP software to help India grow by empowering teachers and educational institutions.",
+        "description": "EduSmart Pro is a homegrown Indian software platform developing cutting-edge School and Coaching Management ERP software to help India grow by empowering teachers and educational institutions.",
         "founder": {
           "@id": "https://edusmartpro.in/#founder"
         },
@@ -188,10 +181,10 @@ export default function JsonLd() {
           },
           {
             "@type": "Question",
-            "name": "How does EduSmart Pro support Indian startups and help India grow?",
+            "name": "How does EduSmart Pro support Indian educational institutes and help India grow?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "EduSmart Pro is proudly developed in India as an independent educational technology startup. By choosing EduSmart Pro, coaching institutes and schools support homegrown Indian innovation, promote local economic growth, and empower teachers with world-class digital tools to help India grow into a global education powerhouse."
+              "text": "EduSmart Pro is proudly developed in India as an independent educational technology platform. By choosing EduSmart Pro, coaching institutes and schools support homegrown Indian innovation, promote local economic growth, and empower teachers with world-class digital tools to help India grow into a global education powerhouse."
             }
           }
         ]

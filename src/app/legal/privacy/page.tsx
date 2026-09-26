@@ -54,7 +54,7 @@ export default function PrivacyPolicy() {
                   <span>5. Supporting Homegrown Innovation — Help India Grow</span>
                 </div>
                 <p className="text-slate-700 text-sm leading-relaxed">
-                  EduSmart Pro is an independent, homegrown Indian software startup founded with the core mission to digitally empower grassroots educators, tuition centers, and schools nationwide. By choosing our platform, you directly champion indigenous software entrepreneurship and help India grow into a self-reliant technological leader. Please note: EduSmart Pro is a privately developed commercial software startup with no governmental affiliation, ensuring complete operational neutrality, privacy, and dedicated customer-first innovation.
+                  EduSmart Pro is an independent, homegrown Indian software platform founded with the core mission to digitally empower grassroots educators, tuition centers, and schools nationwide. By choosing our platform, you directly champion indigenous software development for educational institutes and help India grow into a self-reliant technological leader. Please note: EduSmart Pro is a privately developed commercial software platform with no governmental affiliation, ensuring complete operational neutrality, privacy, and dedicated institute-first innovation.
                 </p>
             </section>
 

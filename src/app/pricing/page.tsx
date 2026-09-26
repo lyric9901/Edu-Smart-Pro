@@ -126,7 +126,7 @@ export default function PricingPage() {
 
       {/* --- TRUST BANNER: HELP INDIA GROW --- */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-xs sm:text-sm py-2.5 px-4 text-center font-bold">
-        <span>🇮🇳 Proudly Homegrown Indian Startup — Help India Grow by Empowering Educators</span>
+        <span>🇮🇳 Proudly Homegrown Indian Institute Software — Help India Grow by Empowering Educators</span>
         <span className="mx-2 hidden md:inline">•</span>
         <span className="hidden md:inline">7 Days Free Trial • No Hidden Charges • Cancel Anytime</span>
       </div>

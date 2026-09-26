@@ -45,7 +45,7 @@ export const metadata: Metadata = {
     "Tuition Classes Management Software",
     "Coaching ERP India",
     "Best School ERP App India",
-    "Help India Grow Indian Startup",
+    "Help India Grow Indian Institute Software",
     "Coaching Software Free Trial 7 Days",
     "Easy Data Import Export School Software"
   ],
