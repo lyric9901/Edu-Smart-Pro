@@ -2,18 +2,18 @@
 import { z } from "zod";
 import toast from "react-hot-toast";
 
-import { useState, useEffect, useMemo, Suspense } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useMemo, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { firestore } from "@/lib/firebase"; 
-import { doc, getDoc, collection, getDocs, onSnapshot, updateDoc } from "firebase/firestore"; 
+import { doc, getDoc, collection, getDocs, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import {
     CheckCircle, IndianRupee, Bell, PieChart, Clock,
     Settings, Plus, LogOut, X, Shield,
     ChevronRight, ChevronLeft, LayoutDashboard, TrendingUp, AlertCircle,
-    Home, BookOpen, Users, Palette
+    Home, BookOpen, Users, Palette, Trash2
 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { initPushNotifications } from "@/lib/notifications";
@@ -64,6 +64,7 @@ const viewVariants = {
 
 function StudentContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const { user: adminUser } = useAuth(); 
 
     const [students, setStudents] = useState([]);
@@ -71,6 +72,20 @@ function StudentContent() {
     const [activeTab, setActiveTab] = useState("dashboard");
     const [loading, setLoading] = useState(true);
     const [notices, setNotices] = useState([]);
+    const [userNotifications, setUserNotifications] = useState<any[]>([]);
+    const [dismissedNoticeIds, setDismissedNoticeIds] = useState<string[]>(() => {
+        if (typeof window === "undefined") return [];
+        try {
+            const stored = localStorage.getItem("eduSmartDismissedNotices");
+            return stored ? JSON.parse(stored) : [];
+        } catch {
+            return [];
+        }
+    });
+
+    const seenInCurrentInboxRef = useRef<Set<string>>(new Set());
+    const prevTabRef = useRef<string>("dashboard");
+
     const [mounted, setMounted] = useState(false);
     const [schoolName, setSchoolName] = useState("Loading...");
 
@@ -87,6 +102,14 @@ function StudentContent() {
     const [addError, setAddError] = useState("");
     const [passForm, setPassForm] = useState({ current: "", new: "", confirm: "" });
     const [passMsg, setPassMsg] = useState({ text: "", type: "" });
+
+    // Handle deep link tab query param (e.g. ?tab=notices)
+    useEffect(() => {
+        const tabParam = searchParams.get("tab");
+        if (tabParam) {
+            setActiveTab(tabParam);
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         setMounted(true);
@@ -114,7 +137,7 @@ function StudentContent() {
         if (currentStudent) {
             const studentId = currentStudent.id || currentStudent.phone || currentStudent.name;
             if (studentId) {
-                initPushNotifications(String(studentId)).catch(() => {});
+                initPushNotifications(String(studentId), currentStudent.institutionCode).catch(() => {});
             }
         }
     }, [currentStudent]);
@@ -126,6 +149,35 @@ function StudentContent() {
             });
         }
     }, [currentStudent?.institutionCode]);
+
+    // Realtime listener for direct user inbox notifications
+    useEffect(() => {
+        const studentId = currentStudent?.id || currentStudent?.phone || currentStudent?.name;
+        if (!studentId) return;
+
+        const userDocRef = doc(firestore, "users", String(studentId));
+        const unsubUser = onSnapshot(userDocRef, (snap) => {
+            if (snap.exists()) {
+                const data = snap.data();
+                if (Array.isArray(data?.notifications)) {
+                    setUserNotifications(data.notifications);
+                } else {
+                    setUserNotifications([]);
+                }
+                if (Array.isArray(data?.dismissedNotices)) {
+                    setDismissedNoticeIds(prev => {
+                        const merged = Array.from(new Set([...prev, ...data.dismissedNotices]));
+                        try {
+                            localStorage.setItem("eduSmartDismissedNotices", JSON.stringify(merged));
+                        } catch {}
+                        return merged;
+                    });
+                }
+            }
+        });
+
+        return () => unsubUser();
+    }, [currentStudent?.id, currentStudent?.phone, currentStudent?.name]);
 
     useEffect(() => {
         if (!currentStudent?.institutionCode || !currentStudent?.batchId || !currentStudent?.id) return;
@@ -176,12 +228,148 @@ function StudentContent() {
     }, [currentStudent?.institutionCode, currentStudent?.batchId, currentStudent?.id, activeStudentIndex]);
 
     const allMessages = useMemo(() => {
-        const personal = currentStudent?.notifications
-            ? currentStudent.notifications.map(val => ({ ...val, isPersonal: true }))
+        const dismissedSet = new Set(dismissedNoticeIds);
+
+        const personalFromBatch = Array.isArray(currentStudent?.notifications)
+            ? currentStudent.notifications.map((val: any) => ({ ...val, isPersonal: true }))
             : [];
-        const global = notices || [];
-        return [...personal, ...global].sort((a: any, b: any) => getTimestamp(b.date || b.createdAt) - getTimestamp(a.date || a.createdAt));
-    }, [currentStudent, notices]);
+
+        const personalFromUser = Array.isArray(userNotifications)
+            ? userNotifications.map((val: any) => ({ ...val, isPersonal: true }))
+            : [];
+
+        const personalMap = new Map();
+        [...personalFromBatch, ...personalFromUser].forEach((item: any) => {
+            const id = String(item.id || item.createdAt || `${item.date}_${item.text}`);
+            if (!dismissedSet.has(id)) {
+                personalMap.set(id, { ...item, id });
+            }
+        });
+
+        const global = (notices || [])
+            .filter((n: any) => !dismissedSet.has(String(n.id)))
+            .map((n: any) => ({ ...n, id: String(n.id) }));
+
+        return [...Array.from(personalMap.values()), ...global].sort(
+            (a: any, b: any) => getTimestamp(b.date || b.createdAt) - getTimestamp(a.date || a.createdAt)
+        );
+    }, [currentStudent?.notifications, userNotifications, notices, dismissedNoticeIds]);
+
+    const clearSeenNotifications = async (idsToDelete: string[]) => {
+        if (!idsToDelete || idsToDelete.length === 0) return;
+        const deleteSet = new Set(idsToDelete.map(String));
+
+        // 1. Update local dismissed notices cache
+        setDismissedNoticeIds(prev => {
+            const next = Array.from(new Set([...prev, ...idsToDelete]));
+            try {
+                localStorage.setItem("eduSmartDismissedNotices", JSON.stringify(next));
+            } catch {}
+            return next;
+        });
+
+        // 2. Clear personal notifications from users doc in Firestore
+        const studentId = currentStudent?.id || currentStudent?.phone || currentStudent?.name;
+        if (studentId) {
+            const userRef = doc(firestore, "users", String(studentId));
+            getDoc(userRef).then(snap => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const existingNotifs = Array.isArray(data.notifications) ? data.notifications : [];
+                    const remaining = existingNotifs.filter((n: any) => !deleteSet.has(String(n.id)));
+                    updateDoc(userRef, {
+                        notifications: remaining,
+                        dismissedNotices: arrayUnion(...idsToDelete)
+                    }).catch(e => console.warn("Failed to update user doc:", e));
+                }
+            }).catch(() => {});
+        }
+
+        // 3. Clear personal notifications from batch student doc in Firestore
+        if (currentStudent?.institutionCode && currentStudent?.batchId) {
+            const batchRef = doc(firestore, `institutions/${currentStudent.institutionCode}/batches`, currentStudent.batchId);
+            getDoc(batchRef).then(snap => {
+                if (snap.exists()) {
+                    const data = snap.data();
+                    const studentsList = data.students || [];
+                    let modified = false;
+                    const updatedList = studentsList.map((s: any) => {
+                        if (s.id === currentStudent.id && Array.isArray(s.notifications)) {
+                            const remaining = s.notifications.filter((n: any) => !deleteSet.has(String(n.id)));
+                            if (remaining.length !== s.notifications.length) {
+                                modified = true;
+                                return { ...s, notifications: remaining };
+                            }
+                        }
+                        return s;
+                    });
+                    if (modified) {
+                        updateDoc(batchRef, { students: updatedList }).catch(() => {});
+                    }
+                }
+            }).catch(() => {});
+        }
+
+        // 4. Update local state
+        setStudents(prev => {
+            const next = [...prev];
+            if (next[activeStudentIndex]) {
+                const existing = Array.isArray(next[activeStudentIndex].notifications) ? next[activeStudentIndex].notifications : [];
+                const remaining = existing.filter((n: any) => !deleteSet.has(String(n.id)));
+                next[activeStudentIndex] = { ...next[activeStudentIndex], notifications: remaining };
+                try {
+                    localStorage.setItem("eduSmartStudentsList", JSON.stringify(next));
+                } catch {}
+            }
+            return next;
+        });
+    };
+
+    const deleteSingleMessage = (id: string) => {
+        clearSeenNotifications([id]);
+    };
+
+    // Track seen messages while user is looking at the Inbox (notices)
+    useEffect(() => {
+        if (activeTab === "notices" && allMessages.length > 0) {
+            allMessages.forEach((m: any) => {
+                if (m.id) seenInCurrentInboxRef.current.add(String(m.id));
+            });
+        }
+    }, [activeTab, allMessages]);
+
+    // Automatically delete seen notifications from user's mobile once they close the inbox
+    useEffect(() => {
+        const prevTab = prevTabRef.current;
+        prevTabRef.current = activeTab;
+
+        if (prevTab === "notices" && activeTab !== "notices") {
+            if (seenInCurrentInboxRef.current.size > 0) {
+                const toDelete = Array.from(seenInCurrentInboxRef.current);
+                seenInCurrentInboxRef.current.clear();
+                clearSeenNotifications(toDelete);
+            }
+        }
+    }, [activeTab]);
+
+    // Ensure seen notifications are purged if user closes or reloads page while in Inbox
+    useEffect(() => {
+        const handleUnload = () => {
+            if (activeTab === "notices" && seenInCurrentInboxRef.current.size > 0) {
+                const toDelete = Array.from(seenInCurrentInboxRef.current);
+                try {
+                    const stored = JSON.parse(localStorage.getItem("eduSmartDismissedNotices") || "[]");
+                    localStorage.setItem("eduSmartDismissedNotices", JSON.stringify(Array.from(new Set([...stored, ...toDelete]))));
+                } catch {}
+            }
+        };
+        window.addEventListener("beforeunload", handleUnload);
+        window.addEventListener("pagehide", handleUnload);
+        return () => {
+            window.removeEventListener("beforeunload", handleUnload);
+            window.removeEventListener("pagehide", handleUnload);
+        };
+    }, [activeTab]);
 
 
     const handleLogout = () => {
@@ -423,6 +611,11 @@ function StudentContent() {
                             >
                                 {item.id === 'dashboard' ? <Home size={18} /> : <Icon size={18} />}
                                 {item.label}
+                                {item.id === 'notices' && allMessages.length > 0 && (
+                                    <span className="ml-auto bg-cyan-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full">
+                                        {allMessages.length}
+                                    </span>
+                                )}
                             </button>
                         );
                     })}
@@ -483,6 +676,11 @@ function StudentContent() {
                                                 <div className={`w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center mb-3 shrink-0 ${item.bg}`}>
                                                     <Icon className={item.color} size={20} strokeWidth={2.5} />
                                                 </div>
+                                                {item.id === 'notices' && allMessages.length > 0 && (
+                                                    <span className="absolute top-4 right-4 bg-cyan-500 text-white text-[10px] font-black px-2 py-0.5 rounded-full shadow-sm">
+                                                        {allMessages.length}
+                                                    </span>
+                                                )}
                                                 <div className="mt-auto pr-2 sm:pr-6">
                                                     <span className="font-bold text-sm md:text-lg text-slate-900 dark:text-white block mb-0.5">{item.label}</span>
                                                     <span className="text-[10px] md:text-sm text-slate-500 dark:text-slate-400 leading-snug hidden sm:block line-clamp-2">{item.desc}</span>
@@ -656,15 +854,28 @@ function StudentContent() {
                             <motion.div key="notices" variants={pageVariants} initial="hidden" animate="visible" exit="exit" className="space-y-3 md:space-y-4">
                                 {allMessages.length > 0 ? allMessages.map((msg, i) => (
                                     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ ...springConfig, delay: i * 0.05 }} key={msg.id}
-                                        className={`p-4 md:p-6 rounded-xl md:rounded-[1.5rem] border shadow-sm flex gap-3 md:gap-5 ${msg.type === 'alert' ? 'bg-red-50 border-red-100 dark:bg-red-500/10 dark:border-red-500/30' : 'bg-white border-slate-100 dark:bg-[#0b1120] dark:border-white/5'}`}
+                                        className={`p-4 md:p-6 rounded-xl md:rounded-[1.5rem] border shadow-sm flex items-start justify-between gap-3 md:gap-5 ${msg.type === 'alert' ? 'bg-red-50 border-red-100 dark:bg-red-500/10 dark:border-red-500/30' : 'bg-white border-slate-100 dark:bg-[#0b1120] dark:border-white/5'}`}
                                     >
-                                        <div className={`shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center ${msg.type === 'alert' ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400' : 'bg-cyan-50 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400'}`}>
-                                            {msg.type === 'alert' ? <AlertCircle size={20} /> : <Bell size={20} />}
+                                        <div className="flex gap-3 md:gap-5 items-start flex-1 min-w-0">
+                                            <div className={`shrink-0 w-10 h-10 md:w-12 md:h-12 rounded-xl flex items-center justify-center ${msg.type === 'alert' ? 'bg-red-100 text-red-600 dark:bg-red-500/20 dark:text-red-400' : 'bg-cyan-50 text-cyan-600 dark:bg-cyan-500/20 dark:text-cyan-400'}`}>
+                                                {msg.type === 'alert' ? <AlertCircle size={20} /> : <Bell size={20} />}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                {msg.title && (
+                                                    <h4 className="text-sm md:text-base font-black text-slate-900 dark:text-white mb-0.5 truncate">{msg.title}</h4>
+                                                )}
+                                                <p className={`text-sm md:text-base font-bold md:font-medium leading-relaxed break-words ${msg.type === 'alert' ? 'text-red-800 dark:text-red-100' : 'text-slate-800 dark:text-zinc-100'}`}>{msg.text || msg.body}</p>
+                                                <p className={`text-[10px] md:text-xs font-bold mt-1 md:mt-2 ${msg.type === 'alert' ? 'text-red-500 dark:text-red-400' : 'text-slate-500 dark:text-zinc-400'}`}>{new Date(msg.date || msg.createdAt).toLocaleDateString()}</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <p className={`text-sm md:text-base font-bold md:font-medium leading-relaxed ${msg.type === 'alert' ? 'text-red-800 dark:text-red-100' : 'text-slate-800 dark:text-zinc-100'}`}>{msg.text}</p>
-                                            <p className={`text-[10px] md:text-xs font-bold mt-1 md:mt-2 ${msg.type === 'alert' ? 'text-red-500 dark:text-red-400' : 'text-slate-500 dark:text-zinc-400'}`}>{new Date(msg.date).toLocaleDateString()}</p>
-                                        </div>
+                                        <button
+                                            onClick={() => deleteSingleMessage(msg.id)}
+                                            className="text-slate-400 hover:text-red-500 dark:text-zinc-500 dark:hover:text-red-400 p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition shrink-0"
+                                            title="Delete notification"
+                                            aria-label="Delete notification"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
                                     </motion.div>
                                 )) : <div className="text-center py-20 sm:py-32 opacity-60"><Bell size={48} className="mx-auto mb-4 text-slate-300 dark:text-white/20" /><p className="text-slate-500 dark:text-zinc-400 font-bold text-sm sm:text-lg">All caught up!</p></div>}
                             </motion.div>

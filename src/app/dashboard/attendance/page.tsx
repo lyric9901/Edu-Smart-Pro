@@ -187,6 +187,8 @@ export default function AttendancePage() {
                         studentId: String(studentId),
                         studentName: student.name || "Student",
                         date: selectedDate,
+                        institutionCode: user?.institutionCode,
+                        batchId: selectedBatch?.id,
                     }),
                 }).catch((err) => console.error("Failed to dispatch absent alert:", err));
             }
@@ -231,6 +233,8 @@ export default function AttendancePage() {
                             studentId: String(studentId),
                             studentName: student.name || "Student",
                             date: selectedDate,
+                            institutionCode: user?.institutionCode,
+                            batchId: selectedBatch?.id,
                         }),
                     }).catch((err) => console.error("Failed to dispatch absent alert:", err));
                 }

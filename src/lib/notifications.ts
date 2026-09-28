@@ -58,7 +58,7 @@ export async function getClientMessaging(): Promise<Messaging | null> {
 /**
  * Initializes and silently requests FCM Push Notification permission and registers token to Firestore.
  */
-export async function initPushNotifications(userId: string): Promise<string | null> {
+export async function initPushNotifications(userId: string, institutionCode?: string): Promise<string | null> {
   if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) {
     return null;
   }
@@ -112,14 +112,14 @@ export async function initPushNotifications(userId: string): Promise<string | nu
 
     if (currentToken) {
       const userDocRef = doc(firestore, "users", userId);
-      await setDoc(
-        userDocRef,
-        {
-          fcmTokens: arrayUnion(currentToken),
-          updatedAt: Date.now(),
-        },
-        { merge: true }
-      );
+      const updateData: any = {
+        fcmTokens: arrayUnion(currentToken),
+        updatedAt: Date.now(),
+      };
+      if (institutionCode) {
+        updateData.institutionCode = institutionCode;
+      }
+      await setDoc(userDocRef, updateData, { merge: true });
       return currentToken;
     }
 

@@ -45,6 +45,20 @@ export default function NoticesPage() {
             date: new Date().toISOString(),
             type: "notice" 
         });
+
+        // Dispatch Web Push notification to students
+        fetch("/api/notifications/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                institutionCode: user.institutionCode,
+                title: `${user.username || "Institute"} Announcement`,
+                body: msg,
+                url: "/student?tab=notices",
+                type: "notice",
+            }),
+        }).catch((e) => console.warn("Failed to dispatch notice push:", e));
+
         setMsg(""); 
     } catch (dbError) {
         console.error("Firebase error:", dbError);
