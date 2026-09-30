@@ -20,10 +20,12 @@ import {
   Settings as SettingsIcon,
   User,
   Users,
-  Shield
+  Shield,
+  ChevronRight,
 } from "lucide-react";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
+import InstituteDataModal from "@/components/InstituteDataModal";
 
 export default function DashboardLayout({ children }) {
   const { user, logout, loading } = useAuth();
@@ -32,6 +34,7 @@ export default function DashboardLayout({ children }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [schoolName, setSchoolName] = useState("Loading...");
   const [showSettingsModal, setShowSettingsModal] = useState(false);
+  const [showInstituteModal, setShowInstituteModal] = useState(false);
 
   const modalSpring = { duration: 0.22, ease: "easeInOut" } as const;
 
@@ -89,7 +92,7 @@ export default function DashboardLayout({ children }) {
     <div className="app-shell flex h-screen transition-colors duration-300">
       
       {/* MOBILE HEADER */}
-      <div className="glass-panel hidden fixed top-0 w-full z-50 p-4 flex justify-between items-center">
+      <div className="glass-panel flex md:hidden fixed top-0 w-full z-50 p-4 justify-between items-center">
          <div className="flex items-center gap-2 font-black text-xl text-blue-600 dark:text-blue-400">
             <School /> {schoolName}
          </div>
@@ -169,7 +172,7 @@ export default function DashboardLayout({ children }) {
       {/* BACKGROUND OVERLAY (Mobile Only) */}
       {isMobileMenuOpen && (
         <div 
-            className="fixed inset-0 bg-black/60 backdrop-blur-md z-[90] md:hidden"
+            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] md:hidden"
             onClick={() => setIsMobileMenuOpen(false)}
         />
       )}
@@ -193,14 +196,14 @@ export default function DashboardLayout({ children }) {
       {/* ADMIN SETTINGS MODAL */}
       <AnimatePresence>
           {showSettingsModal && (
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[110] bg-slate-950/45 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-                  <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={modalSpring} className="glass-panel w-full sm:w-[28rem] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 md:p-8 overflow-hidden relative">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.15 } }} exit={{ opacity: 0, transition: { duration: 0.12 } }} className="fixed inset-0 z-[110] bg-slate-950/60 dark:bg-black/75 backdrop-blur-[2px] sm:backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+                  <motion.div initial={{ opacity: 0, y: 24, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 24, scale: 0.98 }} transition={{ duration: 0.18, ease: "easeOut" }} className="gpu-animated bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/10 w-full sm:w-[28rem] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 md:p-8 overflow-hidden relative shadow-2xl">
                       <div className="flex justify-between items-center mb-6">
                           <h3 className="text-2xl font-black tracking-tight flex items-center gap-3 text-slate-950 dark:text-white"><SettingsIcon size={28} className="text-slate-600 dark:text-zinc-300" /> Settings</h3>
-                          <button onClick={() => setShowSettingsModal(false)} className="touch-target glass-card rounded-2xl text-slate-600 dark:text-zinc-300"><X size={20} /></button>
+                          <button onClick={() => setShowSettingsModal(false)} className="touch-target bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-600 dark:text-zinc-300 flex items-center justify-center"><X size={20} /></button>
                       </div>
 
-                      <div className="flex flex-col items-center justify-center glass-card rounded-[2rem] p-6 mb-6 border border-white/40 dark:border-white/10">
+                      <div className="flex flex-col items-center justify-center bg-slate-50 dark:bg-white/[0.03] rounded-[2rem] p-6 mb-6 border border-slate-200/80 dark:border-white/10">
                           <div className="w-20 h-20 rounded-full bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 flex items-center justify-center text-3xl font-black shadow-inner mb-4 border-2 border-white/50 dark:border-white/20">
                               {user.username.charAt(0).toUpperCase()}
                           </div>
@@ -208,23 +211,42 @@ export default function DashboardLayout({ children }) {
                           <p className="text-sm font-medium text-slate-500 dark:text-zinc-400 mt-1">Admin • ID: {user.schoolId || user.institutionCode}</p>
                       </div>
 
-                      <div className="space-y-4">
-                          <div className="glass-card w-full flex items-center justify-between p-4 rounded-[1.5rem] border border-white/40 dark:border-white/10">
+                      <div className="space-y-3.5">
+                          <div className="w-full flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10">
                               <span className="font-bold text-slate-950 dark:text-white pl-2">App Theme</span>
                               <ThemeToggle />
                           </div>
 
-                          <button onClick={handleSupportClick} className="glass-card w-full flex items-center justify-between p-5 rounded-[1.5rem] transition-colors group border border-white/40 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/5">
+                          <button 
+                              onClick={() => {
+                                  setShowSettingsModal(false);
+                                  setShowInstituteModal(true);
+                              }} 
+                              className="w-full flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 transition-colors group hover:bg-slate-100 dark:hover:bg-white/5"
+                          >
                               <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 rounded-xl bg-green-500/20 text-green-500 flex items-center justify-center group-hover:scale-110 transition-transform"><MessageCircleQuestion size={24} /></div>
-                                  <div className="text-left"><p className="font-bold text-slate-950 dark:text-white text-lg">Contact Support</p></div>
+                                  <div className="w-11 h-11 rounded-xl bg-blue-500/20 text-blue-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                      <School size={22} />
+                                  </div>
+                                  <div className="text-left">
+                                      <p className="font-bold text-slate-950 dark:text-white text-base sm:text-lg">My Institute</p>
+                                      <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Export data & import students</p>
+                                  </div>
+                              </div>
+                              <ChevronRight size={18} className="text-slate-400 group-hover:translate-x-0.5 transition-transform" />
+                          </button>
+
+                          <button onClick={handleSupportClick} className="w-full flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 transition-colors group hover:bg-slate-100 dark:hover:bg-white/5">
+                              <div className="flex items-center gap-4">
+                                  <div className="w-11 h-11 rounded-xl bg-green-500/20 text-green-500 flex items-center justify-center group-hover:scale-105 transition-transform"><MessageCircleQuestion size={22} /></div>
+                                  <div className="text-left"><p className="font-bold text-slate-950 dark:text-white text-base sm:text-lg">Contact Support</p></div>
                               </div>
                           </button>
 
-                          <button onClick={handleSwitchToStudent} className="glass-card w-full flex items-center justify-between p-5 rounded-[1.5rem] transition-colors group border border-white/40 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/5">
+                          <button onClick={handleSwitchToStudent} className="w-full flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 transition-colors group hover:bg-slate-100 dark:hover:bg-white/5">
                               <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-500 flex items-center justify-center group-hover:scale-110 transition-transform"><User size={24} /></div>
-                                  <div className="text-left"><p className="font-bold text-slate-950 dark:text-white text-lg">Switch to Student View</p><p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Test as a student</p></div>
+                                  <div className="w-11 h-11 rounded-xl bg-purple-500/20 text-purple-500 flex items-center justify-center group-hover:scale-105 transition-transform"><User size={22} /></div>
+                                  <div className="text-left"><p className="font-bold text-slate-950 dark:text-white text-base sm:text-lg">Switch to Student View</p><p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Test as a student</p></div>
                               </div>
                           </button>
 
@@ -232,24 +254,24 @@ export default function DashboardLayout({ children }) {
                             <Link 
                               href="/super-admin" 
                               onClick={() => setShowSettingsModal(false)} 
-                              className="glass-card w-full flex items-center justify-between p-5 rounded-[1.5rem] transition-colors group border border-white/40 dark:border-white/10 hover:bg-white/60 dark:hover:bg-white/5"
+                              className="w-full flex items-center justify-between p-4 sm:p-5 rounded-2xl bg-slate-50 dark:bg-white/[0.03] border border-slate-200/80 dark:border-white/10 transition-colors group hover:bg-slate-100 dark:hover:bg-white/5"
                             >
                               <div className="flex items-center gap-4">
-                                <div className="w-12 h-12 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center group-hover:scale-110 transition-transform">
-                                  <Shield size={24} />
+                                <div className="w-11 h-11 rounded-xl bg-amber-500/20 text-amber-500 flex items-center justify-center group-hover:scale-105 transition-transform">
+                                  <Shield size={22} />
                                 </div>
                                 <div className="text-left">
-                                  <p className="font-bold text-slate-950 dark:text-white text-lg">Super Admin</p>
+                                  <p className="font-bold text-slate-950 dark:text-white text-base sm:text-lg">Super Admin</p>
                                   <p className="text-xs text-slate-500 dark:text-zinc-400 font-medium">Platform Master Control</p>
                                 </div>
                               </div>
                             </Link>
                           )}
 
-                          <button onClick={logout} className="w-full flex items-center justify-between p-5 bg-red-500/10 hover:bg-red-500/20 rounded-[1.5rem] border border-red-500/20 backdrop-blur-md transition-all mt-6">
+                          <button onClick={logout} className="w-full flex items-center justify-between p-4 sm:p-5 bg-red-500/10 hover:bg-red-500/20 rounded-2xl border border-red-500/20 transition-all mt-4">
                               <div className="flex items-center gap-4">
-                                  <div className="w-12 h-12 rounded-xl bg-red-500/20 text-red-500 flex items-center justify-center"><LogOut size={24} /></div>
-                                  <div className="text-left"><p className="font-bold text-red-500 text-lg">Logout</p></div>
+                                  <div className="w-11 h-11 rounded-xl bg-red-500/20 text-red-500 flex items-center justify-center"><LogOut size={22} /></div>
+                                  <div className="text-left"><p className="font-bold text-red-500 text-base sm:text-lg">Logout</p></div>
                               </div>
                           </button>
                       </div>
@@ -257,6 +279,14 @@ export default function DashboardLayout({ children }) {
               </motion.div>
           )}
       </AnimatePresence>
+
+      {/* MY INSTITUTE EXPORT / IMPORT MODAL */}
+      <InstituteDataModal
+          isOpen={showInstituteModal}
+          onClose={() => setShowInstituteModal(false)}
+          institutionCode={user?.institutionCode || user?.schoolId || ""}
+          schoolName={schoolName}
+      />
     </div>
   );
 }

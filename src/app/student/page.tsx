@@ -46,20 +46,20 @@ function getTimestamp(val: any) {
 }
 
 // Use framer-motion's predefined easing names with `as const` for proper type narrowing
-const springConfig = { duration: 0.22, ease: "easeInOut" } as const;
-const fastSpringConfig = { duration: 0.16, ease: "easeInOut" } as const;
-const modalSpring = { duration: 0.22, ease: "easeInOut" } as const;
+const springConfig = { duration: 0.18, ease: "easeOut" } as const;
+const fastSpringConfig = { duration: 0.15, ease: "easeOut" } as const;
+const modalSpring = { duration: 0.18, ease: "easeOut" } as const;
 
 const pageVariants = {
-    hidden: { opacity: 0, x: 10, scale: 0.98 },
-    visible: { opacity: 1, x: 0, scale: 1, transition: springConfig },
-    exit: { opacity: 0, x: -10, scale: 0.98, transition: { duration: 0.15, ease: "easeIn" } }
+    hidden: { opacity: 0, y: 8 },
+    visible: { opacity: 1, y: 0, transition: springConfig },
+    exit: { opacity: 0, y: -6, transition: { duration: 0.12, ease: "easeIn" } }
 } as const;
 
 const viewVariants = {
-    hidden: (direction) => ({ opacity: 0, x: direction === 'right' ? 20 : -20 }),
+    hidden: (direction: any) => ({ opacity: 0, x: direction === 'right' ? 14 : -14 }),
     visible: { opacity: 1, x: 0, transition: fastSpringConfig },
-    exit: (direction) => ({ opacity: 0, x: direction === 'right' ? -20 : 20, transition: { duration: 0.15 } })
+    exit: (direction: any) => ({ opacity: 0, x: direction === 'right' ? -14 : 14, transition: { duration: 0.12 } })
 };
 
 function StudentContent() {
@@ -578,7 +578,7 @@ function StudentContent() {
     ];
 
     return (
-        <div className="app-shell flex min-h-screen font-sans transition-colors duration-300 select-none text-slate-900 dark:text-zinc-100 relative overflow-hidden bg-slate-50 dark:bg-[#030712]">
+        <div className="flex min-h-screen font-sans transition-colors duration-300 select-none text-slate-900 dark:text-zinc-100 relative overflow-hidden">
             
             {/* Ambient Glowing Orbs */}
             <div className="fixed inset-0 z-0 pointer-events-none hidden md:block">
@@ -650,7 +650,7 @@ function StudentContent() {
                                             Welcome, {currentStudent?.name?.split(' ')[0] || "Student"}! 👋
                                         </h2>
                                         <p className="text-xs md:text-base text-slate-600 dark:text-slate-400 font-medium">
-                                            Let's make today productive.
+                                            Let&apos;s make today productive.
                                         </p>
                                     </div>
                                     <div className="relative z-10 w-16 h-16 md:w-28 md:h-28 hidden sm:flex items-center justify-center right-2 md:right-4">
@@ -1011,21 +1011,21 @@ function StudentContent() {
             {/* --- MODALS --- */}
             <AnimatePresence>
                 {showProfileModal && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.12 } }} exit={{ opacity: 0, transition: { duration: 0.12 } }} className="fixed inset-0 z-[100] bg-slate-950/45 backdrop-blur-md flex items-end sm:items-center justify-center p-0 sm:p-4">
-                        <motion.div initial={{ y: "100%" }} animate={{ y: 0, transition: modalSpring }} exit={{ y: "100%", transition: { duration: 0.16, ease: "easeInOut" } }} className="bg-white dark:bg-[#0b1120] border border-slate-100 dark:border-white/10 w-full sm:w-[28rem] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 md:p-8 shadow-2xl">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.15 } }} exit={{ opacity: 0, transition: { duration: 0.12 } }} className="fixed inset-0 z-[100] bg-slate-950/60 dark:bg-black/75 backdrop-blur-[2px] sm:backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+                        <motion.div initial={{ opacity: 0, y: 24, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 24, scale: 0.98 }} transition={{ duration: 0.18, ease: "easeOut" }} className="gpu-animated bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/10 w-full sm:w-[28rem] rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 md:p-8 shadow-2xl">
                             <div className="flex justify-between items-center mb-8">
                                 <h3 className="text-xl md:text-2xl font-black tracking-tight text-slate-950 dark:text-white">Your Accounts</h3>
                                 <button onClick={() => setShowProfileModal(false)} className="touch-target bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl text-slate-600 dark:text-zinc-300 transition flex items-center justify-center"><X size={20} /></button>
                             </div>
                             <div className="space-y-4">
                                 {students.map((s, idx) => (
-                                    <motion.button whileTap={{ scale: 0.99 }} key={idx} onClick={() => switchStudent(idx)} className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-colors ${idx === activeStudentIndex ? 'bg-blue-50 border-blue-200 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-white' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700 dark:border-white/10 dark:bg-[#06080f] dark:hover:bg-white/5 dark:text-zinc-300'}`}>
+                                    <motion.button whileTap={{ scale: 0.98 }} key={idx} onClick={() => switchStudent(idx)} className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-colors ${idx === activeStudentIndex ? 'bg-blue-50 border-blue-200 text-blue-700 dark:border-blue-500/30 dark:bg-blue-500/10 dark:text-white' : 'bg-white border-slate-200 hover:bg-slate-50 text-slate-700 dark:border-white/10 dark:bg-[#06080f] dark:hover:bg-white/5 dark:text-zinc-300'}`}>
                                         <div className="w-11 h-11 rounded-full bg-blue-100 dark:bg-white/10 flex items-center justify-center font-black text-blue-600 dark:text-white">{s.name.charAt(0)}</div>
                                         <span className="font-bold flex-1 text-left text-base md:text-lg">{s.name}</span>
                                         {idx === activeStudentIndex && <CheckCircle size={22} className="text-blue-600 dark:text-white" />}
                                     </motion.button>
                                 ))}
-                                <motion.button whileTap={{ scale: 0.99 }} onClick={() => { setShowProfileModal(false); setShowAddModal(true); setAddError(""); }} className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/20 text-slate-600 dark:text-zinc-300 font-bold hover:bg-slate-50 dark:hover:bg-white/5 transition mt-4">
+                                <motion.button whileTap={{ scale: 0.98 }} onClick={() => { setShowProfileModal(false); setShowAddModal(true); setAddError(""); }} className="w-full flex items-center gap-4 p-4 rounded-2xl border-2 border-dashed border-slate-300 dark:border-white/20 text-slate-600 dark:text-zinc-300 font-bold hover:bg-slate-50 dark:hover:bg-white/5 transition mt-4">
                                     <div className="w-11 h-11 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center"><Plus size={20} /></div>
                                     Add Another Child
                                 </motion.button>
@@ -1037,11 +1037,11 @@ function StudentContent() {
 
             <AnimatePresence>
                 {showSettingsModal && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.12 } }} exit={{ opacity: 0, transition: { duration: 0.12 } }} className="fixed inset-0 z-50 bg-slate-950/50 backdrop-blur-md flex items-center justify-center p-4">
-                        <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1, transition: modalSpring }} exit={{ scale: 0.95, opacity: 0, transition: { duration: 0.15 } }} className="bg-white dark:bg-[#0b1120] border border-slate-100 dark:border-white/10 w-full max-w-sm max-h-[95vh] rounded-[2rem] overflow-y-auto custom-scrollbar relative shadow-2xl flex flex-col">
-                            <AnimatePresence mode="wait" custom={settingsDirection}>
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.15 } }} exit={{ opacity: 0, transition: { duration: 0.12 } }} className="fixed inset-0 z-50 bg-slate-950/60 dark:bg-black/75 backdrop-blur-[2px] sm:backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+                        <motion.div initial={{ opacity: 0, y: 24, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 24, scale: 0.98 }} transition={{ duration: 0.18, ease: "easeOut" }} className="gpu-animated bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/10 w-full sm:max-w-sm max-h-[90vh] rounded-t-[2.5rem] sm:rounded-[2.5rem] overflow-y-auto no-scrollbar relative shadow-2xl flex flex-col">
+                            <AnimatePresence mode="wait" initial={false}>
                                 {settingsView === "main" && (
-                                    <motion.div key="main" custom={settingsDirection} variants={viewVariants} initial="hidden" animate="visible" exit="exit" className="w-full p-5 flex flex-col gap-1">
+                                    <motion.div key="main" initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -10 }} transition={{ duration: 0.14 }} className="w-full p-5 flex flex-col gap-1">
                                         <div className="flex justify-between items-center mb-4">
                                             <h3 className="text-lg font-black tracking-tight flex items-center gap-2 text-slate-950 dark:text-white"><Settings size={20} className="text-slate-600 dark:text-zinc-300" /> Settings</h3>
                                             <button onClick={() => setShowSettingsModal(false)} className="touch-target bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-600 dark:text-zinc-300 flex items-center justify-center"><X size={18} /></button>
@@ -1067,7 +1067,7 @@ function StudentContent() {
                                             </div>
 
                                             {/* SWITCH CHILD BUTTON */}
-                                            <motion.button whileTap={{ scale: 0.99 }} onClick={() => { setShowSettingsModal(false); setShowProfileModal(true); }} className="w-full flex items-center justify-between p-3.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-xl transition-colors group">
+                                            <motion.button whileTap={{ scale: 0.98 }} onClick={() => { setShowSettingsModal(false); setShowProfileModal(true); }} className="w-full flex items-center justify-between p-3.5 bg-blue-50 dark:bg-blue-500/10 border border-blue-100 dark:border-blue-500/20 rounded-xl transition-colors group">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-9 h-9 rounded-lg bg-blue-200 text-blue-600 dark:bg-blue-500/20 dark:text-blue-400 flex items-center justify-center group-hover:scale-105 transition-transform"><Users size={18} /></div>
                                                     <div className="text-left"><p className="font-bold text-slate-900 dark:text-white text-sm">Switch Child</p><p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Manage student profiles</p></div>
@@ -1076,7 +1076,7 @@ function StudentContent() {
                                             </motion.button>
 
                                             {adminUser && (
-                                                <motion.button whileTap={{ scale: 0.99 }} onClick={() => router.push('/dashboard/admin')} className="w-full flex items-center justify-between p-3.5 bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-xl border border-purple-200 dark:border-purple-800/30 transition-colors group">
+                                                <motion.button whileTap={{ scale: 0.98 }} onClick={() => router.push('/dashboard/admin')} className="w-full flex items-center justify-between p-3.5 bg-purple-50 dark:bg-purple-500/10 hover:bg-purple-100 dark:hover:bg-purple-500/20 rounded-xl border border-purple-200 dark:border-purple-800/30 transition-colors group">
                                                     <div className="flex items-center gap-3">
                                                         <div className="w-9 h-9 rounded-lg bg-purple-200 text-purple-600 dark:bg-purple-500/20 dark:text-purple-400 flex items-center justify-center group-hover:scale-105 transition-transform"><Shield size={18} /></div>
                                                         <div className="text-left"><p className="font-bold text-slate-900 dark:text-white text-sm">Switch to Admin</p><p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Return to dashboard</p></div>
@@ -1085,7 +1085,7 @@ function StudentContent() {
                                                 </motion.button>
                                             )}
 
-                                            <motion.button whileTap={{ scale: 0.99 }} onClick={() => navigateSettings("password")} className="w-full flex items-center justify-between p-3.5 bg-white border border-slate-200 hover:bg-slate-50 dark:bg-[#06080f] dark:border-white/5 dark:hover:bg-white/5 rounded-xl transition-colors group">
+                                            <motion.button whileTap={{ scale: 0.98 }} onClick={() => navigateSettings("password")} className="w-full flex items-center justify-between p-3.5 bg-white border border-slate-200 hover:bg-slate-50 dark:bg-[#06080f] dark:border-white/5 dark:hover:bg-white/5 rounded-xl transition-colors group">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-9 h-9 rounded-lg bg-slate-100 text-slate-600 dark:bg-white/5 dark:text-zinc-300 flex items-center justify-center group-hover:scale-105 transition-transform"><Shield size={18} /></div>
                                                     <div className="text-left"><p className="font-bold text-slate-900 dark:text-white text-sm">Change Password</p><p className="text-[10px] text-slate-500 dark:text-zinc-400 font-medium">Update your credentials</p></div>
@@ -1103,7 +1103,7 @@ function StudentContent() {
                                     </motion.div>
                                 )}
                                 {settingsView === "password" && (
-                                    <motion.div key="password" custom={settingsDirection} variants={viewVariants} initial="hidden" animate="visible" exit="exit" className="w-full p-5 flex flex-col gap-1">
+                                    <motion.div key="password" initial={{ opacity: 0, x: 10 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 10 }} transition={{ duration: 0.14 }} className="w-full p-5 flex flex-col gap-1">
                                         <div className="flex justify-between items-center mb-4">
                                             <button onClick={() => { navigateSettings("main"); setPassMsg({ text: "", type: "" }); }} className="flex items-center gap-1.5 text-xs font-bold text-slate-600 hover:text-slate-950 dark:text-zinc-300 dark:hover:text-white transition-colors"><ChevronLeft size={16} /> Back</button>
                                             <button onClick={() => setShowSettingsModal(false)} className="touch-target bg-slate-50 border border-slate-200 dark:bg-white/5 dark:border-white/10 rounded-xl text-slate-600 dark:text-zinc-300 flex items-center justify-center"><X size={18} /></button>
@@ -1114,7 +1114,7 @@ function StudentContent() {
                                             <input type="password" placeholder="New Password" value={passForm.new} onChange={e => setPassForm({ ...passForm, new: e.target.value })} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-3 text-sm outline-none focus:border-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-colors" />
                                             <input type="password" placeholder="Confirm New Password" value={passForm.confirm} onChange={e => setPassForm({ ...passForm, confirm: e.target.value })} className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl px-3.5 py-3 text-sm outline-none focus:border-blue-500 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-colors" />
                                             {passMsg.text && <p className={`text-xs font-bold p-3 rounded-xl border ${passMsg.type === 'error' ? 'bg-red-50 border-red-200 text-red-600 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400' : 'bg-emerald-50 border-emerald-200 text-emerald-600 dark:bg-emerald-500/10 dark:border-emerald-500/20 dark:text-emerald-400'}`}>{passMsg.text}</p>}
-                                            <motion.button whileTap={{ scale: 0.99 }} onClick={handlePasswordChange} className="w-full bg-slate-900 text-white dark:bg-white dark:text-slate-950 py-3 rounded-xl text-sm font-bold hover:bg-black dark:hover:bg-slate-200 transition mt-2">Save Password</motion.button>
+                                            <motion.button whileTap={{ scale: 0.98 }} onClick={handlePasswordChange} className="w-full bg-slate-900 text-white dark:bg-white dark:text-slate-950 py-3 rounded-xl text-sm font-bold hover:bg-black dark:hover:bg-slate-200 transition mt-2">Save Password</motion.button>
                                         </div>
                                     </motion.div>
                                 )}
@@ -1125,16 +1125,16 @@ function StudentContent() {
             </AnimatePresence>
             <AnimatePresence>
                 {showAddModal && (
-                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.12 } }} exit={{ opacity: 0, transition: { duration: 0.12 } }} className="fixed inset-0 z-[110] bg-slate-950/45 backdrop-blur-md flex items-center justify-center p-4 sm:p-6">
-                        <motion.div initial={{ y: "100%" }} animate={{ y: 0, transition: modalSpring }} exit={{ y: "100%", transition: { duration: 0.16, ease: "easeInOut" } }} className="bg-white dark:bg-[#0b1120] border border-slate-100 dark:border-white/10 w-full max-w-sm rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-8 shadow-2xl">
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1, transition: { duration: 0.15 } }} exit={{ opacity: 0, transition: { duration: 0.12 } }} className="fixed inset-0 z-[110] bg-slate-950/60 dark:bg-black/75 backdrop-blur-[2px] sm:backdrop-blur-sm flex items-end sm:items-center justify-center p-0 sm:p-4">
+                        <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 24 }} transition={{ duration: 0.18, ease: "easeOut" }} className="gpu-animated bg-white dark:bg-[#0b1120] border border-slate-200 dark:border-white/10 w-full sm:max-w-sm rounded-t-[2.5rem] sm:rounded-[2.5rem] p-6 md:p-8 shadow-2xl">
                             <h3 className="text-xl md:text-2xl font-black mb-5 md:mb-6 text-slate-950 dark:text-white">Add Child</h3>
                             <form onSubmit={addNewChild} className="space-y-3 md:space-y-4">
                                 <input required placeholder="Student Name" className="w-full p-3.5 md:p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm md:text-base text-slate-900 dark:text-white outline-none focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-colors" onChange={e => setAddForm({ ...addForm, name: e.target.value })} />
                                 <input required placeholder="Contact / Phone Info" className="w-full p-3.5 md:p-4 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-sm md:text-base text-slate-900 dark:text-white outline-none focus:border-blue-500 placeholder:text-slate-400 dark:placeholder:text-zinc-500 transition-colors" onChange={e => setAddForm({ ...addForm, phone: e.target.value })} />
                                 {addError && <p className="text-red-600 text-xs md:text-sm font-bold bg-red-50 border border-red-200 dark:bg-red-500/10 dark:border-red-500/20 dark:text-red-400 p-3 rounded-xl">{addError}</p>}
                                 <div className="flex gap-3 pt-3 md:pt-4">
-                                    <motion.button whileTap={{ scale: 0.99 }} type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-3.5 md:py-4 font-bold text-sm md:text-base text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-white/10 rounded-2xl border border-transparent transition-all">Cancel</motion.button>
-                                    <motion.button whileTap={{ scale: 0.99 }} className="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-950 py-3.5 md:py-4 rounded-2xl font-bold text-sm md:text-base hover:bg-black dark:hover:bg-slate-200 transition-all shadow-lg">Add</motion.button>
+                                    <motion.button whileTap={{ scale: 0.98 }} type="button" onClick={() => setShowAddModal(false)} className="flex-1 py-3.5 md:py-4 font-bold text-sm md:text-base text-slate-600 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-white/10 rounded-2xl border border-transparent transition-all">Cancel</motion.button>
+                                    <motion.button whileTap={{ scale: 0.98 }} className="flex-1 bg-slate-900 dark:bg-white text-white dark:text-slate-950 py-3.5 md:py-4 rounded-2xl font-bold text-sm md:text-base hover:bg-black dark:hover:bg-slate-200 transition-all shadow-lg">Add</motion.button>
                                 </div>
                             </form>
                         </motion.div>

@@ -1,6 +1,6 @@
 // src/app/login/page.js
 "use client";
-import { useState, useEffect, Suspense } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { firestore } from "@/lib/firebase";
@@ -25,30 +25,7 @@ function LoginPortal() {
   const [studentForm, setStudentForm] = useState({ name: "", passwordInput: "" });
   const [adminForm, setAdminForm] = useState({ username: "", password: "" });
 
-  // --- AUTO-LOGIN & URL CODE LOGIC ---
-  useEffect(() => {
-    // 1. Check for existing session (Persistent Login)
-    const adminSession = localStorage.getItem("eduSmartUser");
-    const studentSession = localStorage.getItem("eduSmartStudent");
-
-    if (adminSession) {
-        router.replace("/dashboard/admin");
-        return;
-    }
-    if (studentSession) {
-        router.replace("/student");
-        return;
-    }
-
-    // 2. If no session, check for Magic Link in URL
-    const urlCode = searchParams.get("code");
-    if (urlCode) {
-        setInstitutionCode(urlCode.toUpperCase());
-        verifyCode(urlCode);
-    }
-  }, [searchParams, router]);
-
-  const verifyCode = async (codeToVerify) => {
+  const verifyCode = useCallback(async (codeToVerify) => {
     setLoading(true);
     setError("");
     try {
@@ -80,7 +57,30 @@ function LoginPortal() {
       setStep(1);
     }
     setLoading(false);
-  };
+  }, []);
+
+  // --- AUTO-LOGIN & URL CODE LOGIC ---
+  useEffect(() => {
+    // 1. Check for existing session (Persistent Login)
+    const adminSession = localStorage.getItem("eduSmartUser");
+    const studentSession = localStorage.getItem("eduSmartStudent");
+
+    if (adminSession) {
+        router.replace("/dashboard/admin");
+        return;
+    }
+    if (studentSession) {
+        router.replace("/student");
+        return;
+    }
+
+    // 2. If no session, check for Magic Link in URL
+    const urlCode = searchParams.get("code");
+    if (urlCode) {
+        setInstitutionCode(urlCode.toUpperCase());
+        verifyCode(urlCode);
+    }
+  }, [searchParams, router, verifyCode]);
 
   const handleCheckCode = (e) => {
     e.preventDefault();

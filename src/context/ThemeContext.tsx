@@ -34,11 +34,12 @@ function applyTheme(preference: Theme): "light" | "dark" {
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setThemeState] = useState<Theme>("system");
-  const [resolvedTheme, setResolvedTheme] = useState("light");
+  const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light");
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    const savedTheme = localStorage.getItem(STORAGE_KEY) || "system";
+    const rawTheme = localStorage.getItem(STORAGE_KEY);
+    const savedTheme: Theme = rawTheme === "light" || rawTheme === "dark" || rawTheme === "system" ? rawTheme : "system";
     setThemeState(savedTheme);
     setResolvedTheme(applyTheme(savedTheme));
     setMounted(true);

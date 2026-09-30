@@ -14,12 +14,13 @@ export default function PricingPage() {
 
   const plans = [
     {
-      name: "Starter",
+      name: "Basic",
       bestFor: "Home tutors & individual coaching batches",
       limit: "Up to 40 Students",
       price: "299",
       originalPrice: "499",
       popular: false,
+      trialAvailable: true,
       features: [
         { text: "Complete Student & Batch Management", included: true },
         { text: "Smart Daily Attendance & Absentee Tracker", included: true },
@@ -27,7 +28,7 @@ export default function PricingPage() {
         { text: "Digital Notice Board & Timetable", included: true },
         { text: "Student & Parent Login Mobile App (PWA)", included: true },
         { text: "Easy CSV/Excel Data Import & Export", included: true },
-        { text: "7 Days Free Trial (Zero Hidden Charges)", included: true },
+        { text: "7 Days Free Trial (Zero Risk & No Upfront Card)", included: true },
         { text: "1-Click WhatsApp Notices & Receipts", included: false },
         { text: "Custom Branding & Institute Personalization", included: false },
       ],
@@ -39,6 +40,7 @@ export default function PricingPage() {
       price: "499",
       originalPrice: "799",
       popular: true, // Auto-scroll target
+      trialAvailable: false,
       features: [
         { text: "Complete Student & Batch Management", included: true },
         { text: "Smart Daily Attendance & Absentee Tracker", included: true },
@@ -46,7 +48,7 @@ export default function PricingPage() {
         { text: "Digital Notice Board & Timetable", included: true },
         { text: "Student & Parent Login Mobile App (PWA)", included: true },
         { text: "Easy CSV/Excel Data Import & Export", included: true },
-        { text: "7 Days Free Trial (Zero Hidden Charges)", included: true },
+        { text: "7 Days Free Trial (Available only on Basic plan)", included: false },
         { text: "1-Click WhatsApp Notices & Receipts", included: true },
         { text: "Custom Branding & Institute Personalization", included: false },
       ],
@@ -58,6 +60,7 @@ export default function PricingPage() {
       price: "2,499",
       originalPrice: "3,999",
       popular: false,
+      trialAvailable: false,
       features: [
         { text: "Complete Student & Batch Management", included: true },
         { text: "Smart Daily Attendance & Absentee Tracker", included: true },
@@ -65,7 +68,7 @@ export default function PricingPage() {
         { text: "Digital Notice Board & Timetable", included: true },
         { text: "Student & Parent Login Mobile App (PWA)", included: true },
         { text: "Easy CSV/Excel Data Import & Export", included: true },
-        { text: "7 Days Free Trial (Zero Hidden Charges)", included: true },
+        { text: "7 Days Free Trial (Available only on Basic plan)", included: false },
         { text: "1-Click WhatsApp Notices & Receipts", included: true },
         { text: "Custom Branding & Institute Personalization", included: true },
       ],
@@ -118,7 +121,7 @@ export default function PricingPage() {
               ← Back to Home
             </Link>
             <Link href="/register" className="hidden sm:inline-flex px-4 py-2 text-xs font-bold bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
-              Start 7-Day Free Trial
+              Start Free Trial (Basic)
             </Link>
           </div>
         </div>
@@ -128,7 +131,7 @@ export default function PricingPage() {
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white text-xs sm:text-sm py-2.5 px-4 text-center font-bold">
         <span>🇮🇳 Dedicated Indian Institute Software — Built for Coaching Centers & Schools</span>
         <span className="mx-2 hidden md:inline">•</span>
-        <span className="hidden md:inline">7 Days Free Trial • No Hidden Charges • Cancel Anytime</span>
+        <span className="hidden md:inline">7 Days Free Trial on Basic Plan • No Hidden Charges • Cancel Anytime</span>
       </div>
 
       {/* --- HERO TEXT --- */}
@@ -140,13 +143,13 @@ export default function PricingPage() {
           Transparent Subscriptions, Zero Lock-In
         </h1>
         <p className="text-base md:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-          No ₹50,000 legacy contracts. No hidden charges. Enjoy a full-access <strong>7-day free trial</strong>, cancel subscription anytime, and seamlessly import/export your data in Excel/CSV.
+          No ₹50,000 legacy contracts. No hidden charges. Enjoy a full-access <strong>7-day free trial on our Basic plan</strong>, cancel subscription anytime, and seamlessly import/export your data in Excel/CSV.
         </p>
 
         {/* TRUST PILLS */}
         <div className="flex flex-wrap items-center justify-center gap-3 mt-6 text-xs sm:text-sm font-semibold text-slate-700">
           <span className="px-3 py-1.5 bg-white rounded-full border border-slate-200 shadow-sm flex items-center gap-1.5">
-            <Check size={14} className="text-green-600" /> 7 Days Free Trial
+            <Check size={14} className="text-green-600" /> 7 Days Free Trial (Basic Plan)
           </span>
           <span className="px-3 py-1.5 bg-white rounded-full border border-slate-200 shadow-sm flex items-center gap-1.5">
             <Check size={14} className="text-green-600" /> No Hidden Charges
@@ -223,14 +226,16 @@ export default function PricingPage() {
 
                   <div className="space-y-2.5">
                     <Link
-                      href="/register"
+                      href={plan.trialAvailable ? "/register" : `/register?plan=${plan.name.toLowerCase()}`}
                       className={`block w-full py-3.5 font-bold rounded-xl text-center transition shadow-md ${
                         plan.popular
                           ? "bg-blue-600 text-white hover:bg-blue-700 shadow-blue-500/20"
-                          : "bg-slate-900 text-white hover:bg-black shadow-slate-200"
+                          : plan.trialAvailable
+                          ? "bg-slate-900 text-white hover:bg-black shadow-slate-200"
+                          : "bg-slate-800 text-white hover:bg-slate-900 shadow-slate-200"
                       }`}
                     >
-                      Start 7-Day Free Trial
+                      {plan.trialAvailable ? "Start 7-Day Free Trial" : `Choose ${plan.name} Plan`}
                     </Link>
                     <a
                       href={`https://wa.me/917388739691?text=${encodeURIComponent(`Hi Shah, I am interested in the ${plan.name} plan for my institute.`)}`}
@@ -286,10 +291,10 @@ export default function PricingPage() {
               <Phone size={16} /> +91 73887-39691
             </a>
             <a
-              href="mailto:shanibrooo@gmail.com"
+              href="mailto:shahnawaz.23120@gmail.com"
               className="px-5 py-3 rounded-xl bg-slate-100 text-slate-800 font-bold text-sm flex items-center justify-center gap-2 hover:bg-slate-200 transition"
             >
-              <Mail size={16} /> shanibrooo@gmail.com
+              <Mail size={16} /> shahnawaz.23120@gmail.com
             </a>
           </div>
         </div>
@@ -300,7 +305,7 @@ export default function PricingPage() {
         <p>Monthly subscription • Cancel anytime with one click • No hidden charges.</p>
         <p className="mt-1">
           <Link href="/register" className="text-blue-600 font-bold hover:underline">
-            Click here to try full features free for 7 days without paying!
+            Click here to try the Basic plan free for 7 days without paying upfront!
           </Link>
         </p>
       </div>

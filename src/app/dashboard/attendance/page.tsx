@@ -1,7 +1,7 @@
 // src/app/dashboard/attendance/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useSyncExternalStore } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { firestore } from "@/lib/firebase";
 import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
@@ -17,21 +17,26 @@ import {
     CheckCircle2,
     ChevronLeft,
     ChevronRight,
-    Download,
+    Search,
+    UserCheck,
+    UserX,
+    Percent,
 } from "lucide-react";
 
-const Skeleton = ({ className }) => (
+const Skeleton = ({ className }: { className?: string }) => (
     <div
-        className={`animate-pulse bg-slate-200 dark:bg-slate-700 rounded-xl ${className}`}
+        className={`animate-pulse bg-slate-200 dark:bg-slate-750 rounded-xl ${className}`}
     />
 );
+
+const emptySubscribe = () => () => {};
 
 const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
         opacity: 1,
         transition: {
-            staggerChildren: 0.05,
+            staggerChildren: 0.04,
         },
     },
 };
@@ -39,7 +44,7 @@ const containerVariants = {
 const itemVariants = {
     hidden: {
         opacity: 0,
-        y: 10,
+        y: 8,
     },
     visible: {
         opacity: 1,
@@ -59,85 +64,97 @@ export default function AttendancePage() {
             .split("T")[0];
     };
 
-    const [batches, setBatches] = useState([]);
-    const [selectedBatch, setSelectedBatch] = useState(null);
+    const [batches, setBatches] = useState<any[]>([]);
+    const [selectedBatch, setSelectedBatch] = useState<any>(null);
     const [selectedDate, setSelectedDate] = useState(getLocalToday());
+    const [searchQuery, setSearchQuery] = useState("");
+    const [filterStatus, setFilterStatus] = useState<"all" | "present" | "absent" | "not-marked">("all");
 
-    const [stats, setStats] = useState({
-        present: 0,
-        absent: 0,
-        total: 0,
-    });
-
-    const [mounted, setMounted] = useState(false);
+    const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
     const [loading, setLoading] = useState(true);
-    const [isPastDate, setIsPastDate] = useState(false);
 
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+    const isPastDate = selectedDate !== getLocalToday();
 
-    useEffect(() => {
-        setIsPastDate(selectedDate !== getLocalToday());
-    }, [selectedDate]);
-
-    useEffect(() => {
-        if (user?.institutionCode) {
-            setLoading(true);
-
-            const unsub = onSnapshot(
-                collection(
-                    firestore,
-                    `institutions/${user.institutionCode}/batches`
-                ),
-                (snapshot) => {
-                    const list = [];
-
-                    snapshot.forEach((doc) => {
-                        list.push({
-                            id: doc.id,
-                            ...doc.data(),
-                            students: doc.data().students || [],
-                        });
-                    });
-
-                    setBatches(list);
-
-                    if (selectedBatch) {
-                        const updated = list.find(
-                            (b) => b.id === selectedBatch.id
-                        );
-
-                        if (updated) setSelectedBatch(updated);
-                    }
-
-                    setLoading(false);
-                }
-            );
-
-            return () => unsub();
+    const stats = useMemo(() => {
+        if (!selectedBatch?.students) {
+            return { present: 0, absent: 0, total: 0, unmarked: 0, rate: 0 };
         }
-    }, [user, selectedBatch?.id]);
-
-    useEffect(() => {
-        if (selectedBatch && selectedBatch.students) {
-            let p = 0,
-                a = 0;
-
-            selectedBatch.students.forEach((s) => {
-                const status = s.attendance?.[selectedDate];
-
-                if (status === "present") p++;
-                if (status === "absent") a++;
-            });
-
-            setStats({
-                present: p,
-                absent: a,
-                total: selectedBatch.students.length,
-            });
-        }
+        let p = 0, a = 0;
+        selectedBatch.students.forEach((s: any) => {
+            const status = s.attendance?.[selectedDate];
+            if (status === "present") p++;
+            if (status === "absent") a++;
+        });
+        const total = selectedBatch.students.length;
+        const unmarked = Math.max(0, total - (p + a));
+        const rate = total > 0 ? Math.round((p / total) * 100) : 0;
+        return {
+            present: p,
+            absent: a,
+            total,
+            unmarked,
+            rate,
+        };
     }, [selectedBatch, selectedDate]);
+
+    useEffect(() => {
+        if (!user?.institutionCode) return;
+
+        const unsub = onSnapshot(
+            collection(
+                firestore,
+                `institutions/${user.institutionCode}/batches`
+            ),
+            (snapshot) => {
+                const list: any[] = [];
+
+                snapshot.forEach((doc) => {
+                    list.push({
+                        id: doc.id,
+                        ...doc.data(),
+                        students: doc.data().students || [],
+                    });
+                });
+
+                setBatches(list);
+
+                setSelectedBatch((prev: any) => {
+                    if (prev) {
+                        return list.find((b: any) => b.id === prev.id) || (list.length > 0 ? list[0] : null);
+                    }
+                    return list.length > 0 ? list[0] : null;
+                });
+
+                setLoading(false);
+            },
+            (error) => {
+                console.error("Batches snapshot error:", error);
+                setLoading(false);
+            }
+        );
+
+        return () => unsub();
+    }, [user?.institutionCode]);
+
+    const filteredStudents = useMemo(() => {
+        if (!selectedBatch?.students) return [];
+        return selectedBatch.students.map((student: any, originalIndex: number) => ({
+            ...student,
+            originalIndex
+        })).filter((student: any) => {
+            const matchesQuery = !searchQuery.trim() || 
+                (student.name?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (student.phone?.toLowerCase().includes(searchQuery.toLowerCase())) ||
+                (student.rollNumber?.toLowerCase().includes(searchQuery.toLowerCase()));
+            
+            if (!matchesQuery) return false;
+
+            const currentStatus = student.attendance?.[selectedDate] || "not-marked";
+            if (filterStatus !== "all" && currentStatus !== filterStatus) return false;
+
+            return true;
+        });
+    }, [selectedBatch, searchQuery, filterStatus, selectedDate]);
 
     const toggleAttendance = async (studentIndex) => {
         if (!selectedBatch) return;
@@ -256,55 +273,10 @@ export default function AttendancePage() {
         setSelectedDate(newDate);
     };
 
-    const downloadCSV = () => {
-        try {
-            const studentsToExport = selectedBatch?.students || [];
-            if (!studentsToExport || studentsToExport.length === 0) {
-                toast.error("No student records available to export.");
-                return;
-            }
-
-            const headers = ["Student ID", "Roll Number", "Name", "Batch", "Phone", "Status", "Date"];
-            const escapeCsvCell = (val) => {
-                if (val === null || val === undefined) return '""';
-                const str = String(val).replace(/"/g, '""');
-                return `"${str}"`;
-            };
-
-            const rows = studentsToExport.map((s) => {
-                const status = s.attendance?.[selectedDate] || "not-marked";
-                return [
-                    escapeCsvCell(s.id || ""),
-                    escapeCsvCell(s.rollNumber || s.rollNo || "N/A"),
-                    escapeCsvCell(s.name || ""),
-                    escapeCsvCell(s.batch || "General"),
-                    escapeCsvCell(s.phone || "N/A"),
-                    escapeCsvCell(status.toUpperCase()),
-                    escapeCsvCell(selectedDate)
-                ].join(",");
-            });
-
-            const csvContent = [headers.join(","), ...rows].join("\r\n");
-            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement("a");
-            link.setAttribute("href", url);
-            link.setAttribute("download", `attendance_${selectedDate}_batch_${selectedBatch || "all"}.csv`);
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            URL.revokeObjectURL(url);
-            toast.success("Attendance CSV exported successfully!");
-        } catch (err) {
-            console.error("Failed to export attendance CSV:", err);
-            toast.error("Failed to export CSV. Please try again.");
-        }
-    };
-
-    const getStatus = (student) =>
+    const getStatus = (student: any) =>
         student.attendance?.[selectedDate] || "not-marked";
 
-    const getStatusUI = (status) => {
+    const getStatusUI = (status: string) => {
         switch (status) {
             case "present":
                 return {
@@ -332,40 +304,51 @@ export default function AttendancePage() {
         }
     };
 
-    if (!mounted) return null;
+    if (!mounted) {
+        return (
+            <div className="w-full max-w-6xl mx-auto px-3 sm:px-5 py-4 space-y-4">
+                <Skeleton className="w-48 h-10 rounded-2xl" />
+                <Skeleton className="w-full h-32 rounded-3xl" />
+                <Skeleton className="w-full h-64 rounded-3xl" />
+            </div>
+        );
+    }
 
     return (
         <div className="w-full max-w-6xl mx-auto px-3 sm:px-5 py-4 text-slate-900 dark:text-white">
 
             {/* HEADER */}
-            <div className="mb-5">
-                <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
-                    <Calendar className="text-blue-600" size={30} />
-                    Attendance
-                </h1>
+            <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                <div>
+                    <h1 className="text-3xl font-black tracking-tight flex items-center gap-2">
+                        <Calendar className="text-blue-600" size={30} />
+                        Attendance
+                    </h1>
 
-                <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {isPastDate
-                        ? "Managing Past Records"
-                        : "Today's Tracker"}
-                </p>
+                    <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
+                        {isPastDate
+                            ? "Managing Past Records"
+                            : "Today's Tracker"}
+                    </p>
+                </div>
             </div>
 
             {/* TOP CONTROLS */}
-            <div className="bg-gradient-to-br from-blue-50 to-slate-100 dark:from-slate-900 dark:to-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-4 sm:p-5 shadow-sm">
+            <div className="bg-gradient-to-br from-blue-50/80 via-slate-50 to-slate-100 dark:from-slate-900 dark:via-slate-900/90 dark:to-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2rem] p-4 sm:p-5 shadow-sm space-y-4">
 
                 {/* DATE */}
-                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 flex items-center justify-between mb-4">
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-2 flex items-center justify-between">
 
                     <button
                         onClick={() => changeDate(-1)}
-                        className="h-10 w-10 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        className="h-10 w-10 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-600 dark:text-slate-300"
+                        title="Previous Day"
                     >
                         <ChevronLeft size={18} />
                     </button>
 
                     <div className="flex items-center gap-2">
-                        <Calendar size={18} className="text-slate-400" />
+                        <Calendar size={18} className="text-blue-600 dark:text-blue-400" />
 
                         <input
                             type="date"
@@ -373,42 +356,46 @@ export default function AttendancePage() {
                             onChange={(e) =>
                                 setSelectedDate(e.target.value)
                             }
-                            className="bg-transparent outline-none text-sm font-bold"
+                            className="bg-transparent outline-none text-sm font-bold cursor-pointer"
                         />
                     </div>
 
                     <button
                         onClick={() => changeDate(1)}
-                        className="h-10 w-10 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition"
+                        className="h-10 w-10 rounded-xl flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-600 dark:text-slate-300"
+                        title="Next Day"
                     >
                         <ChevronRight size={18} />
                     </button>
                 </div>
 
                 {/* BATCHES */}
-                <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1">
-
+                <div className="flex gap-2.5 overflow-x-auto no-scrollbar pb-1">
                     {loading ? (
                         <>
-                            <Skeleton className="w-24 h-11" />
-                            <Skeleton className="w-24 h-11" />
+                            <Skeleton className="w-28 h-12" />
+                            <Skeleton className="w-28 h-12" />
+                            <Skeleton className="w-28 h-12" />
                         </>
                     ) : batches.length > 0 ? (
                         batches.map((batch) => (
                             <motion.button
                                 whileTap={{ scale: 0.96 }}
                                 key={batch.id}
-                                onClick={() => setSelectedBatch(batch)}
-                                className={`px-6 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all border shadow-sm ${selectedBatch?.id === batch.id
-                                        ? "bg-[#0B132B] text-white border-[#0B132B]"
-                                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300"
+                                onClick={() => {
+                                    setSelectedBatch(batch);
+                                    setSearchQuery("");
+                                }}
+                                className={`px-5 py-3 rounded-2xl text-sm font-bold whitespace-nowrap transition-all border shadow-sm ${selectedBatch?.id === batch.id
+                                        ? "bg-[#0B132B] dark:bg-blue-600 text-white border-[#0B132B] dark:border-blue-600 shadow-md"
+                                        : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700"
                                     }`}
                             >
                                 {batch.name}
                             </motion.button>
                         ))
                     ) : (
-                        <p className="text-sm text-slate-400">
+                        <p className="text-sm text-slate-400 py-2">
                             No batches found
                         </p>
                     )}
@@ -434,82 +421,125 @@ export default function AttendancePage() {
                         className="mt-5 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] overflow-hidden shadow-sm"
                     >
 
-                        {/* BATCH HEADER */}
-                        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800">
+                        {/* BATCH HEADER & STATS */}
+                        <div className="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 space-y-5">
 
-                            <h2 className="text-3xl font-black tracking-tight">
-                                {selectedBatch.name}
-                            </h2>
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                                <div>
+                                    <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900 dark:text-white">
+                                        {selectedBatch.name}
+                                    </h2>
 
-                            <p className="text-xs uppercase tracking-widest text-slate-400 font-bold mt-1">
-                                {new Date(selectedDate).toDateString()}
-                            </p>
+                                    <p className="text-xs uppercase tracking-widest text-slate-400 font-bold mt-1">
+                                        {new Date(selectedDate).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })}
+                                    </p>
+                                </div>
 
-                            {/* ACTION BUTTONS */}
-                            <div className="flex items-center gap-3 mt-5">
+                                {/* ACTION BUTTONS */}
+                                <div className="flex items-center gap-3">
+                                    <motion.button
+                                        whileTap={{ scale: 0.96 }}
+                                        onClick={() => markAll("present")}
+                                        className="px-5 h-12 sm:h-13 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20 text-sm transition"
+                                    >
+                                        <CheckCircle2 size={18} />
+                                        Mark All Present
+                                    </motion.button>
+                                </div>
+                            </div>
 
-                                <motion.button
-                                    whileTap={{ scale: 0.95 }}
-                                    onClick={downloadCSV}
-                                    className="h-14 w-14 rounded-2xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 flex items-center justify-center shadow-sm"
-                                >
-                                    <Download size={18} />
-                                </motion.button>
+                            {/* SEARCH & FILTER CONTROLS */}
+                            <div className="flex flex-col sm:flex-row gap-3 pt-1">
+                                <div className="relative flex-1">
+                                    <Search size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                    <input 
+                                        type="text"
+                                        placeholder="Search student by name or phone..."
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 text-sm font-semibold outline-none focus:border-blue-500 transition"
+                                    />
+                                    {searchQuery && (
+                                        <button 
+                                            onClick={() => setSearchQuery("")}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-400 hover:text-slate-600 dark:hover:text-slate-200"
+                                        >
+                                            Clear
+                                        </button>
+                                    )}
+                                </div>
 
-                                <motion.button
-                                    whileTap={{ scale: 0.96 }}
-                                    onClick={() => markAll("present")}
-                                    className="flex-1 h-14 rounded-2xl bg-blue-600 text-white font-bold flex items-center justify-center gap-2 shadow-lg shadow-blue-500/20"
-                                >
-                                    <CheckCircle2 size={18} />
-                                    Mark All Present
-                                </motion.button>
+                                <div className="flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
+                                    <button
+                                        onClick={() => setFilterStatus("all")}
+                                        className={`px-3 py-2 rounded-xl text-xs font-bold transition border ${filterStatus === "all" ? "bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent" : "bg-slate-100 dark:bg-slate-900 text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-800"}`}
+                                    >
+                                        All ({stats.total})
+                                    </button>
+                                    <button
+                                        onClick={() => setFilterStatus("present")}
+                                        className={`px-3 py-2 rounded-xl text-xs font-bold transition border ${filterStatus === "present" ? "bg-emerald-600 text-white border-transparent" : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40"}`}
+                                    >
+                                        Present ({stats.present})
+                                    </button>
+                                    <button
+                                        onClick={() => setFilterStatus("absent")}
+                                        className={`px-3 py-2 rounded-xl text-xs font-bold transition border ${filterStatus === "absent" ? "bg-rose-600 text-white border-transparent" : "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/40"}`}
+                                    >
+                                        Absent ({stats.absent})
+                                    </button>
+                                    <button
+                                        onClick={() => setFilterStatus("not-marked")}
+                                        className={`px-3 py-2 rounded-xl text-xs font-bold transition border ${filterStatus === "not-marked" ? "bg-amber-600 text-white border-transparent" : "bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800/40"}`}
+                                    >
+                                        Unmarked ({stats.unmarked})
+                                    </button>
+                                </div>
                             </div>
                         </div>
 
                         {/* STUDENT LIST */}
-                        <div className="p-3 sm:p-4 space-y-3">
+                        <div className="p-3 sm:p-5 space-y-3">
 
-                            {selectedBatch.students.map(
-                                (student, index) => {
+                            {filteredStudents.map(
+                                (student: any) => {
                                     const status = getStatus(student);
-
                                     const ui = getStatusUI(status);
 
                                     return (
                                         <motion.div
-                                            key={student.id || index}
+                                            key={student.id || student.originalIndex}
                                             variants={itemVariants}
                                             whileTap={{ scale: 0.985 }}
                                             onClick={() =>
-                                                toggleAttendance(index)
+                                                toggleAttendance(student.originalIndex)
                                             }
-                                            className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl p-4 flex items-center justify-between cursor-pointer shadow-sm hover:shadow-md transition-all"
+                                            className="bg-white dark:bg-slate-900/90 border border-slate-200/80 dark:border-slate-800/90 rounded-2xl p-4 flex items-center justify-between cursor-pointer shadow-xs hover:border-slate-300 dark:hover:border-slate-700 transition-all"
                                         >
 
                                             {/* LEFT */}
-                                            <div className="flex items-center gap-4 min-w-0">
+                                            <div className="flex items-center gap-3.5 min-w-0">
 
                                                 <div
-                                                    className={`h-12 w-12 rounded-full border-2 flex items-center justify-center font-black text-lg shrink-0 ${ui.color}`}
+                                                    className={`h-12 w-12 rounded-2xl border-2 flex items-center justify-center font-black text-lg shrink-0 ${ui.color}`}
                                                 >
-                                                    {student.name.charAt(0)}
+                                                    {(student.name || "S").charAt(0).toUpperCase()}
                                                 </div>
 
                                                 <div className="min-w-0">
-                                                    <p className="font-bold truncate text-base">
+                                                    <p className="font-bold truncate text-base text-slate-900 dark:text-white">
                                                         {student.name}
                                                     </p>
 
-                                                    <p className="text-xs text-slate-400 truncate">
-                                                        {student.phone}
+                                                    <p className="text-xs font-medium text-slate-400 truncate mt-0.5">
+                                                        {student.phone ? `Ph: ${student.phone}` : "No phone"} {student.rollNumber ? `• Roll: ${student.rollNumber}` : ""}
                                                     </p>
                                                 </div>
                                             </div>
 
-                                            {/* RIGHT */}
+                                            {/* RIGHT BUTTON */}
                                             <div
-                                                className={`min-w-[115px] h-12 rounded-xl border-2 flex items-center justify-center gap-2 text-sm font-bold px-4 transition-all ${ui.color}`}
+                                                className={`min-w-[110px] sm:min-w-[125px] h-11 rounded-xl border-2 flex items-center justify-center gap-2 text-sm font-bold px-4 transition-all shrink-0 ${ui.color}`}
                                             >
                                                 {ui.icon}
                                                 {ui.label}
@@ -519,9 +549,10 @@ export default function AttendancePage() {
                                 }
                             )}
 
-                            {selectedBatch.students.length === 0 && (
-                                <div className="py-20 text-center text-slate-400">
-                                    No students found
+                            {filteredStudents.length === 0 && (
+                                <div className="py-16 text-center text-slate-400">
+                                    <p className="font-bold text-base">No students matching criteria</p>
+                                    <p className="text-xs text-slate-400 mt-1">Try changing your search or filter</p>
                                 </div>
                             )}
                         </div>
@@ -536,9 +567,12 @@ export default function AttendancePage() {
                         <p className="font-bold text-lg">
                             Select a batch
                         </p>
+                        <p className="text-xs text-slate-400 mt-1">
+                            Choose a batch above to start marking attendance
+                        </p>
                     </div>
                 )}
             </AnimatePresence>
         </div>
     );
-}
+} 

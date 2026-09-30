@@ -27,7 +27,7 @@ export default function JsonLd() {
           },
           {
             "@type": "Offer",
-            "name": "Starter Plan",
+            "name": "Basic Plan",
             "price": "299",
             "priceCurrency": "INR",
             "priceSpecification": {
@@ -36,7 +36,7 @@ export default function JsonLd() {
               "priceCurrency": "INR",
               "unitText": "MONTH"
             },
-            "description": "For up to 40 students. Includes student management, smart attendance, fee tracking & receipts, notice board, and student/parent login app.",
+            "description": "For up to 40 students. Includes 7-day free trial, student management, smart attendance, fee tracking & receipts, notice board, and student/parent login app.",
             "availability": "https://schema.org/InStock",
             "url": "https://edusmartpro.in/pricing"
           },
@@ -51,7 +51,7 @@ export default function JsonLd() {
               "priceCurrency": "INR",
               "unitText": "MONTH"
             },
-            "description": "Most popular plan for up to 150 students. Includes all Starter features plus automated WhatsApp notices, fee reminders, homework, and timetable management.",
+            "description": "Most popular plan for up to 150 students. Includes all Basic features plus automated WhatsApp notices, fee reminders, homework, and timetable management.",
             "availability": "https://schema.org/InStock",
             "url": "https://edusmartpro.in/pricing"
           },
@@ -72,7 +72,7 @@ export default function JsonLd() {
           }
         ],
         "featureList": [
-          "7 Days Free Trial with Zero Risk",
+          "7 Days Free Trial on Basic Plan",
           "No Hidden Charges & Cancel Subscription Anytime",
           "Easy Data Import and Export (CSV & Excel, Zero Vendor Lock-in)",
           "School and Coaching ERP Core System",
@@ -134,7 +134,7 @@ export default function JsonLd() {
             "@type": "ContactPoint",
             "telephone": "+91-73887-39691",
             "contactType": "customer support",
-            "email": "shanibrooo@gmail.com",
+            "email": "shahnawaz.23120@gmail.com",
             "areaServed": "IN",
             "availableLanguage": ["English", "Hindi"]
           }

@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { firestore } from "@/lib/firebase"; // Updated to firestore
 import { collection, doc, onSnapshot, deleteDoc, updateDoc } from "firebase/firestore"; // Firestore imports
 import { ShieldAlert, Trash2, Key, Search, RefreshCw, LogOut, ArrowLeft, Eye, EyeOff, Edit, X, Save } from "lucide-react";
@@ -11,8 +11,7 @@ import { motion, AnimatePresence } from "framer-motion";
 export default function SuperAdmin() {
   const router = useRouter();
   const [schools, setSchools] = useState<any>({}); 
-  const [admins, setAdmins] = useState<any>({});   
-  const [combinedData, setCombinedData] = useState<any[]>([]);
+  const [admins, setAdmins] = useState<any>({});
   
   const [masterKey, setMasterKey] = useState("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -83,24 +82,22 @@ export default function SuperAdmin() {
   }, [isAuthenticated]);
 
   // 4. COMBINE DATA
-  useEffect(() => {
-    if (schools) {
-      const list = Object.entries(schools).map(([id, val]: [string, any]) => {
-        // Find admin matching this institution code
-        const adminEntry = Object.entries(admins || {}).find(([_, v]: [string, any]) => v.institutionCode === id);
-        return {
-          id, // This is the institutionCode (e.g., LPS)
-          name: val.name,
-          owner: val.owner,
-          phone: val.phone,
-          createdAt: val.createdAt,
-          username: adminEntry ? adminEntry[0] : null,
-          password: adminEntry ? (adminEntry[1] as any).password : null
-        };
-      });
-      list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      setCombinedData(list);
-    }
+  const combinedData = useMemo(() => {
+    if (!schools || Object.keys(schools).length === 0) return [];
+    const list = Object.entries(schools).map(([id, val]: [string, any]) => {
+      // Find admin matching this institution code
+      const adminEntry = Object.entries(admins || {}).find(([_, v]: [string, any]) => v.institutionCode === id);
+      return {
+        id, // This is the institutionCode (e.g., LPS)
+        name: val.name,
+        owner: val.owner,
+        phone: val.phone,
+        createdAt: val.createdAt,
+        username: adminEntry ? adminEntry[0] : null,
+        password: adminEntry ? (adminEntry[1] as any).password : null
+      };
+    });
+    return list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   }, [schools, admins]);
 
   // --- ACTIONS ---

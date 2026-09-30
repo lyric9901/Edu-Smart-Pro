@@ -368,12 +368,12 @@ export default function LandingPage() {
               >
                 Pricing
               </Link>
-              <button
-                onClick={() => setIsContactOpen(true)}
+              <Link
+                href="/contact"
                 className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors dark:text-slate-300 dark:hover:text-white"
               >
-                Contact
-              </button>
+                Contact Us
+              </Link>
               <ThemeToggle compact />
               <div className="flex items-center gap-3 ml-2 border-l pl-5 border-slate-200 dark:border-slate-800">
                 <Link
@@ -453,15 +453,13 @@ export default function LandingPage() {
                 >
                   Pricing
                 </Link>
-                <button
-                  onClick={() => {
-                    setIsContactOpen(true);
-                    setIsMenuOpen(false);
-                  }}
-                  className="px-4 py-3 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800 text-left"
+                <Link
+                  href="/contact"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="px-4 py-3 text-base font-semibold text-slate-900 rounded-xl hover:bg-slate-50 dark:text-white dark:hover:bg-slate-800"
                 >
-                  Contact Support (+91 7388739691)
-                </button>
+                  Contact Us
+                </Link>
                 <div className="px-4 mt-2 mb-4">
                   <ThemeToggle className="w-full justify-start" />
                 </div>
@@ -1058,23 +1056,27 @@ export default function LandingPage() {
               7 days free trial, zero hidden charges, cancel subscription
               anytime, and easy CSV/Excel data import & export.
             </p>
-            <div className="flex flex-col gap-1.5 text-xs text-slate-600 dark:text-slate-400 font-medium">
-              <div>
-                📞 Phone/WhatsApp:{" "}
+            <div className="flex flex-col gap-2 text-xs text-slate-600 dark:text-slate-400 font-medium">
+              <div className="flex items-center gap-2">
+                <span className="text-slate-400 dark:text-slate-500">Legal Entity:</span>
+                <span className="font-semibold text-slate-800 dark:text-slate-200">SHAHNAWAZ ALI</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Phone size={13} className="text-slate-400 shrink-0" />
                 <a
-                  href="tel:+917388739691"
-                  className="text-blue-600 font-bold hover:underline"
+                  href="tel:7388739691"
+                  className="text-blue-600 dark:text-blue-400 font-bold hover:underline"
                 >
-                  +91 73887-39691
+                  7388739691
                 </a>
               </div>
-              <div>
-                ✉️ Official Email:{" "}
+              <div className="flex items-center gap-2">
+                <Mail size={13} className="text-slate-400 shrink-0" />
                 <a
-                  href="mailto:shanibrooo@gmail.com"
-                  className="text-blue-600 font-bold hover:underline"
+                  href="mailto:shahnawaz.23120@gmail.com"
+                  className="text-blue-600 dark:text-blue-400 font-bold hover:underline"
                 >
-                  shanibrooo@gmail.com
+                  shahnawaz.23120@gmail.com
                 </a>
               </div>
             </div>
@@ -1110,12 +1112,12 @@ export default function LandingPage() {
                 </Link>
               </li>
               <li>
-                <button
-                  onClick={() => setIsContactOpen(true)}
-                  className="text-left hover:text-slate-900 dark:hover:text-white transition"
+                <Link
+                  href="/contact"
+                  className="hover:text-slate-900 dark:hover:text-white transition"
                 >
-                  Contact Support
-                </button>
+                  Contact Us
+                </Link>
               </li>
             </ul>
           </div>
@@ -1138,7 +1140,7 @@ export default function LandingPage() {
                   href="/legal/term"
                   className="hover:text-slate-900 dark:hover:text-white transition"
                 >
-                  Terms of Service
+                  Terms & Conditions
                 </Link>
               </li>
               <li>
@@ -1146,27 +1148,45 @@ export default function LandingPage() {
                   href="/legal/refund"
                   className="hover:text-slate-900 dark:hover:text-white transition"
                 >
-                  Refund Policy
+                  Refunds & Cancellations
                 </Link>
               </li>
               <li>
                 <Link
-                  href="/super-admin"
-                  className="text-xs text-gray-500 hover:text-gray-700 transition"
+                  href="/contact"
+                  className="hover:text-slate-900 dark:hover:text-white transition"
                 >
-                  Platform Master Access
+                  Contact Us
                 </Link>
               </li>
             </ul>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-5 pt-8 border-t border-slate-100 flex flex-col md:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500 dark:border-slate-800 dark:text-slate-500">
-          <div>
-            © {new Date().getFullYear()} EduSmart Pro ERP. All rights reserved.
+        <div className="max-w-7xl mx-auto px-5 pt-8 border-t border-slate-100 dark:border-slate-800 flex flex-col lg:flex-row justify-between items-center gap-4 text-xs font-medium text-slate-500 dark:text-slate-400">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-center sm:text-left justify-center lg:justify-start">
+            <span>© {new Date().getFullYear()} EduSmart Pro ERP. All rights reserved.</span>
+            <span className="hidden sm:inline text-slate-300 dark:text-slate-700">•</span>
+            <span className="text-slate-600 dark:text-slate-300 font-semibold">Operated by SHAHNAWAZ ALI</span>
           </div>
-          <div>
-            🇮🇳 Dedicated to Indian Institutes & Educators
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs">
+            <a
+              href="mailto:shahnawaz.23120@gmail.com"
+              className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition"
+            >
+              <Mail size={12} className="text-slate-400 shrink-0" />
+              <span>shahnawaz.23120@gmail.com</span>
+            </a>
+            <span className="text-slate-300 dark:text-slate-700">•</span>
+            <a
+              href="tel:7388739691"
+              className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition font-mono"
+            >
+              <Phone size={12} className="text-slate-400 shrink-0" />
+              <span>7388739691</span>
+            </a>
+            <span className="text-slate-300 dark:text-slate-700 hidden sm:inline">•</span>
+            <span className="hidden sm:inline">🇮🇳 Dedicated to Indian Institutes & Educators</span>
           </div>
         </div>
       </footer>
@@ -1247,7 +1267,7 @@ export default function LandingPage() {
                   </a>
 
                   <a
-                    href="mailto:shanibrooo@gmail.com"
+                    href="mailto:shahnawaz.23120@gmail.com"
                     className="w-full p-4 rounded-xl bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 flex items-center justify-between group hover:bg-blue-100 dark:hover:bg-blue-900/30 transition"
                   >
                     <div className="flex items-center gap-3">
@@ -1259,7 +1279,7 @@ export default function LandingPage() {
                           Email Us
                         </p>
                         <p className="text-xs text-blue-700 dark:text-blue-400 font-mono font-semibold">
-                          shanibrooo@gmail.com
+                          shahnawaz.23120@gmail.com
                         </p>
                       </div>
                     </div>

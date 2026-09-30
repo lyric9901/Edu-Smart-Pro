@@ -65,7 +65,7 @@ export default function HomeworkDashboard() {
 
     Object.keys(updatedAssignments).forEach(key => {
         const hwDate = new Date(updatedAssignments[key].createdAt);
-        if (now - hwDate > FORTY_FIVE_DAYS) {
+        if (now.getTime() - hwDate.getTime() > FORTY_FIVE_DAYS) {
             delete updatedAssignments[key];
             needsUpdate = true;
         }
@@ -360,10 +360,10 @@ export default function HomeworkDashboard() {
                     {selectedBatch.assignments && Object.keys(selectedBatch.assignments).length > 0 ? (
                         <div className="grid grid-cols-1 gap-4">
                             {Object.values(selectedBatch.assignments)
-                                .sort((a,b) => new Date(b.createdAt) - new Date(a.createdAt))
-                                .map(assign => {
+                                .sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                                .map((assign: any) => {
                                     const createdDate = new Date(assign.createdAt);
-                                    const daysAgo = Math.floor((new Date() - createdDate) / (1000 * 60 * 60 * 24));
+                                    const daysAgo = Math.floor((new Date().getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
                                     
                                     return (
                                         <motion.div 
