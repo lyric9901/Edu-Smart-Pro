@@ -3,8 +3,7 @@
 
 import { useState, useEffect, useMemo, useSyncExternalStore } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { firestore } from "@/lib/firebase";
-import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { subscribeToBatches, recordAttendance, recordBulkAttendance } from "@/lib/supabaseDb";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 
@@ -100,40 +99,20 @@ export default function AttendancePage() {
     useEffect(() => {
         if (!user?.institutionCode) return;
 
-        const unsub = onSnapshot(
-            collection(
-                firestore,
-                `institutions/${user.institutionCode}/batches`
-            ),
-            (snapshot) => {
-                const list: any[] = [];
+        const unsubscribe = subscribeToBatches(user.institutionCode, (list) => {
+            setBatches(list);
 
-                snapshot.forEach((doc) => {
-                    list.push({
-                        id: doc.id,
-                        ...doc.data(),
-                        students: doc.data().students || [],
-                    });
-                });
+            setSelectedBatch((prev: any) => {
+                if (prev) {
+                    return list.find((b: any) => b.id === prev.id) || (list.length > 0 ? list[0] : null);
+                }
+                return list.length > 0 ? list[0] : null;
+            });
 
-                setBatches(list);
+            setLoading(false);
+        });
 
-                setSelectedBatch((prev: any) => {
-                    if (prev) {
-                        return list.find((b: any) => b.id === prev.id) || (list.length > 0 ? list[0] : null);
-                    }
-                    return list.length > 0 ? list[0] : null;
-                });
-
-                setLoading(false);
-            },
-            (error) => {
-                console.error("Batches snapshot error:", error);
-                setLoading(false);
-            }
-        );
-
-        return () => unsub();
+        return () => unsubscribe();
     }, [user?.institutionCode]);
 
     const filteredStudents = useMemo(() => {
@@ -156,20 +135,18 @@ export default function AttendancePage() {
         });
     }, [selectedBatch, searchQuery, filterStatus, selectedDate]);
 
-    const toggleAttendance = async (studentIndex) => {
-        if (!selectedBatch) return;
+    const toggleAttendance = async (studentIndex: number) => {
+        if (!selectedBatch || !user?.institutionCode) return;
 
         const student = selectedBatch.students[studentIndex];
 
         const currentStatus =
             student.attendance?.[selectedDate] || "not-marked";
 
-        let newStatus = "present";
+        let newStatus: "present" | "absent" | "late" = "present";
 
         if (currentStatus === "present") newStatus = "absent";
-
-        if (currentStatus === "absent")
-            newStatus = "not-marked";
+        if (currentStatus === "absent") newStatus = "present"; // toggles between present and absent
 
         const updatedBatch = { ...selectedBatch };
 
@@ -183,16 +160,17 @@ export default function AttendancePage() {
 
         setSelectedBatch(updatedBatch);
 
-        await updateDoc(
-            doc(
-                firestore,
-                `institutions/${user.institutionCode}/batches`,
-                selectedBatch.id
-            ),
-            {
-                students: updatedBatch.students,
-            }
-        );
+        try {
+            await recordAttendance(
+                user.institutionCode,
+                selectedBatch.id,
+                student.id,
+                selectedDate,
+                newStatus
+            );
+        } catch (e) {
+            console.error("Failed to record attendance:", e);
+        }
 
         if (newStatus === "absent") {
             const studentId = student.id || student.phone || student.rollNumber || student.name;
@@ -212,35 +190,35 @@ export default function AttendancePage() {
         }
     };
 
-    const markAll = async (status) => {
-        if (!selectedBatch) return;
+    const markAll = async (status: "present" | "absent") => {
+        if (!selectedBatch || !user?.institutionCode) return;
 
         const updatedBatch = { ...selectedBatch };
 
-        updatedBatch.students.forEach((student, index) => {
-            if (!updatedBatch.students[index].attendance)
-                updatedBatch.students[index].attendance = {};
-
-            updatedBatch.students[index].attendance[
-                selectedDate
-            ] = status;
+        const records = updatedBatch.students.map((student: any) => {
+            if (!student.attendance) student.attendance = {};
+            student.attendance[selectedDate] = status;
+            return {
+                studentId: student.id,
+                status,
+            };
         });
 
         setSelectedBatch(updatedBatch);
 
-        await updateDoc(
-            doc(
-                firestore,
-                `institutions/${user.institutionCode}/batches`,
-                selectedBatch.id
-            ),
-            {
-                students: updatedBatch.students,
-            }
-        );
+        try {
+            await recordBulkAttendance(
+                user.institutionCode,
+                selectedBatch.id,
+                selectedDate,
+                records
+            );
+        } catch (e) {
+            console.error("Failed to record bulk attendance:", e);
+        }
 
         if (status === "absent") {
-            updatedBatch.students.forEach((student) => {
+            updatedBatch.students.forEach((student: any) => {
                 const studentId = student.id || student.phone || student.rollNumber || student.name;
                 if (studentId) {
                     fetch("/api/notifications/attendance-alert", {

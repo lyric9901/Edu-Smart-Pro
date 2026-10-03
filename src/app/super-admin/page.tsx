@@ -2,9 +2,7 @@
 export const dynamic = "force-dynamic";
 
 import { useState, useEffect, useMemo } from "react";
-import { firestore } from "@/lib/firebase"; // Updated to firestore
-import { collection, doc, onSnapshot, deleteDoc, updateDoc } from "firebase/firestore"; // Firestore imports
-import { ShieldAlert, Trash2, Key, Search, RefreshCw, LogOut, ArrowLeft, Eye, EyeOff, Edit, X, Save } from "lucide-react";
+import { ShieldAlert, Trash2, Key, Search, RefreshCw, LogOut, ArrowLeft, Edit, X, Save } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -17,7 +15,6 @@ export default function SuperAdmin() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [search, setSearch] = useState("");
   const [isClient, setIsClient] = useState(false);
-  const [showPasswords, setShowPasswords] = useState({});
 
   // --- MODAL STATES ---
   const [editingSchool, setEditingSchool] = useState<any>(null); 
@@ -27,11 +24,14 @@ export default function SuperAdmin() {
   const [editForm, setEditForm] = useState({ name: "", owner: "", phone: "" });
   const [passForm, setPassForm] = useState("");
 
-  // 1. INITIALIZE
+  // 1. INITIALIZE (Server-side Session Check)
   useEffect(() => {
     setIsClient(true);
-    const storedAuth = localStorage.getItem("superAdminAuth");
-    if (storedAuth === "true") setIsAuthenticated(true);
+    fetch("/api/super-admin/check-session")
+      .then((res) => {
+        if (res.ok) setIsAuthenticated(true);
+      })
+      .catch(() => {});
   }, []);
 
   // 2. AUTH
@@ -41,12 +41,11 @@ export default function SuperAdmin() {
       const res = await fetch("/api/super-admin/verify", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key: masterKey })
+        body: JSON.stringify({ key: masterKey }),
       });
       const data = await res.json();
       if (res.ok && data.success) {
         setIsAuthenticated(true);
-        localStorage.setItem("superAdminAuth", "true");
       } else {
         alert(data.message || "Invalid Master Key");
       }
@@ -55,29 +54,32 @@ export default function SuperAdmin() {
     }
   };
 
-  const handleLogout = () => {
-      if(confirm("Logout?")) {
-        setIsAuthenticated(false);
-        localStorage.removeItem("superAdminAuth");
-      }
+  const handleLogout = async () => {
+    if (confirm("Logout?")) {
+      await fetch("/api/super-admin/logout", { method: "POST" }).catch(() => {});
+      setIsAuthenticated(false);
+    }
   };
 
-  // 3. FETCH DATA (Firestore)
+  // 3. FETCH DATA (Secure Server-Side API)
+  const loadData = async () => {
+    try {
+      const res = await fetch("/api/super-admin/institutions");
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setSchools(data.schools || {});
+          setAdmins(data.admins || {});
+        }
+      }
+    } catch (err) {
+      console.error("Failed to load super admin data:", err);
+    }
+  };
+
   useEffect(() => {
     if (isAuthenticated) {
-      // Fetch Institutions
-      const unsubSchools = onSnapshot(collection(firestore, "institutions"), (snap) => {
-          const instData: any = {};
-          snap.forEach(doc => { instData[doc.id] = doc.data(); });
-          setSchools(instData);
-      });
-      // Fetch Admins
-      const unsubAdmins = onSnapshot(collection(firestore, "admins"), (snap) => {
-          const admData: any = {};
-          snap.forEach(doc => { admData[doc.id] = doc.data(); });
-          setAdmins(admData);
-      });
-      return () => { unsubSchools(); unsubAdmins(); };
+      loadData();
     }
   }, [isAuthenticated]);
 
@@ -85,16 +87,18 @@ export default function SuperAdmin() {
   const combinedData = useMemo(() => {
     if (!schools || Object.keys(schools).length === 0) return [];
     const list = Object.entries(schools).map(([id, val]: [string, any]) => {
-      // Find admin matching this institution code
-      const adminEntry = Object.entries(admins || {}).find(([_, v]: [string, any]) => v.institutionCode === id);
+      // Find admin matching this institution code (case-insensitive)
+      const adminEntry = Object.entries(admins || {}).find(([_, v]: [string, any]) => 
+        (v.institutionCode || "").trim().toUpperCase() === id.trim().toUpperCase()
+      );
       return {
         id, // This is the institutionCode (e.g., LPS)
         name: val.name,
         owner: val.owner,
         phone: val.phone,
         createdAt: val.createdAt,
-        username: adminEntry ? adminEntry[0] : null,
-        password: adminEntry ? (adminEntry[1] as any).password : null
+        username: adminEntry ? (adminEntry[1] as any)?.username || adminEntry[0] : null,
+        password: adminEntry ? (adminEntry[1] as any)?.password : null
       };
     });
     return list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
@@ -102,20 +106,30 @@ export default function SuperAdmin() {
 
   // --- ACTIONS ---
 
-  // A. DELETE SCHOOL (Firestore)
+  // A. DELETE SCHOOL (Secure Server API)
   const deleteSchool = async (schoolId: string, schoolName: string, username: string) => {
     if (confirm(`⚠️ PERMANENTLY DELETE "${schoolName}"?\n\nThis will remove all branches, students, and login access.`)) {
         try {
-            await deleteDoc(doc(firestore, "institutions", schoolId));
-            if (username) await deleteDoc(doc(firestore, "admins", username));
+            const res = await fetch("/api/super-admin/institutions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    action: "delete_institution",
+                    institutionId: schoolId,
+                    username,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok || !data.success) throw new Error(data.error || "Failed to delete");
             alert("Deleted successfully.");
-        } catch (error) {
-            alert("Error deleting: " + error.message);
+            loadData();
+        } catch (error: any) {
+            alert("Error deleting: " + (error?.message || error));
         }
     }
   };
 
-  // B. EDIT SCHOOL INFO (Firestore)
+  // B. EDIT SCHOOL INFO (Secure Server API)
   const openEditModal = (school: any) => {
       setEditingSchool(school);
       setEditForm({ name: school.name, owner: school.owner, phone: school.phone });
@@ -124,18 +138,29 @@ export default function SuperAdmin() {
   const saveSchoolInfo = async () => {
       if(!editingSchool) return;
       try {
-          await updateDoc(doc(firestore, "institutions", editingSchool.id), {
-              name: editForm.name,
-              owner: editForm.owner,
-              phone: editForm.phone
+          const res = await fetch("/api/super-admin/institutions", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                  action: "update_institution",
+                  institutionId: editingSchool.id,
+                  updates: {
+                      name: editForm.name,
+                      owner: editForm.owner,
+                      phone: editForm.phone,
+                  },
+              }),
           });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || "Failed to update");
           setEditingSchool(null);
-      } catch (error) {
-          alert("Failed to update: " + error.message);
+          loadData();
+      } catch (error: any) {
+          alert("Failed to update: " + (error?.message || error));
       }
   };
 
-  // C. CHANGE PASSWORD (Firestore)
+  // C. CHANGE PASSWORD (Secure Server API)
   const openPassModal = (school: any) => {
       setResettingPassword(school);
       setPassForm(""); 
@@ -143,19 +168,26 @@ export default function SuperAdmin() {
 
   const saveNewPassword = async () => {
       if(!resettingPassword || !resettingPassword.username || !passForm.trim()) return;
+      const targetUsername = resettingPassword.username.trim();
+      const newPassword = passForm.trim();
       try {
-          await updateDoc(doc(firestore, "admins", resettingPassword.username), {
-              password: passForm.trim()
+          const res = await fetch("/api/super-admin/institutions", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                  action: "update_password",
+                  username: targetUsername,
+                  newPassword,
+              }),
           });
+          const data = await res.json();
+          if (!res.ok || !data.success) throw new Error(data.error || "Failed to update password");
           setResettingPassword(null);
-          alert("Password updated!");
-      } catch (error) {
-          alert("Failed to update password: " + error.message);
+          alert("Password updated successfully!");
+          loadData();
+      } catch (error: any) {
+          alert("Failed to update password: " + (error?.message || error));
       }
-  };
-
-  const togglePassword = (id: string) => {
-    setShowPasswords((prev: any) => ({ ...prev, [id]: !prev[id] }));
   };
 
   if (!isClient) return null; 
@@ -227,8 +259,7 @@ export default function SuperAdmin() {
                                                 <div className="flex items-center gap-2"><span className="text-zinc-500 text-xs w-8">ID:</span> <span className="text-blue-400 font-mono">{school.username}</span></div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-zinc-500 text-xs w-8">PW:</span> 
-                                                    <span className="text-zinc-300 font-mono tracking-wider">{showPasswords[school.id] ? school.password : "••••••"}</span>
-                                                    <button onClick={() => togglePassword(school.id)} className="text-zinc-600 hover:text-white transition"><Eye size={14}/></button>
+                                                    <span className="text-emerald-400 text-xs font-mono bg-emerald-950/50 border border-emerald-800/40 px-2 py-0.5 rounded">Encrypted</span>
                                                 </div>
                                             </div>
                                         ) : <span className="text-red-500 text-xs font-bold">No Admin</span>}

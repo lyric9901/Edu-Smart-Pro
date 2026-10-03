@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { firestore } from "@/lib/firebase";
-import { collection, doc, onSnapshot, addDoc, deleteDoc } from "firebase/firestore";
+import { subscribeToNotices, createNotice as dbCreateNotice, deleteNotice as dbDeleteNotice } from "@/lib/supabaseDb";
 import { motion, AnimatePresence } from "framer-motion";
 import { Bell, Trash2, Megaphone, Send, Loader2 } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -11,7 +10,7 @@ export default function NoticesPage() {
   const { user } = useAuth();
   
   const [msg, setMsg] = useState("");
-  const [notices, setNotices] = useState([]);
+  const [notices, setNotices] = useState<any[]>([]);
   const [mounted, setMounted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false); 
 
@@ -21,15 +20,10 @@ export default function NoticesPage() {
 
   useEffect(() => {
     if (user?.institutionCode) {
-      const unsub = onSnapshot(collection(firestore, `institutions/${user.institutionCode}/notices`), (snapshot) => {
-        const list = [];
-        snapshot.forEach((doc) => {
-            list.push({ id: doc.id, ...doc.data() });
-        });
-        list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      const unsubscribe = subscribeToNotices(user.institutionCode, (list) => {
         setNotices(list);
       });
-      return () => unsub();
+      return () => unsubscribe();
     }
   }, [user]);
 
@@ -38,10 +32,9 @@ export default function NoticesPage() {
     setIsSubmitting(true);
 
     try {
-        await addDoc(collection(firestore, `institutions/${user.institutionCode}/notices`), {
+        await dbCreateNotice(user.institutionCode, {
             text: msg, 
             sender: user.username || "Admin",
-            createdAt: Date.now(),
             date: new Date().toISOString(),
             type: "notice" 
         });
@@ -61,16 +54,16 @@ export default function NoticesPage() {
 
         setMsg(""); 
     } catch (dbError) {
-        console.error("Firebase error:", dbError);
+        console.error("Database error:", dbError);
         alert("Failed to post notice.");
     } finally {
         setIsSubmitting(false);
     }
   };
 
-  const deleteNotice = async (id) => {
-    if(confirm("Delete this notice?")) {
-       await deleteDoc(doc(firestore, `institutions/${user.institutionCode}/notices`, id));
+  const deleteNotice = async (id: string) => {
+    if(confirm("Delete this notice?") && user?.institutionCode) {
+       await dbDeleteNotice(user.institutionCode, id);
     }
   };
 

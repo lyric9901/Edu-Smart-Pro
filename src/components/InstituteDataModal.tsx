@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { firestore } from "@/lib/firebase";
-import { collection, doc, getDocs, updateDoc } from "firebase/firestore";
+import { getBatches, addMultipleStudents, DBBatch } from "@/lib/supabaseDb";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
@@ -39,7 +38,7 @@ export default function InstituteDataModal({
     schoolName,
 }: InstituteDataModalProps) {
     const [tab, setTab] = useState<"export" | "import">("export");
-    const [batches, setBatches] = useState<any[]>([]);
+    const [batches, setBatches] = useState<DBBatch[]>([]);
     const [selectedBatchId, setSelectedBatchId] = useState<string>("");
     const [loadingBatches, setLoadingBatches] = useState(false);
 
@@ -53,16 +52,9 @@ export default function InstituteDataModal({
     useEffect(() => {
         if (!isOpen || !institutionCode) return;
 
-        getDocs(collection(firestore, `institutions/${institutionCode}/batches`))
-            .then((snapshot) => {
-                const list: any[] = [];
-                snapshot.forEach((d) => {
-                    list.push({
-                        id: d.id,
-                        ...d.data(),
-                        students: d.data().students || [],
-                    });
-                });
+        setLoadingBatches(true);
+        getBatches(institutionCode)
+            .then((list) => {
                 setBatches(list);
                 if (list.length > 0) {
                     setSelectedBatchId(list[0].id);
@@ -94,24 +86,23 @@ export default function InstituteDataModal({
     const exportAttendance = async () => {
         setExportingType("attendance");
         try {
-            const snap = await getDocs(collection(firestore, `institutions/${institutionCode}/batches`));
+            const allBatches = await getBatches(institutionCode);
             const rows: string[] = [
                 ["Batch Name", "Student ID", "Roll Number", "Student Name", "Phone", "Date", "Status"].join(",")
             ];
 
             const escape = (val: any) => `"${String(val ?? "").replace(/"/g, '""')}"`;
 
-            snap.forEach((batchDoc) => {
-                const batch = batchDoc.data();
+            allBatches.forEach((batch) => {
                 const students = batch.students || [];
                 students.forEach((student: any) => {
                     const attendance = student.attendance || {};
                     const dates = Object.keys(attendance).sort();
                     if (dates.length === 0) {
                         rows.push([
-                            escape(batch.name || batchDoc.id),
+                            escape(batch.name || batch.id),
                             escape(student.id || ""),
-                            escape(student.rollNumber || student.rollNo || ""),
+                            escape(student.rollNumber || ""),
                             escape(student.name || ""),
                             escape(student.phone || ""),
                             "No Records",
@@ -120,9 +111,9 @@ export default function InstituteDataModal({
                     } else {
                         dates.forEach((date) => {
                             rows.push([
-                                escape(batch.name || batchDoc.id),
+                                escape(batch.name || batch.id),
                                 escape(student.id || ""),
-                                escape(student.rollNumber || student.rollNo || ""),
+                                escape(student.rollNumber || ""),
                                 escape(student.name || ""),
                                 escape(student.phone || ""),
                                 escape(date),
@@ -148,7 +139,7 @@ export default function InstituteDataModal({
         setExportingType("fees");
         try {
             const currentYear = new Date().getFullYear();
-            const snap = await getDocs(collection(firestore, `institutions/${institutionCode}/batches`));
+            const allBatches = await getBatches(institutionCode);
             const escape = (val: any) => `"${String(val ?? "").replace(/"/g, '""')}"`;
 
             const headers = [
@@ -164,8 +155,7 @@ export default function InstituteDataModal({
             ];
             const rows: string[] = [headers.join(",")];
 
-            snap.forEach((batchDoc) => {
-                const batch = batchDoc.data();
+            allBatches.forEach((batch) => {
                 const students = batch.students || [];
                 students.forEach((student: any) => {
                     const feesByYear = student.fees?.[currentYear] || {};
@@ -177,9 +167,9 @@ export default function InstituteDataModal({
                     });
 
                     rows.push([
-                        escape(batch.name || batchDoc.id),
+                        escape(batch.name || batch.id),
                         escape(student.id || ""),
-                        escape(student.rollNumber || student.rollNo || ""),
+                        escape(student.rollNumber || ""),
                         escape(student.name || ""),
                         escape(student.phone || ""),
                         currentYear,
@@ -204,24 +194,23 @@ export default function InstituteDataModal({
     const exportStudents = async () => {
         setExportingType("students");
         try {
-            const snap = await getDocs(collection(firestore, `institutions/${institutionCode}/batches`));
+            const allBatches = await getBatches(institutionCode);
             const escape = (val: any) => `"${String(val ?? "").replace(/"/g, '""')}"`;
 
             const rows: string[] = [
                 ["Batch Name", "Student ID", "Roll Number", "Student Name", "Phone", "Monthly Fee"].join(",")
             ];
 
-            snap.forEach((batchDoc) => {
-                const batch = batchDoc.data();
+            allBatches.forEach((batch) => {
                 const students = batch.students || [];
                 students.forEach((student: any) => {
                     rows.push([
-                        escape(batch.name || batchDoc.id),
+                        escape(batch.name || batch.id),
                         escape(student.id || ""),
-                        escape(student.rollNumber || student.rollNo || ""),
+                        escape(student.rollNumber || ""),
                         escape(student.name || ""),
                         escape(student.phone || ""),
-                        escape(student.monthlyFee || batch.defaultFee || "N/A")
+                        escape(student.monthlyFee || "N/A")
                     ].join(","));
                 });
             });
@@ -240,17 +229,12 @@ export default function InstituteDataModal({
     const exportFullBackup = async () => {
         setExportingType("backup");
         try {
-            const snap = await getDocs(collection(firestore, `institutions/${institutionCode}/batches`));
-            const batchesData: any[] = [];
-            snap.forEach((d) => {
-                batchesData.push({ id: d.id, ...d.data() });
-            });
-
+            const allBatches = await getBatches(institutionCode);
             const backup = {
                 institutionCode,
                 schoolName,
                 exportedAt: new Date().toISOString(),
-                batches: batchesData,
+                batches: allBatches,
             };
 
             triggerDownload(
@@ -348,26 +332,14 @@ export default function InstituteDataModal({
         setImporting(true);
         try {
             const targetBatch = batches.find((b) => b.id === selectedBatchId);
-            const currentStudents: any[] = targetBatch?.students || [];
-
             const newStudents = parsedStudents.map((s, idx) => ({
                 id: `student_${Date.now()}_${idx}`,
                 name: s.name,
                 phone: s.phone || "",
                 rollNumber: s.rollNumber || "",
-                attendance: {},
-                fees: {},
-                createdAt: new Date().toISOString(),
             }));
 
-            const merged = [...currentStudents, ...newStudents];
-
-            await updateDoc(
-                doc(firestore, `institutions/${institutionCode}/batches`, selectedBatchId),
-                {
-                    students: merged,
-                }
-            );
+            await addMultipleStudents(institutionCode, selectedBatchId, newStudents);
 
             toast.success(`Successfully imported ${newStudents.length} students into ${targetBatch?.name || "batch"}!`);
             setCsvFile(null);

@@ -2,8 +2,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { firestore } from "@/lib/firebase";
-import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { subscribeToBatches, createAssignment as dbCreateAssignment, deleteAssignment as dbDeleteAssignment } from "@/lib/supabaseDb";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   BookOpen, Plus, Trash2, CheckCircle, X, LayoutGrid, 
@@ -54,69 +53,23 @@ export default function HomeworkDashboard() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  // --- AUTOMATIC HOMEWORK CLEANUP (Older than 1.5 months / 45 days) ---
-  const cleanUpOldHomework = async (batchId, assignments) => {
-    if (!assignments || Object.keys(assignments).length === 0) return;
-    
-    const now = new Date();
-    const FORTY_FIVE_DAYS = 45 * 24 * 60 * 60 * 1000;
-    let needsUpdate = false;
-    const updatedAssignments = { ...assignments };
-
-    Object.keys(updatedAssignments).forEach(key => {
-        const hwDate = new Date(updatedAssignments[key].createdAt);
-        if (now.getTime() - hwDate.getTime() > FORTY_FIVE_DAYS) {
-            delete updatedAssignments[key];
-            needsUpdate = true;
-        }
-    });
-
-    if (needsUpdate && user?.institutionCode) {
-        try {
-            await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, batchId), {
-                assignments: updatedAssignments
-            });
-            console.log(`Auto-cleaned expired homework for batch: ${batchId}`);
-        } catch (error) {
-            console.error("Cleanup error:", error);
-        }
-    }
-  };
-
   // --- FETCH BATCHES & SYNC REALTIME ---
   useEffect(() => {
     if (!user?.institutionCode) return;
     
-    const batchesRef = collection(firestore, `institutions/${user.institutionCode}/batches`);
-    const unsub = onSnapshot(batchesRef, (snapshot) => {
-        const list = [];
-        snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            
-            // Run background cleanup on fetch
-            cleanUpOldHomework(docSnap.id, data.assignments);
+    const unsubscribe = subscribeToBatches(user.institutionCode, (list) => {
+      setBatches(list);
 
-            list.push({
-                id: docSnap.id,
-                ...data,
-                assignments: data.assignments || {}
-            });
-        });
-        
-        // Use numeric collation to properly sort Class 7, Class 8, Class 9, Class 10, etc.
-        list.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
-        setBatches(list);
-
-        // Keep selected batch up to date if data changes
-        setSelectedBatch(prev => {
-            if (!prev) return null; // Default to null so "Select" is shown initially
-            return list.find(b => b.id === prev.id) || null;
-        });
-        
-        setLoading(false);
+      // Keep selected batch up to date if data changes
+      setSelectedBatch(prev => {
+        if (!prev) return null;
+        return list.find(b => b.id === prev.id) || null;
+      });
+      
+      setLoading(false);
     });
 
-    return () => unsub();
+    return () => unsubscribe();
   }, [user?.institutionCode]);
 
   const createAssignment = async () => {
@@ -126,19 +79,13 @@ export default function HomeworkDashboard() {
     }
     
     const id = Date.now().toString();
-    const updatedAssignments = {
-        ...(selectedBatch.assignments || {}),
-        [id]: {
+
+    try {
+        await dbCreateAssignment(user.institutionCode, selectedBatch.id, {
             id,
             title: newAssignment.title.trim(),
             description: newAssignment.description.trim(),
             createdAt: new Date().toISOString()
-        }
-    };
-
-    try {
-        await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
-            assignments: updatedAssignments
         });
         setNewAssignment({ title: "", description: "" });
         showToast("Homework assigned successfully!");
@@ -151,13 +98,8 @@ export default function HomeworkDashboard() {
     if (!selectedBatch || !user?.institutionCode) return;
     if (!confirm("Are you sure you want to delete this homework?")) return;
 
-    const updatedAssignments = { ...selectedBatch.assignments };
-    delete updatedAssignments[assignmentId];
-
     try {
-        await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
-            assignments: updatedAssignments
-        });
+        await dbDeleteAssignment(user.institutionCode, assignmentId);
         showToast("Homework removed");
     } catch (err) {
         showToast("Failed to delete homework", "error");

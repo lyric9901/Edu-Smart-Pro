@@ -3,8 +3,7 @@
 import { useState, useEffect, useCallback, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { firestore } from "@/lib/firebase";
-import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import { getInstitution, getBranches, getBatches } from "@/lib/supabaseDb";
 import { Lock, User, School, Loader2, GraduationCap, ShieldCheck, Building2, ChevronRight, ArrowLeft, MapPin } from "lucide-react";
 
 function LoginPortal() {
@@ -19,27 +18,24 @@ function LoginPortal() {
   const [step, setStep] = useState(1);
   const [schoolName, setSchoolName] = useState("");
   const [institutionCode, setInstitutionCode] = useState("");
-  const [branches, setBranches] = useState([]);
+  const [branches, setBranches] = useState<any[]>([]);
   const [selectedBranch, setSelectedBranch] = useState("");
   
   const [studentForm, setStudentForm] = useState({ name: "", passwordInput: "" });
   const [adminForm, setAdminForm] = useState({ username: "", password: "" });
 
-  const verifyCode = useCallback(async (codeToVerify) => {
+  const verifyCode = useCallback(async (codeToVerify: string) => {
     setLoading(true);
     setError("");
     try {
       const code = codeToVerify.toUpperCase().trim();
-      const instDoc = await getDoc(doc(firestore, "institutions", code));
+      const inst = await getInstitution(code);
       
-      if (instDoc.exists()) {
-        setSchoolName(instDoc.data().name);
+      if (inst) {
+        setSchoolName(inst.name);
         setInstitutionCode(code);
         
-        const branchSnapshot = await getDocs(collection(firestore, `institutions/${code}/branches`));
-        const branchList = [];
-        branchSnapshot.forEach((doc) => branchList.push({ id: doc.id, ...doc.data() }));
-        
+        const branchList = await getBranches(code);
         setBranches(branchList);
         
         if (branchList.length > 1) {
@@ -52,7 +48,7 @@ function LoginPortal() {
         setError("Institution Code not found.");
         setStep(1);
       }
-    } catch (err) {
+    } catch (err: any) {
       setError("Failed to verify: " + err.message);
       setStep(1);
     }
@@ -82,87 +78,55 @@ function LoginPortal() {
     }
   }, [searchParams, router, verifyCode]);
 
-  const handleCheckCode = (e) => {
+  const handleCheckCode = (e: React.FormEvent) => {
     e.preventDefault();
     verifyCode(institutionCode);
   };
 
-  const handleStudentLogin = async (e) => {
+  const handleStudentLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
         const code = institutionCode.toUpperCase().trim();
-        const inputName = String(studentForm.name).trim().toLowerCase();
+        const inputName = String(studentForm.name).trim();
         const inputPass = String(studentForm.passwordInput).trim();
-        
-        // 1. Try checking the NEW Branches folder
-        let batchesRef = collection(firestore, `institutions/${code}/branches/${selectedBranch}/batches`);
-        let snapshot = await getDocs(batchesRef);
-        
-        // 2. FALLBACK: If the branch folder is empty, check the OLD folder!
-        // This ensures coachings created before the branch update still work perfectly.
-        if (snapshot.empty) {
-            batchesRef = collection(firestore, `institutions/${code}/batches`);
-            snapshot = await getDocs(batchesRef);
-        }
-        
-        let foundStudent = null;
 
-        // 3. Search through the batches for the student
-        snapshot.forEach(batchDoc => {
-            const batchData = batchDoc.data();
-            const studentsArr = batchData.students || [];
-            
-            const match = studentsArr.find(s => {
-                // Forcing everything to Strings prevents silent crashing if a phone is saved as a Number
-                const dbName = String(s.name || "").trim().toLowerCase();
-                const dbPhone = String(s.phone || "").trim();
-                const dbPass = s.password || "";
-
-                const nameMatch = (dbName === inputName);
-                
-                // If a custom password exists, strictly check against that. 
-                // Otherwise, fallback to the phone number. No more permanent skeleton keys! 
-                const passMatch = dbPass ? (dbPass === inputPass) : (dbPhone === inputPass);
-
-                return nameMatch && passMatch;
-            });
-
-            if (match) {
-                foundStudent = { 
-                    ...match, 
-                    batchId: batchDoc.id, 
-                    batchName: batchData.name,
-                    institutionCode: code,
-                    branchId: selectedBranch,
-                    batchTiming: batchData.timing 
-                };
-            }
+        const res = await fetch("/api/auth/student-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            institutionCode: code,
+            branchId: selectedBranch,
+            name: inputName,
+            password: inputPass,
+          }),
         });
 
-        if (foundStudent) {
-            localStorage.setItem("eduSmartStudent", JSON.stringify(foundStudent));
-            localStorage.setItem("eduSmartStudentsList", JSON.stringify([foundStudent]));
+        const data = await res.json();
+
+        if (res.ok && data.success && data.student) {
+            localStorage.setItem("eduSmartStudent", JSON.stringify(data.student));
+            localStorage.setItem("eduSmartStudentsList", JSON.stringify([data.student]));
             router.push("/student"); 
         } else {
-            setError("Invalid Credentials. Please check Name and Password/Phone.");
+            setError(data.message || "Invalid Credentials. Please check Name and Password/Phone.");
         }
-    } catch (err) {
+    } catch (err: any) {
         console.error("Login Error:", err);
         setError("Login failed: " + err.message);
     }
     setLoading(false);
   };
 
-  const handleAdminLogin = async (e) => {
+  const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError("");
     const res = await loginAdmin(adminForm.username, adminForm.password, institutionCode.toUpperCase());
     if (!res.success) {
-      setError(res.message);
+      setError(res.message || "Failed to log in.");
     }
     setLoading(false);
   };

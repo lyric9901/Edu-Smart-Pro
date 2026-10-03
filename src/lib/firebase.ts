@@ -1,6 +1,4 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from "firebase/app";
-import { getFirestore, Firestore } from "firebase/firestore";
-import { getAuth, Auth } from "firebase/auth";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY || "AIzaSyFakeKeyForBuildEnv123456789",
@@ -11,16 +9,7 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID || "1:1234567890:web:abcdef",
 };
 
-// Initialize Firebase safely for Next.js SSR
+// Initialize Firebase App safely for Web Push (FCM)
 const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 
-const firestore: Firestore = getFirestore(app);
-
-let auth: Auth;
-try {
-  auth = getAuth(app);
-} catch {
-  auth = {} as Auth;
-}
-
-export { app, firestore, auth };
+export { app };

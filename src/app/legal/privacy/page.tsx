@@ -60,7 +60,7 @@ export default function PrivacyPolicy() {
 
             <section>
                 <h2 className="text-xl font-bold mb-2 text-slate-900">6. Data Security & Confidentiality</h2>
-                <p className="text-slate-600">We employ industry-standard SSL encryption and secured Firebase cloud architecture. We strictly enforce a zero-commercialization policy: we never sell, rent, or lease student information or institute records to third-party marketing companies, advertisers, or competing educational entities.</p>
+                <p className="text-slate-600">We employ industry-standard SSL encryption and secured Supabase cloud database architecture. We strictly enforce a zero-commercialization policy: we never sell, rent, or lease student information or institute records to third-party marketing companies, advertisers, or competing educational entities.</p>
             </section>
 
             <section>

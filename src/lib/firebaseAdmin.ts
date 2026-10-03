@@ -1,8 +1,6 @@
 // src/lib/firebaseAdmin.ts
 import { getApps, initializeApp, cert } from "firebase-admin/app";
 import type { App } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-import type { Firestore } from "firebase-admin/firestore";
 import { getMessaging } from "firebase-admin/messaging";
 import type { Messaging } from "firebase-admin/messaging";
 
@@ -57,12 +55,6 @@ export function getFirebaseAdminApp(): App | null {
   }
 
   return null;
-}
-
-export function getAdminFirestore(): Firestore | null {
-  const adminApp = getFirebaseAdminApp();
-  if (!adminApp) return null;
-  return getFirestore(adminApp);
 }
 
 export function getAdminMessaging(): Messaging | null {

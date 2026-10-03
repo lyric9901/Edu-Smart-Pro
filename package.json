@@ -6,12 +6,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "migrate:firestore": "bun run scripts/migrate-firestore-to-supabase.ts --live",
+    "migrate:firestore:dry-run": "bun run scripts/migrate-firestore-to-supabase.ts --dry-run",
+    "verify:migration": "bun run scripts/verify-migration.ts"
   },
   "dependencies": {
     "@ducanh2912/next-pwa": "^10.2.9",
+    "@supabase/ssr": "^0.12.7",
+    "@supabase/supabase-js": "^2.117.2",
     "@vercel/analytics": "^2.0.1",
     "@vercel/speed-insights": "^2.0.0",
+    "bcryptjs": "^3.0.3",
     "firebase": "^12.8.0",
     "firebase-admin": "^14.5.0",
     "framer-motion": "^12.33.0",
@@ -28,6 +34,7 @@
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
+    "@types/bcryptjs": "^3.0.0",
     "@types/node": "^25.9.1",
     "@types/react": "^19.2.15",
     "@types/react-dom": "^19.2.3",

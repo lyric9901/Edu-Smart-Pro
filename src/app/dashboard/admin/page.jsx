@@ -1,8 +1,17 @@
 "use client";
 import { useState, useEffect, useMemo, useCallback, useSyncExternalStore } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { firestore } from "@/lib/firebase"; 
-import { doc, collection, getDocs, setDoc, updateDoc, onSnapshot, deleteDoc } from "firebase/firestore"; 
+import { 
+  subscribeToBatches, 
+  createBatch as dbCreateBatch, 
+  updateBatch as dbUpdateBatch, 
+  deleteBatch as dbDeleteBatch, 
+  addStudent as dbAddStudent, 
+  removeStudentFromBatch as dbRemoveStudent, 
+  saveExamScore, 
+  deleteExamScore, 
+  updateExamScore 
+} from "@/lib/supabaseDb"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { QRCodeSVG } from "qrcode.react"; 
 import Link from "next/link";
@@ -77,85 +86,28 @@ export default function AdminDashboard() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const cleanUpOldHomework = useCallback(async (batchId, assignments) => {
-    if (!assignments || Object.keys(assignments).length === 0 || !user?.institutionCode) return;
-    
-    const now = new Date();
-    const FORTY_FIVE_DAYS = 45 * 24 * 60 * 60 * 1000;
-    let needsUpdate = false;
-    const updatedAssignments = { ...assignments };
-
-    Object.keys(updatedAssignments).forEach(key => {
-        const hwDate = new Date(updatedAssignments[key].createdAt);
-        if (now - hwDate > FORTY_FIVE_DAYS) {
-            delete updatedAssignments[key];
-            needsUpdate = true;
-        }
-    });
-
-    if (needsUpdate) {
-        try {
-            await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, batchId), {
-                assignments: updatedAssignments
-            });
-        } catch (error) {
-            console.error("Cleanup error:", error);
-        }
-    }
-  }, [user?.institutionCode]);
-
   useEffect(() => {
     if (!user?.institutionCode) return;
     
-    const fetchBatches = async () => {
-        try {
-            const querySnapshot = await getDocs(collection(firestore, `institutions/${user.institutionCode}/batches`));
-            const list = [];
-            querySnapshot.forEach((docSnap) => {
-                const data = docSnap.data();
-                cleanUpOldHomework(docSnap.id, data.assignments);
-                list.push({
-                    id: docSnap.id,
-                    ...data,
-                    students: data.students || [],
-                    assignments: data.assignments || {}
-                });
-            });
-            list.sort((a, b) => a.name.localeCompare(b.name));
-            setBatches(list);
-        } catch (error) {
-            console.error("Error fetching batches:", error);
+    const unsubscribe = subscribeToBatches(user.institutionCode, (list) => {
+      setBatches(list);
+      setSelectedBatch((prev) => {
+        if (!prev) return list.length > 0 ? list[0] : null;
+        return list.find((b) => b.id === prev.id) || (list.length > 0 ? list[0] : null);
+      });
+      setSelectedStudent((prevStudent) => {
+        if (!prevStudent) return null;
+        for (const b of list) {
+          const found = b.students?.find((s) => s.id === prevStudent.id);
+          if (found) return found;
         }
-        setLoading(false);
-    };
-
-    fetchBatches();
-  }, [user?.institutionCode, cleanUpOldHomework]);
-
-  useEffect(() => {
-    if (!user?.institutionCode || !selectedBatch?.id) return;
-    
-    const batchDocRef = doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id);
-    const unsub = onSnapshot(batchDocRef, (docSnap) => {
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const updatedBatch = {
-                id: docSnap.id,
-                ...data,
-                students: data.students || [],
-                assignments: data.assignments || {}
-            };
-            setSelectedBatch(updatedBatch);
-            setBatches(prev => prev.map(b => b.id === updatedBatch.id ? updatedBatch : b));
-            setSelectedStudent(prevStudent => {
-                if (!prevStudent) return null;
-                const updatedStudent = updatedBatch.students.find(s => s.id === prevStudent.id);
-                return updatedStudent || prevStudent;
-            });
-        }
+        return prevStudent;
+      });
+      setLoading(false);
     });
-    return () => unsub();
-  }, [user?.institutionCode, selectedBatch?.id]);
+
+    return () => unsubscribe();
+  }, [user?.institutionCode]);
 
   const globalFeeStats = useMemo(() => {
       let total = 0;
@@ -176,18 +128,19 @@ export default function AdminDashboard() {
   const createBatch = async () => {
     if (!newBatchName.trim() || !user?.institutionCode) return;
     const id = Date.now().toString();
-    const newBatchData = { name: newBatchName, students: [], assignments: {} };
-    
-    await setDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, id), newBatchData);
-    setBatches(prev => [...prev, { id, ...newBatchData }].sort((a, b) => a.name.localeCompare(b.name)));
-    setNewBatchName("");
-    showToast("New batch created!");
+    try {
+      await dbCreateBatch(user.institutionCode, id, newBatchName.trim());
+      setNewBatchName("");
+      showToast("New batch created!");
+    } catch (err) {
+      showToast("Failed to create batch", "error");
+    }
   };
 
   const handleEditBatch = async () => {
     if (!editBatchName.trim() || !user?.institutionCode || !selectedBatch) return;
     try {
-        await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
+        await dbUpdateBatch(user.institutionCode, selectedBatch.id, {
             name: editBatchName.trim()
         });
         showToast("Batch renamed successfully!");
@@ -202,8 +155,7 @@ export default function AdminDashboard() {
     if (!confirm(`Are you sure you want to permanently delete the batch "${selectedBatch.name}"?`)) return;
 
     try {
-        await deleteDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id));
-        setBatches(prev => prev.filter(b => b.id !== selectedBatch.id));
+        await dbDeleteBatch(user.institutionCode, selectedBatch.id);
         setSelectedBatch(null);
         showToast("Batch deleted successfully!");
     } catch (err) {
@@ -217,22 +169,16 @@ export default function AdminDashboard() {
         showToast("Enter a name!", "error");
         return;
     }
-    const updatedStudents = [...(selectedBatch.students || []), {
-      id: Date.now(),
-      name: newStudent.name,
-      phone: newStudent.phone || "N/A",
-      fees: {},
-      attendance: {},
-      performance: 0,
-      performanceHistory: []
-    }];
-    
-    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
-        students: updatedStudents
-    });
-
-    setNewStudent({ name: "", phone: "" });
-    showToast("Student added successfully");
+    try {
+      await dbAddStudent(user.institutionCode, selectedBatch.id, {
+        name: newStudent.name,
+        phone: newStudent.phone || "N/A"
+      });
+      setNewStudent({ name: "", phone: "" });
+      showToast("Student added successfully");
+    } catch (err) {
+      showToast("Failed to add student", "error");
+    }
   };
 
   const calculateAverage = (history) => {
@@ -244,49 +190,25 @@ export default function AdminDashboard() {
   const saveTestScore = async () => {
     if (!selectedStudent || !selectedBatch || !newTest.name || !newTest.score || !user?.institutionCode) return;
     
-    const history = selectedStudent.performanceHistory || [];
-    const updatedHistory = [...history, { 
-        id: Date.now(), 
-        name: newTest.name, 
+    try {
+      await saveExamScore(user.institutionCode, selectedBatch.id, selectedStudent.id, {
+        name: newTest.name,
         score: Number(newTest.score),
-        date: new Date().toISOString() 
-    }];
-    
-    const avg = calculateAverage(updatedHistory);
-
-    const updatedStudents = selectedBatch.students.map(s => {
-        if (s.id === selectedStudent.id) {
-            return { ...s, performanceHistory: updatedHistory, performance: avg };
-        }
-        return s;
-    });
-
-    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
-        students: updatedStudents
-    });
-    
-    setNewTest({ name: "", score: "" });
-    showToast("Test score added!");
+        date: new Date().toISOString()
+      });
+      setNewTest({ name: "", score: "" });
+      showToast("Test score added!");
+    } catch (err) {
+      showToast("Failed to add test score", "error");
+    }
   };
 
   const handleDeleteTestScore = async (testId) => {
     if (!selectedStudent || !selectedBatch || !user?.institutionCode) return;
     if (!confirm("Are you sure you want to remove this test record?")) return;
 
-    const updatedHistory = (selectedStudent.performanceHistory || []).filter(t => t.id !== testId);
-    const newAvg = calculateAverage(updatedHistory);
-
-    const updatedStudents = selectedBatch.students.map(s => {
-        if (s.id === selectedStudent.id) {
-            return { ...s, performanceHistory: updatedHistory, performance: newAvg };
-        }
-        return s;
-    });
-
     try {
-        await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
-            students: updatedStudents
-        });
+        await deleteExamScore(user.institutionCode, testId);
         showToast("Test record deleted successfully!");
     } catch (error) {
         showToast("Error deleting test", "error");
@@ -296,25 +218,10 @@ export default function AdminDashboard() {
   const handleSaveEditTest = async () => {
     if (!selectedStudent || !selectedBatch || !user?.institutionCode || !editTestModal) return;
     
-    const updatedHistory = (selectedStudent.performanceHistory || []).map(t => {
-        if (t.id === editTestModal.id) {
-            return { ...t, name: editTestModal.name, score: Number(editTestModal.score) };
-        }
-        return t;
-    });
-    
-    const newAvg = calculateAverage(updatedHistory);
-
-    const updatedStudents = selectedBatch.students.map(s => {
-        if (s.id === selectedStudent.id) {
-            return { ...s, performanceHistory: updatedHistory, performance: newAvg };
-        }
-        return s;
-    });
-
     try {
-        await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
-            students: updatedStudents
+        await updateExamScore(user.institutionCode, editTestModal.id, {
+            name: editTestModal.name,
+            score: Number(editTestModal.score)
         });
         setEditTestModal(null);
         showToast("Test record updated!");
@@ -356,11 +263,12 @@ export default function AdminDashboard() {
 
   const deleteStudent = async (studentId) => {
     if(!confirm("Are you sure you want to remove this student?")) return;
-    const updatedList = selectedBatch.students.filter(s => s.id !== studentId);
-    await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, selectedBatch.id), {
-        students: updatedList
-    });
-    showToast("Student removed");
+    try {
+      await dbRemoveStudent(user.institutionCode, selectedBatch.id, studentId);
+      showToast("Student removed");
+    } catch (err) {
+      showToast("Failed to remove student", "error");
+    }
   };
 
   // UPDATED DOWNLOAD QR LOGIC

@@ -1,7 +1,6 @@
 "use client";
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
-import { firestore } from "@/lib/firebase";
-import { doc, getDoc, DocumentData } from "firebase/firestore";
+import { getAdmin } from "@/lib/supabaseDb";
 import { useRouter } from "next/navigation";
 import { initPushNotifications } from "@/lib/notifications";
 
@@ -60,42 +59,44 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
   }, []);
 
-  // 2. ADMIN LOGIN
+  // 2. ADMIN LOGIN (Secure Server-Side API)
   const loginAdmin = async (
     username: string, 
     password: string, 
     institutionCodeFromLogin?: string
   ): Promise<{ success: boolean; message?: string }> => {
     try {
-      const adminRef = doc(firestore, "admins", username);
-      const snapshot = await getDoc(adminRef);
-      
-      if (snapshot.exists()) {
-        const data = snapshot.data() as DocumentData;
-        
-        if (data.password !== password) throw new Error("Wrong Password");
-        
-        if (institutionCodeFromLogin && data.institutionCode !== institutionCodeFromLogin) {
-           throw new Error("This admin does not belong to this institution code.");
-        }
+      const res = await fetch("/api/auth/admin-login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: username.trim(),
+          password: password.trim(),
+          institutionCode: institutionCodeFromLogin?.trim().toUpperCase(),
+        }),
+      });
 
-        const userData: AuthUser = {
-          role: "admin",
-          username: username,
-          institutionCode: data.institutionCode
-        };
-
-        setUser(userData);
-        localStorage.setItem("eduSmartUser", JSON.stringify(userData));
-        initPushNotifications(username).catch(() => {});
-        router.push("/dashboard/admin"); 
-        return { success: true };
+      const data = await res.json();
+      if (!res.ok || !data.success) {
+        throw new Error(data.message || "Failed to log in.");
       }
-      throw new Error("Username not found");
+
+      const userData: AuthUser = {
+        role: data.user.role || "admin",
+        username: data.user.username,
+        institutionCode: data.user.institutionCode,
+      };
+
+      setUser(userData);
+      localStorage.setItem("eduSmartUser", JSON.stringify(userData));
+      initPushNotifications(userData.username, userData.institutionCode).catch(() => {});
+      router.push("/dashboard/admin"); 
+      return { success: true };
     } catch (error: any) {
       return { success: false, message: error.message };
     }
   };
+
 
   // 3. LOGOUT
   const logout = () => {

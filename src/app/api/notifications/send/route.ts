@@ -1,9 +1,21 @@
 // src/app/api/notifications/send/route.ts
 import { NextResponse } from "next/server";
-import { getAdminMessaging, getAdminFirestore, hasAdminCredentials } from "@/lib/firebaseAdmin";
+import { getAdminMessaging, hasAdminCredentials } from "@/lib/firebaseAdmin";
+import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
+import { addDirectNotification } from "@/lib/supabaseDb";
+import { checkRateLimit } from "@/lib/security";
 
 export async function POST(request: Request) {
   try {
+    const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
+    const { allowed } = checkRateLimit(`notif-send:${ip}`, 30, 60 * 1000);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many notification requests. Please slow down." },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json().catch(() => ({}));
     const {
       tokens = [],
@@ -17,127 +29,129 @@ export async function POST(request: Request) {
       batchId,
     } = body;
 
-    if (!title || !content) {
+    if (!institutionCode) {
       return NextResponse.json(
-        { error: "title and body are required." },
+        { error: "institutionCode is required." },
         { status: 400 }
       );
     }
 
-    if (!hasAdminCredentials()) {
-      return NextResponse.json({
-        success: false,
-        skipped: true,
-        message: "Firebase Admin credentials (FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY) not configured on server.",
-      });
+    if (!title || typeof title !== "string" || !title.trim()) {
+      return NextResponse.json(
+        { error: "Valid title is required." },
+        { status: 400 }
+      );
     }
 
-    const messaging = getAdminMessaging();
-    const db = getAdminFirestore();
+    if (!content || typeof content !== "string" || !content.trim()) {
+      return NextResponse.json(
+        { error: "Valid notification body is required." },
+        { status: 400 }
+      );
+    }
 
-    if (!messaging || !db) {
-      return NextResponse.json({
-        success: false,
-        skipped: true,
-        message: "Firebase Admin could not be initialized.",
-      });
+    const cleanInst = String(institutionCode).toUpperCase().trim();
+    const cleanTitle = title.trim().slice(0, 150);
+    const cleanBody = content.trim().slice(0, 1000);
+    const cleanType = String(type).slice(0, 30).replace(/[^a-zA-Z0-9_-]/g, "");
+
+    // Sanitize URL: must start with single '/', no protocol/domain allowed
+    const cleanUrl =
+      typeof url === "string" && url.startsWith("/") && !url.startsWith("//")
+        ? url.slice(0, 200)
+        : "/student?tab=notices";
+
+    const supabaseAdmin = getSupabaseAdmin();
+
+    // Verify institution exists
+    const { data: instExists } = await supabaseAdmin
+      .from("institutions")
+      .select("id")
+      .eq("id", cleanInst)
+      .maybeSingle();
+
+    if (!instExists) {
+      return NextResponse.json(
+        { error: "Invalid institution." },
+        { status: 403 }
+      );
     }
 
     const targetId = studentId || userId;
-    const notifItem = {
-      id: `notif_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`,
-      title,
-      text: content,
-      date: new Date().toISOString(),
-      createdAt: Date.now(),
-      type,
-    };
+    const cleanTargetId = targetId ? String(targetId).trim() : null;
 
-    const { FieldValue } = await import("firebase-admin/firestore");
-
-    // 1. Save to individual user/student inbox if target specified
-    if (targetId) {
+    // 1. Save to individual user/student inbox in Supabase if target specified
+    if (cleanTargetId) {
       try {
-        await db.collection("users").doc(String(targetId)).set({
-          notifications: FieldValue.arrayUnion(notifItem),
-          updatedAt: Date.now(),
-        }, { merge: true });
+        await addDirectNotification(cleanTargetId, {
+          title: cleanTitle,
+          text: cleanBody,
+          type: cleanType,
+          date: new Date().toISOString(),
+          institutionCode: cleanInst,
+          batchId: batchId ? String(batchId).trim() : undefined,
+        });
       } catch (e) {
-        console.warn("Could not save to users doc:", e);
-      }
-
-      if (institutionCode && batchId) {
-        try {
-          const batchRef = db.collection("institutions").doc(String(institutionCode)).collection("batches").doc(String(batchId));
-          const batchSnap = await batchRef.get();
-          if (batchSnap.exists) {
-            const batchData = batchSnap.data();
-            const students = batchData?.students || [];
-            let modified = false;
-            const updatedStudents = students.map((s: any) => {
-              if (String(s.id) === String(targetId)) {
-                modified = true;
-                const existing = Array.isArray(s.notifications) ? s.notifications : [];
-                return { ...s, notifications: [...existing, notifItem] };
-              }
-              return s;
-            });
-            if (modified) {
-              await batchRef.update({ students: updatedStudents });
-            }
-          }
-        } catch (e) {
-          console.warn("Could not update batch student notifications:", e);
-        }
+        console.warn("Could not save direct notification in Supabase:", e);
       }
     }
 
     // 2. Resolve FCM tokens
-    let pushTokens: string[] = Array.isArray(tokens) ? [...tokens] : [];
+    let pushTokens: string[] = Array.isArray(tokens) ? tokens.slice(0, 200) : [];
 
-    // If specific user target provided and tokens array empty, fetch user tokens
-    if (targetId && pushTokens.length === 0) {
+    // If specific user target provided and tokens array empty, fetch user tokens from Supabase
+    if (cleanTargetId && pushTokens.length === 0) {
       try {
-        const userDoc = await db.collection("users").doc(String(targetId)).get();
-        if (userDoc.exists && Array.isArray(userDoc.data()?.fcmTokens)) {
-          pushTokens.push(...userDoc.data()!.fcmTokens);
+        const { data: userRow } = await supabaseAdmin
+          .from("users")
+          .select("fcm_tokens")
+          .eq("id", cleanTargetId)
+          .eq("institution_id", cleanInst)
+          .single();
+
+        if (userRow && Array.isArray(userRow.fcm_tokens)) {
+          pushTokens.push(...userRow.fcm_tokens);
         }
       } catch (e) {
-        console.warn("Error fetching target user tokens:", e);
+        console.warn("Error fetching target user tokens from Supabase:", e);
       }
     }
 
-    // If institutionCode provided and tokens still empty, broadcast to all institution students
-    if (institutionCode && pushTokens.length === 0) {
+    // If institutionCode provided and tokens still empty, broadcast to all institution users
+    if (cleanInst && pushTokens.length === 0 && !cleanTargetId) {
       try {
-        const batchesSnap = await db.collection("institutions").doc(String(institutionCode)).collection("batches").get();
-        const studentIds: string[] = [];
-        batchesSnap.forEach((batchDoc) => {
-          const students = batchDoc.data()?.students || [];
-          students.forEach((s: any) => {
-            const sid = s.id || s.phone || s.name;
-            if (sid) studentIds.push(String(sid));
-          });
-        });
+        const { data: usersRows } = await supabaseAdmin
+          .from("users")
+          .select("fcm_tokens")
+          .eq("institution_id", cleanInst)
+          .limit(200);
 
-        const uniqueStudentIds = Array.from(new Set(studentIds)).slice(0, 100);
-        for (const sid of uniqueStudentIds) {
-          const uDoc = await db.collection("users").doc(sid).get();
-          if (uDoc.exists && Array.isArray(uDoc.data()?.fcmTokens)) {
-            pushTokens.push(...uDoc.data()!.fcmTokens);
+        (usersRows || []).forEach((u) => {
+          if (Array.isArray(u.fcm_tokens)) {
+            pushTokens.push(...u.fcm_tokens);
           }
-        }
+        });
       } catch (e) {
-        console.warn("Error broadcasting institution tokens:", e);
+        console.warn("Error broadcasting institution tokens from Supabase:", e);
       }
     }
 
-    const validTokens = Array.from(new Set(pushTokens.filter(Boolean)));
+    const validTokens = Array.from(new Set(pushTokens.filter(Boolean))).slice(0, 500);
 
-    if (validTokens.length === 0) {
+    if (!hasAdminCredentials()) {
       return NextResponse.json({
         success: true,
-        savedToInbox: !!targetId,
+        savedToInbox: !!cleanTargetId,
+        sentCount: 0,
+        message: "Notification saved to inbox. Firebase push credentials not configured.",
+      });
+    }
+
+    const messaging = getAdminMessaging();
+    if (!messaging || validTokens.length === 0) {
+      return NextResponse.json({
+        success: true,
+        savedToInbox: !!cleanTargetId,
         sentCount: 0,
         message: "Notification saved. No active push tokens found to deliver on web.",
       });
@@ -146,12 +160,12 @@ export async function POST(request: Request) {
     const payload = {
       tokens: validTokens,
       notification: {
-        title,
-        body: content,
+        title: cleanTitle,
+        body: cleanBody,
       },
       data: {
-        url,
-        type,
+        url: cleanUrl,
+        type: cleanType,
       },
       webpush: {
         notification: {
@@ -159,7 +173,7 @@ export async function POST(request: Request) {
           badge: "/icons/icon-72x72.png",
         },
         fcmOptions: {
-          link: url,
+          link: cleanUrl,
         },
       },
     };
@@ -168,7 +182,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      savedToInbox: !!targetId,
+      savedToInbox: !!cleanTargetId,
       successCount: response.successCount,
       failureCount: response.failureCount,
     });

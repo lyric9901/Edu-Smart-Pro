@@ -2,8 +2,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { doc, getDoc } from "firebase/firestore"; 
-import { firestore } from "@/lib/firebase"; 
+import { getInstitution } from "@/lib/supabaseDb";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   LayoutDashboard, 
@@ -27,7 +26,7 @@ import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import InstituteDataModal from "@/components/InstituteDataModal";
 
-export default function DashboardLayout({ children }) {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname(); 
@@ -35,8 +34,6 @@ export default function DashboardLayout({ children }) {
   const [schoolName, setSchoolName] = useState("Loading...");
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showInstituteModal, setShowInstituteModal] = useState(false);
-
-  const modalSpring = { duration: 0.22, ease: "easeInOut" } as const;
 
   useEffect(() => {
     if (!loading && !user) {
@@ -46,8 +43,8 @@ export default function DashboardLayout({ children }) {
 
   useEffect(() => {
     if (user?.institutionCode) {
-      getDoc(doc(firestore, "institutions", user.institutionCode)).then(snap => {
-        if (snap.exists()) setSchoolName(snap.data().name);
+      getInstitution(user.institutionCode).then(inst => {
+        if (inst) setSchoolName(inst.name);
       });
     }
   }, [user?.institutionCode]);
@@ -62,9 +59,9 @@ export default function DashboardLayout({ children }) {
     if (!existing) {
         const dummy = {
             id: "admin-preview",
-            name: user.username || "Admin Preview",
+            name: user?.username || "Admin Preview",
             phone: "N/A",
-            institutionCode: user.institutionCode || user.schoolId,
+            institutionCode: user?.institutionCode || user?.schoolId,
             batchId: "preview",
             batchName: "Admin Preview"
         };

@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
-import { firestore } from "@/lib/firebase"; // <-- Firestore Import
-import { doc, setDoc } from "firebase/firestore"; // <-- Firestore Functions
+import { createInstitution, createAdmin, createBranch } from "@/lib/supabaseDb";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
@@ -22,69 +21,52 @@ export default function Register() {
   const router = useRouter();
   const [form, setForm] = useState({ name: "", owner: "", phone: "", username: "", password: "" });
   
-  // --- NEW: DYNAMIC BRANCHES STATE ---
+  // --- DYNAMIC BRANCHES STATE ---
   const [branches, setBranches] = useState(["Main Branch"]); 
   const [loading, setLoading] = useState(false);
   const [magicLink, setMagicLink] = useState("");
 
   const handleAddBranch = () => setBranches([...branches, ""]);
   
-  const handleUpdateBranch = (index, value) => {
+  const handleUpdateBranch = (index: number, value: string) => {
       const newBranches = [...branches];
       newBranches[index] = value;
       setBranches(newBranches);
   };
 
-  const handleRemoveBranch = (index) => {
+  const handleRemoveBranch = (index: number) => {
       const newBranches = branches.filter((_, i) => i !== index);
       setBranches(newBranches);
   };
 
-  const handleRegister = async (e) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
-        // 1. Generate Institution Code (e.g., TOP8291)
-        const cleanName = form.name.replace(/[^a-zA-Z]/g, '').substring(0, 3).toUpperCase() || "EDU";
-        const randomNum = Math.floor(1000 + Math.random() * 9000);
-        const institutionCode = `${cleanName}${randomNum}`;
-
-        // 2. Create Institution Document
-        await setDoc(doc(firestore, "institutions", institutionCode), {
-            name: form.name,
-            owner: form.owner,
-            phone: form.phone,
-            plan: "premium", 
-            createdAt: Date.now()
+        const res = await fetch("/api/auth/register-institution", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                name: form.name,
+                owner: form.owner,
+                phone: form.phone,
+                username: form.username,
+                password: form.password,
+                branches: branches,
+            }),
         });
 
-        // 3. Save Admin Credentials
-        await setDoc(doc(firestore, "admins", form.username), {
-            password: form.password, 
-            institutionCode: institutionCode,
-            role: "admin"
-        });
-
-        // 4. Save Branches to Sub-collection
-        const validBranches = branches.filter(b => b.trim() !== "");
-        // If they deleted all inputs, default to Main Branch
-        if (validBranches.length === 0) validBranches.push("Main Branch");
-
-        for (const branchName of validBranches) {
-            const branchId = branchName.toLowerCase().replace(/\s+/g, '-');
-            await setDoc(doc(firestore, `institutions/${institutionCode}/branches`, branchId), {
-                name: branchName,
-                createdAt: Date.now()
-            });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.message || "Registration failed.");
         }
-        
-        // 5. Generate Link
+
+        const institutionCode = data.institutionCode;
         const link = `${window.location.origin}/login?code=${institutionCode}`;
         setMagicLink(link);
-        
-    } catch (error) {
-        alert("Registration Failed: " + error.message);
+    } catch (error: any) {
+        alert("Registration Failed: " + (error?.message || error));
     }
     setLoading(false);
   };

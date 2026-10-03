@@ -1,8 +1,7 @@
 "use client";
 import { useState, useEffect, useSyncExternalStore } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { firestore } from "@/lib/firebase";
-import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { subscribeToBatches, saveBatchTiming, saveTimetable } from "@/lib/supabaseDb";
 import { motion, AnimatePresence } from "framer-motion";
 import { Clock, Save, X, Edit2, Calendar, Plus, Trash2, BookOpen } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
@@ -48,15 +47,11 @@ export default function TimingPage() {
 
   useEffect(() => {
     if (user?.institutionCode) {
-      const unsub = onSnapshot(collection(firestore, `institutions/${user.institutionCode}/batches`), (snapshot) => {
-        const list: any[] = [];
-        snapshot.forEach((d) => {
-          list.push({ id: d.id, ...d.data() });
-        });
+      const unsubscribe = subscribeToBatches(user.institutionCode, (list) => {
         setBatches(list);
         setLoading(false);
       });
-      return () => unsub();
+      return () => unsubscribe();
     }
   }, [user]);
 
@@ -72,8 +67,9 @@ export default function TimingPage() {
     if (!timeForm.start || !timeForm.end || !user?.institutionCode) return;
     
     try {
-      await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, batchId), {
-        timing: { start: timeForm.start, end: timeForm.end }
+      await saveBatchTiming(user.institutionCode, batchId, {
+        start: timeForm.start,
+        end: timeForm.end
       });
       setEditingId(null);
       toast.success("Batch timing updated!");
@@ -146,9 +142,7 @@ export default function TimingPage() {
         room: s.room || "",
         teacher: s.teacher || ""
       }));
-      await updateDoc(doc(firestore, `institutions/${user.institutionCode}/batches`, timetableModalBatch.id), {
-        timetable: sanitizedSlots
-      });
+      await saveTimetable(user.institutionCode, timetableModalBatch.id, sanitizedSlots);
       toast.success("Weekly timetable saved successfully!");
       setTimetableModalBatch(null);
     } catch (err) {

@@ -1,33 +1,71 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
 
-# dependencies
-node_modules
-.next
-.env
-.env.local
-firebase-debug.log
-# production
-/build
+# Environment Files (Never upload secrets/keys)
+.env*
+!.env.example
 
-# misc
-.DS_Store
+# Service Account Credentials & Private Keys
 *.pem
+*.key
+*.cert
+*.crt
+*service-account*.json
+*firebase-adminsdk*.json
+*credentials*.json
 
-# debug
+# Logs & Audit Reports
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-.pnpm-debug.log*
+pnpm-debug.log*
+bun-debug.log*
+firebase-debug.log*
+firestore-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# Next.js & Production Build Outputs
+/.next/
+/out/
+/build/
+/dist/
+/.turbo/
+/.swc/
 
-# vercel
-.vercel
+# Supabase Local Runtime & Sensitive Seed Data (Contains live user PII)
+.supabase/
+supabase/.temp/
+supabase/seed_firestore_data.sql
+supabase/complete_setup_and_migrate.sql
+*.dump
+*.sql.bak
+*.sql.gz
 
-# typescript
+# Testing & Coverage
+/coverage/
+/.nyc_output/
+
+# Deployment & Vercel
+.vercel/
+
+# TypeScript Build Info
 *.tsbuildinfo
 next-env.d.ts
 
-# IDEs and editors
-.vscode
+# IDEs & System Files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
+Thumbs.db
+
+# Agent / Tool Artifacts
+.agents/
+skills-lock.json

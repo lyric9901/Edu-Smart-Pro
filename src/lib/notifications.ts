@@ -1,7 +1,7 @@
 // src/lib/notifications.ts
-import { app, firestore } from "./firebase";
+import { app } from "./firebase";
 import { getMessaging, getToken, isSupported, Messaging } from "firebase/messaging";
-import { doc, setDoc, arrayUnion } from "firebase/firestore";
+import { saveFCMToken } from "./supabaseDb";
 
 let messagingInstance: Messaging | null = null;
 
@@ -56,7 +56,7 @@ export async function getClientMessaging(): Promise<Messaging | null> {
 }
 
 /**
- * Initializes and silently requests FCM Push Notification permission and registers token to Firestore.
+ * Initializes and silently requests FCM Push Notification permission and registers token to Supabase.
  */
 export async function initPushNotifications(userId: string, institutionCode?: string): Promise<string | null> {
   if (typeof window === "undefined" || !("Notification" in window) || !("serviceWorker" in navigator)) {
@@ -111,15 +111,7 @@ export async function initPushNotifications(userId: string, institutionCode?: st
     }
 
     if (currentToken) {
-      const userDocRef = doc(firestore, "users", userId);
-      const updateData: any = {
-        fcmTokens: arrayUnion(currentToken),
-        updatedAt: Date.now(),
-      };
-      if (institutionCode) {
-        updateData.institutionCode = institutionCode;
-      }
-      await setDoc(userDocRef, updateData, { merge: true });
+      await saveFCMToken(userId, currentToken, institutionCode);
       return currentToken;
     }
 

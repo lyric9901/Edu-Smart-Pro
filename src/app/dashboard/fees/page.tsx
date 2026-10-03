@@ -2,8 +2,7 @@
 
 import { useState, useEffect, useMemo, useSyncExternalStore } from "react";
 import { useAuth } from "@/context/AuthContext";
-import { firestore } from "@/lib/firebase";
-import { collection, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { subscribeToBatches, recordFee, recordBulkFees } from "@/lib/supabaseDb";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import {
@@ -86,40 +85,20 @@ export default function FeesPage() {
     useEffect(() => {
         if (!user?.institutionCode) return;
 
-        const unsub = onSnapshot(
-            collection(
-                firestore,
-                `institutions/${user.institutionCode}/batches`
-            ),
-            (snapshot) => {
-                const list: any[] = [];
+        const unsubscribe = subscribeToBatches(user.institutionCode, (list) => {
+            setBatches(list);
 
-                snapshot.forEach((doc) => {
-                    list.push({
-                        id: doc.id,
-                        ...doc.data(),
-                        students: doc.data().students || [],
-                    });
-                });
+            setSelectedBatch((prev: any) => {
+                if (prev) {
+                    return list.find((b: any) => b.id === prev.id) || (list.length > 0 ? list[0] : null);
+                }
+                return list.length > 0 ? list[0] : null;
+            });
 
-                setBatches(list);
+            setLoading(false);
+        });
 
-                setSelectedBatch((prev: any) => {
-                    if (prev) {
-                        return list.find((b: any) => b.id === prev.id) || (list.length > 0 ? list[0] : null);
-                    }
-                    return list.length > 0 ? list[0] : null;
-                });
-
-                setLoading(false);
-            },
-            (error) => {
-                console.error("Failed to fetch batches for fees:", error);
-                setLoading(false);
-            }
-        );
-
-        return () => unsub();
+        return () => unsubscribe();
     }, [user?.institutionCode]);
 
     // Derived active student for modal
@@ -205,15 +184,13 @@ export default function FeesPage() {
         setSelectedBatch(updatedBatch);
 
         try {
-            await updateDoc(
-                doc(
-                    firestore,
-                    `institutions/${user.institutionCode}/batches`,
-                    selectedBatch.id
-                ),
-                {
-                    students: updatedStudents,
-                }
+            await recordFee(
+                user.institutionCode,
+                selectedBatch.id,
+                student.id,
+                year,
+                monthKey,
+                newStatus
             );
 
             if (newStatus === "paid") {
@@ -244,15 +221,14 @@ export default function FeesPage() {
         setSelectedBatch(updatedBatch);
 
         try {
-            await updateDoc(
-                doc(
-                    firestore,
-                    `institutions/${user.institutionCode}/batches`,
-                    selectedBatch.id
-                ),
-                {
-                    students: updatedStudents,
-                }
+            const studentIds = selectedBatch.students.map((s: any) => s.id);
+            await recordBulkFees(
+                user.institutionCode,
+                selectedBatch.id,
+                year,
+                selectedMonthKey,
+                studentIds,
+                "paid"
             );
             toast.success(`All students marked Paid for ${selectedMonthName} ${year}!`);
         } catch (err) {

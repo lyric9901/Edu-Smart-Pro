@@ -5,8 +5,15 @@ import toast from "react-hot-toast";
 import { useState, useEffect, useMemo, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
-import { firestore } from "@/lib/firebase"; 
-import { doc, getDoc, collection, getDocs, onSnapshot, updateDoc, arrayUnion } from "firebase/firestore"; 
+import { 
+    getInstitution, 
+    getBatches, 
+    subscribeToBatches, 
+    subscribeToNotices, 
+    subscribeToUser, 
+    dismissNotices, 
+    updateStudentProfile 
+} from "@/lib/supabaseDb"; 
 import { motion, AnimatePresence } from "framer-motion";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import {
@@ -37,7 +44,7 @@ const Skeleton = ({ className }) => (
     <div className={`animate-pulse bg-slate-200/75 dark:bg-white/10 backdrop-blur-md rounded-2xl ${className}`} />
 );
 
-// Helper: normalize firestore Timestamp / date / number to epoch ms
+// Helper: normalize timestamp / date / number to epoch ms
 function getTimestamp(val: any) {
     if (!val) return 0;
     if (typeof val === 'number') return val;
@@ -144,8 +151,8 @@ function StudentContent() {
 
     useEffect(() => {
         if (currentStudent?.institutionCode) {
-            getDoc(doc(firestore, "institutions", currentStudent.institutionCode)).then(snap => {
-                if (snap.exists()) setSchoolName(snap.data().name);
+            getInstitution(currentStudent.institutionCode).then(inst => {
+                if (inst) setSchoolName(inst.name);
             });
         }
     }, [currentStudent?.institutionCode]);
@@ -155,24 +162,20 @@ function StudentContent() {
         const studentId = currentStudent?.id || currentStudent?.phone || currentStudent?.name;
         if (!studentId) return;
 
-        const userDocRef = doc(firestore, "users", String(studentId));
-        const unsubUser = onSnapshot(userDocRef, (snap) => {
-            if (snap.exists()) {
-                const data = snap.data();
-                if (Array.isArray(data?.notifications)) {
-                    setUserNotifications(data.notifications);
-                } else {
-                    setUserNotifications([]);
-                }
-                if (Array.isArray(data?.dismissedNotices)) {
-                    setDismissedNoticeIds(prev => {
-                        const merged = Array.from(new Set([...prev, ...data.dismissedNotices]));
-                        try {
-                            localStorage.setItem("eduSmartDismissedNotices", JSON.stringify(merged));
-                        } catch {}
-                        return merged;
-                    });
-                }
+        const unsubUser = subscribeToUser(String(studentId), (profile) => {
+            if (Array.isArray(profile?.notifications)) {
+                setUserNotifications(profile.notifications);
+            } else {
+                setUserNotifications([]);
+            }
+            if (Array.isArray(profile?.dismissedNotices)) {
+                setDismissedNoticeIds(prev => {
+                    const merged = Array.from(new Set([...prev, ...profile.dismissedNotices]));
+                    try {
+                        localStorage.setItem("eduSmartDismissedNotices", JSON.stringify(merged));
+                    } catch {}
+                    return merged;
+                });
             }
         });
 
@@ -182,12 +185,10 @@ function StudentContent() {
     useEffect(() => {
         if (!currentStudent?.institutionCode || !currentStudent?.batchId || !currentStudent?.id) return;
 
-        const batchRef = doc(firestore, `institutions/${currentStudent.institutionCode}/batches`, currentStudent.batchId);
-        const unsubBatch = onSnapshot(batchRef, (docSnap) => {
-            if (docSnap.exists()) {
-                const data = docSnap.data();
-
-                const updatedStudentData = (data.students || []).find(s => s.id === currentStudent.id);
+        const unsubBatch = subscribeToBatches(currentStudent.institutionCode, (batchesList) => {
+            const data = batchesList.find(b => b.id === currentStudent.batchId);
+            if (data) {
+                const updatedStudentData = (data.students || []).find(s => String(s.id) === String(currentStudent.id));
                 if (updatedStudentData) {
                     const mergedData = {
                         ...updatedStudentData,
@@ -213,12 +214,9 @@ function StudentContent() {
             }
         });
 
-        const noticesRef = collection(firestore, `institutions/${currentStudent.institutionCode}/notices`);
-        const unsubNotices = onSnapshot(noticesRef, (snapshot) => {
-            const list = [];
-            snapshot.forEach(docSnap => list.push({ id: docSnap.id, ...docSnap.data(), type: 'notice' }));
-            list.sort((a: any, b: any) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
-            setNotices(list);
+        const unsubNotices = subscribeToNotices(currentStudent.institutionCode, (list) => {
+            const sorted = [...list].sort((a: any, b: any) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
+            setNotices(sorted);
         });
 
         return () => {
@@ -268,49 +266,13 @@ function StudentContent() {
             return next;
         });
 
-        // 2. Clear personal notifications from users doc in Firestore
+        // 2. Clear personal notifications from Supabase
         const studentId = currentStudent?.id || currentStudent?.phone || currentStudent?.name;
         if (studentId) {
-            const userRef = doc(firestore, "users", String(studentId));
-            getDoc(userRef).then(snap => {
-                if (snap.exists()) {
-                    const data = snap.data();
-                    const existingNotifs = Array.isArray(data.notifications) ? data.notifications : [];
-                    const remaining = existingNotifs.filter((n: any) => !deleteSet.has(String(n.id)));
-                    updateDoc(userRef, {
-                        notifications: remaining,
-                        dismissedNotices: arrayUnion(...idsToDelete)
-                    }).catch(e => console.warn("Failed to update user doc:", e));
-                }
-            }).catch(() => {});
+            await dismissNotices(String(studentId), idsToDelete);
         }
 
-        // 3. Clear personal notifications from batch student doc in Firestore
-        if (currentStudent?.institutionCode && currentStudent?.batchId) {
-            const batchRef = doc(firestore, `institutions/${currentStudent.institutionCode}/batches`, currentStudent.batchId);
-            getDoc(batchRef).then(snap => {
-                if (snap.exists()) {
-                    const data = snap.data();
-                    const studentsList = data.students || [];
-                    let modified = false;
-                    const updatedList = studentsList.map((s: any) => {
-                        if (s.id === currentStudent.id && Array.isArray(s.notifications)) {
-                            const remaining = s.notifications.filter((n: any) => !deleteSet.has(String(n.id)));
-                            if (remaining.length !== s.notifications.length) {
-                                modified = true;
-                                return { ...s, notifications: remaining };
-                            }
-                        }
-                        return s;
-                    });
-                    if (modified) {
-                        updateDoc(batchRef, { students: updatedList }).catch(() => {});
-                    }
-                }
-            }).catch(() => {});
-        }
-
-        // 4. Update local state
+        // 3. Update local state
         setStudents(prev => {
             const next = [...prev];
             if (next[activeStudentIndex]) {
@@ -392,7 +354,7 @@ function StudentContent() {
         setSettingsView(view);
     };
 
-    const addNewChild = async (e) => {
+    const addNewChild = async (e: React.FormEvent) => {
         e.preventDefault();
         setAddError("");
         if (!currentStudent?.institutionCode) return;
@@ -403,17 +365,17 @@ function StudentContent() {
                 phone: addForm.phone
             });
 
-            const batchesSnap = await getDocs(collection(firestore, `institutions/${currentStudent.institutionCode}/batches`));
-            let found = null;
+            const batchesList = await getBatches(currentStudent.institutionCode);
+            let found: any = null;
 
-            batchesSnap.forEach(batchDoc => {
-                const list = batchDoc.data().students || [];
+            batchesList.forEach(batch => {
+                const list = batch.students || [];
                 const match = list.find(s =>
                     s.name.trim().toLowerCase() === validatedData.name.trim().toLowerCase() &&
                     (s.phone || "").trim() === validatedData.phone.trim() 
                 );
                 if (match) {
-                    found = { ...match, batchName: batchDoc.data().name, batchId: batchDoc.id, institutionCode: currentStudent.institutionCode };
+                    found = { ...match, batchName: batch.name, batchId: batch.id, institutionCode: currentStudent.institutionCode };
                 }
             });
 
@@ -455,48 +417,38 @@ function StudentContent() {
                 return toast.error("New password must be at least 6 characters.");
             }
 
-            const isFirstTimeSetup = !currentStudent?.password;
-            const validCurrent = isFirstTimeSetup ? currentStudent?.phone : currentStudent?.password;
-            if (!validCurrent || passForm.current !== validCurrent) {
-                return toast.error("Incorrect current password.");
+            if (!currentStudent?.institutionCode || !currentStudent?.id) {
+                return toast.error("Missing student session data.");
             }
 
-            if (currentStudent?.institutionCode && currentStudent?.batchId && currentStudent?.id) {
+            const res = await fetch("/api/auth/student-change-password", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    institutionCode: currentStudent.institutionCode,
+                    studentId: currentStudent.id,
+                    currentPassword: passForm.current,
+                    newPassword: passForm.new,
+                }),
+            });
 
-                const basePath = currentStudent.branchId
-                    ? `institutions/${currentStudent.institutionCode}/branches/${currentStudent.branchId}/batches`
-                    : `institutions/${currentStudent.institutionCode}/batches`;
-
-                const batchRef = doc(firestore, basePath, currentStudent.batchId);
-                const batchSnap = await getDoc(batchRef);
-
-                if (batchSnap.exists()) {
-                    const data = batchSnap.data();
-                    const studentsArr = data.students || [];
-                    const studentIndex = studentsArr.findIndex(s => s.id === currentStudent.id);
-
-                    if (studentIndex > -1) {
-                        studentsArr[studentIndex].password = passForm.new;
-                        await updateDoc(batchRef, { students: studentsArr });
-
-                        const updatedCurrent = { ...currentStudent, password: passForm.new };
-                        setStudents(prev => {
-                            const newStudents = [...prev];
-                            newStudents[activeStudentIndex] = updatedCurrent;
-                            localStorage.setItem("eduSmartStudentsList", JSON.stringify(newStudents));
-                            return newStudents;
-                        });
-
-                        toast.success("Password changed successfully!");
-                        setPassForm({ current: "", new: "", confirm: "" });
-                        navigateSettings("main");
-                    } else {
-                        toast.error("Error syncing student record.");
-                    }
-                } else {
-                    toast.error("Batch document not found.");
-                }
+            const data = await res.json();
+            if (!data.success) {
+                return toast.error(data.message || "Failed to update password.");
             }
+
+            const updatedCurrent = { ...currentStudent, hasPassword: true };
+            delete (updatedCurrent as any).password;
+            setStudents(prev => {
+                const newStudents = [...prev];
+                newStudents[activeStudentIndex] = updatedCurrent;
+                localStorage.setItem("eduSmartStudentsList", JSON.stringify(newStudents));
+                return newStudents;
+            });
+
+            toast.success("Password changed successfully!");
+            setPassForm({ current: "", new: "", confirm: "" });
+            navigateSettings("main");
         } catch (err) {
             console.error("Password update error:", err);
             toast.error("Failed to update password.");
