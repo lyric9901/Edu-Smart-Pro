@@ -124,6 +124,20 @@ textarea {
   }
 }
 
+/* Recharts accessibility focus: remove outline for mouse/pointer clicks, preserve for keyboard navigation */
+.recharts-responsive-container:focus:not(:focus-visible),
+.recharts-wrapper:focus:not(:focus-visible),
+.recharts-surface:focus:not(:focus-visible),
+.recharts-wrapper *:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.recharts-wrapper:focus-visible,
+.recharts-surface:focus-visible {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 2px;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -134,3 +148,4 @@ textarea {
     transition-duration: 0.01ms !important;
   }
 }
+
