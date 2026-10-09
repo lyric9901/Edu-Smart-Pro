@@ -1,8 +1,14 @@
 // src/app/api/super-admin/verify/route.ts
 import { NextResponse } from "next/server";
+import { checkBotId } from "botid/server";
 import { timingSafeEqualStr, createSuperAdminToken, checkRateLimit } from "@/lib/security";
 
 export async function POST(request: Request) {
+  const verification = await checkBotId();
+  if (verification.isBot) {
+    return NextResponse.json({ error: "Automated request detected. Access denied." }, { status: 403 });
+  }
+
   try {
     // 1. IP Rate Limiting (5 attempts per 15 minutes)
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown-client";

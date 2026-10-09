@@ -1,10 +1,20 @@
 import { Inter } from "next/font/google";
 import dynamic from "next/dynamic";
+import { BotIdClient } from "botid/client";
 import { AuthProvider } from "@/context/AuthContext";
 import { ThemeProvider } from "@/context/ThemeContext";
 import JsonLd from "@/context/JsonLd"; // JSON is so small it doesn't need lazy loading
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+
+const protectedRoutes = [
+  { path: "/api/auth/student-login", method: "POST" },
+  { path: "/api/auth/admin-login", method: "POST" },
+  { path: "/api/auth/register-institution", method: "POST" },
+  { path: "/api/auth/student-change-password", method: "POST" },
+  { path: "/api/super-admin/verify", method: "POST" },
+  { path: "/api/notifications/send", method: "POST" },
+];
 
 
 // 🚀 Performance tweak: display swap is mandatory for text performance
@@ -139,6 +149,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        <BotIdClient protect={protectedRoutes} />
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className={inter.className}>

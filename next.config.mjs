@@ -1,4 +1,5 @@
 import withPWAInit from "@ducanh2912/next-pwa";
+import { withBotId } from "botid/next/config";
 
 const withPWA = withPWAInit({
   dest: "public",
@@ -24,4 +25,4 @@ const nextConfig = {
   },
 };
 
-export default withPWA(nextConfig);
+export default withBotId(withPWA(nextConfig));

@@ -1,9 +1,15 @@
 // src/app/api/auth/admin-login/route.ts
 import { NextResponse } from "next/server";
+import { checkBotId } from "botid/server";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { verifyPassword, hashPassword, checkRateLimit } from "@/lib/security";
 
 export async function POST(request: Request) {
+  const verification = await checkBotId();
+  if (verification.isBot) {
+    return NextResponse.json({ error: "Automated request detected. Access denied." }, { status: 403 });
+  }
+
   try {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const { allowed } = checkRateLimit(`admin-login:${ip}`, 8, 5 * 60 * 1000);

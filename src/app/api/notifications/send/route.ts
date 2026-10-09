@@ -1,11 +1,17 @@
 // src/app/api/notifications/send/route.ts
 import { NextResponse } from "next/server";
+import { checkBotId } from "botid/server";
 import { getAdminMessaging, hasAdminCredentials } from "@/lib/firebaseAdmin";
 import { getSupabaseAdmin } from "@/lib/supabaseAdmin";
 import { addDirectNotification } from "@/lib/supabaseDb";
 import { checkRateLimit } from "@/lib/security";
 
 export async function POST(request: Request) {
+  const verification = await checkBotId();
+  if (verification.isBot) {
+    return NextResponse.json({ error: "Automated request detected. Access denied." }, { status: 403 });
+  }
+
   try {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
     const { allowed } = checkRateLimit(`notif-send:${ip}`, 30, 60 * 1000);
