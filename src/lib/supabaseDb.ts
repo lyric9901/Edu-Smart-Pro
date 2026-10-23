@@ -9,6 +9,16 @@ export interface DBInstitution {
   phone?: string;
   plan?: string;
   createdAt?: number;
+  email?: string;
+  institutionType?: string;
+  address?: string;
+  category?: string;
+  description?: string;
+  trialStartDate?: string;
+  trialEndDate?: string;
+  planStatus?: "active" | "trial" | "expired" | "cancelled";
+  notifiedDay4?: boolean;
+  notifiedExpired?: boolean;
 }
 
 export interface DBBranch {
@@ -21,9 +31,14 @@ export interface DBBranch {
 export interface DBAdmin {
   id?: string;
   username: string;
-  password: string;
+  password?: string;
   institutionCode: string;
   role: string;
+  email?: string;
+  phone?: string;
+  fullName?: string;
+  age?: number;
+  forcePasswordReset?: boolean;
 }
 
 export interface DBTimeSlot {
@@ -102,6 +117,16 @@ export async function getInstitution(code: string): Promise<DBInstitution | null
     phone: data.phone,
     plan: data.plan,
     createdAt: data.created_at ? new Date(data.created_at).getTime() : Date.now(),
+    email: data.email,
+    institutionType: data.institution_type,
+    address: data.address,
+    category: data.category,
+    description: data.description,
+    trialStartDate: data.trial_start_date,
+    trialEndDate: data.trial_end_date,
+    planStatus: data.plan_status || (data.plan === "trial" ? "active" : "active"),
+    notifiedDay4: Boolean(data.notified_day_4),
+    notifiedExpired: Boolean(data.notified_expired),
   };
 }
 

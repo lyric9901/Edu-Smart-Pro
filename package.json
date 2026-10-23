@@ -19,6 +19,7 @@
     "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "botid": "^1.5.11",
+    "disposable-email-domains": "^1.0.62",
     "firebase": "^12.8.0",
     "firebase-admin": "^14.5.0",
     "framer-motion": "^12.33.0",
@@ -30,6 +31,7 @@
     "react-dom": "19.2.3",
     "react-hot-toast": "^2.6.0",
     "recharts": "^3.8.1",
+    "resend": "^6.34.1",
     "zod": "^4.3.6",
     "zustand": "^5.0.12"
   },

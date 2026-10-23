@@ -38,7 +38,7 @@ export async function POST(request: Request) {
 
     const { data: admin, error } = await supabaseAdmin
       .from("admins")
-      .select("id, username, password, institution_id, role")
+      .select("id, username, password, institution_id, role, force_password_reset")
       .ilike("username", cleanUsername)
       .maybeSingle();
 
@@ -81,6 +81,7 @@ export async function POST(request: Request) {
         username: admin.username,
         institutionCode: admin.institution_id,
         role: admin.role || "admin",
+        forcePasswordReset: Boolean(admin.force_password_reset),
       },
     });
   } catch (err: any) {

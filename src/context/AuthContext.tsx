@@ -10,6 +10,7 @@ export interface AuthUser {
   username: string;
   institutionCode: string;
   schoolId?: string;
+  forcePasswordReset?: boolean;
 }
 
 // Define what the Context provides
@@ -18,6 +19,7 @@ interface AuthContextType {
   loading: boolean;
   loginAdmin: (username: string, password: string, institutionCodeFromLogin?: string) => Promise<{ success: boolean; message?: string }>;
   logout: () => void;
+  clearForcePasswordReset: () => void;
 }
 
 // Initialize Context with undefined to enforce Provider usage
@@ -85,6 +87,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         role: data.user.role || "admin",
         username: data.user.username,
         institutionCode: data.user.institutionCode,
+        forcePasswordReset: Boolean(data.user.forcePasswordReset),
       };
 
       setUser(userData);
@@ -97,6 +100,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const clearForcePasswordReset = () => {
+    setUser((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, forcePasswordReset: false };
+      try {
+        localStorage.setItem("eduSmartUser", JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
 
   // 3. LOGOUT
   const logout = () => {
@@ -106,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, loginAdmin, logout }}>
+    <AuthContext.Provider value={{ user, loading, loginAdmin, logout, clearForcePasswordReset }}>
       {children}
     </AuthContext.Provider>
   );

@@ -2,7 +2,7 @@
 import { useAuth } from "@/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { getInstitution } from "@/lib/supabaseDb";
+import { getInstitution, type DBInstitution } from "@/lib/supabaseDb";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   LayoutDashboard, 
@@ -25,6 +25,8 @@ import {
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import InstituteDataModal from "@/components/InstituteDataModal";
+import TrialBanner from "@/components/TrialBanner";
+import ForcePasswordResetModal from "@/components/ForcePasswordResetModal";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const { user, logout, loading } = useAuth();
@@ -32,6 +34,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const pathname = usePathname(); 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [schoolName, setSchoolName] = useState("Loading...");
+  const [institution, setInstitution] = useState<DBInstitution | null>(null);
   const [showSettingsModal, setShowSettingsModal] = useState(false);
   const [showInstituteModal, setShowInstituteModal] = useState(false);
 
@@ -44,7 +47,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   useEffect(() => {
     if (user?.institutionCode) {
       getInstitution(user.institutionCode).then(inst => {
-        if (inst) setSchoolName(inst.name);
+        if (inst) {
+          setInstitution(inst);
+          setSchoolName(inst.name);
+        }
       });
     }
   }, [user?.institutionCode]);
@@ -176,7 +182,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
       {/* MAIN CONTENT AREA */}
       <main className="flex-1 overflow-y-auto pt-20 md:pt-0 scroll-smooth pb-28 md:pb-0 relative z-0">
+        <TrialBanner institution={institution} />
         {children}
+        <ForcePasswordResetModal isOpen={Boolean(user?.forcePasswordReset)} />
       </main>
 
       {/* MOBILE BOTTOM NAV */}
