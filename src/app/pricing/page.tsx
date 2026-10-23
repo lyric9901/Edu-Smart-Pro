@@ -143,7 +143,7 @@ export default function PricingPage() {
           Transparent Subscriptions, Zero Lock-In
         </h1>
         <p className="text-base md:text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-          No ₹50,000 legacy contracts. No hidden charges. Enjoy a full-access <strong>7-day free trial on our Basic plan</strong>, cancel subscription anytime, and seamlessly import/export your data in Excel/CSV.
+          No expensive legacy contracts. No hidden fees. Start with a full-access <strong>7-day free trial on our Basic plan</strong>, cancel anytime with one click, and import or export your data freely in Excel/CSV.
         </p>
 
         {/* TRUST PILLS */}

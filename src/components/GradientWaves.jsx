@@ -160,8 +160,11 @@ const GradientWaves = ({
     const container = containerRef.current;
     if (!container) return;
 
+    const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (prefersReducedMotion) return;
+
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 1.5);
+    const dpr = isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 1.25);
 
     const renderer = new Renderer({
       webgl: 2,
@@ -203,7 +206,7 @@ const GradientWaves = ({
         uZoom: { value: zoom },
         uHeight: { value: height },
         uFogDepth: { value: fogDepth },
-        uSteps: { value: detailToSteps(detail) },
+        uSteps: { value: isMobile ? Math.min(24.0, detailToSteps(detail)) : detailToSteps(detail) },
         uBrightness: { value: brightness },
         uOpacity: { value: opacity },
         uGrain: { value: grain ? 1.0 : 0.0 },
@@ -253,16 +256,21 @@ const GradientWaves = ({
     let isVisible = true;
     let isPageVisible = !document.hidden;
     const t0 = performance.now();
+    let lastRenderTime = 0;
+    const minFrameInterval = isMobile ? 1000 / 30 : 1000 / 60;
 
     const loop = t => {
-      program.uniforms.iTime.value = (t - t0) * 0.001;
-      const tx = enableMouseRef.current ? targetMouse[0] : 0.5;
-      const ty = enableMouseRef.current ? targetMouse[1] : 0.5;
-      currentMouse[0] += 0.05 * (tx - currentMouse[0]);
-      currentMouse[1] += 0.05 * (ty - currentMouse[1]);
-      program.uniforms.uMouse.value[0] = currentMouse[0];
-      program.uniforms.uMouse.value[1] = currentMouse[1];
-      renderer.render({ scene: mesh });
+      if (t - lastRenderTime >= minFrameInterval) {
+        lastRenderTime = t;
+        program.uniforms.iTime.value = (t - t0) * 0.001;
+        const tx = enableMouseRef.current ? targetMouse[0] : 0.5;
+        const ty = enableMouseRef.current ? targetMouse[1] : 0.5;
+        currentMouse[0] += 0.05 * (tx - currentMouse[0]);
+        currentMouse[1] += 0.05 * (ty - currentMouse[1]);
+        program.uniforms.uMouse.value[0] = currentMouse[0];
+        program.uniforms.uMouse.value[1] = currentMouse[1];
+        renderer.render({ scene: mesh });
+      }
       raf = requestAnimationFrame(loop);
     };
 

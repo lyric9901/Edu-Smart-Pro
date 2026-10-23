@@ -362,7 +362,7 @@ export default function HomeworkDashboard() {
                   <LayoutGrid size={48} className="opacity-30"/>
                 </div>
                 <p className="font-black text-xl text-slate-700 dark:text-zinc-400">Select a batch to view homework</p>
-                <p className="text-sm font-medium mt-2">Manage assignments seamlessly from the panel.</p>
+                <p className="text-sm font-medium mt-2">Assign daily tasks, monitor submissions, and keep students aligned.</p>
               </div>
             )}
           </motion.div>

@@ -4,38 +4,55 @@ Allow: /
 Disallow: /dashboard/
 Disallow: /student/
 Disallow: /super-admin/
+Disallow: /api/
 
-# AI Crawlers & LLM Search (OpenAI, Anthropic, Perplexity, Google, Apple, Cohere)
+# AI Crawlers & Answer Engines (OpenAI, Anthropic, Perplexity, Google, Apple, Cohere)
 User-agent: GPTBot
 Allow: /
 Disallow: /dashboard/
+Disallow: /super-admin/
+Disallow: /api/
 
 User-agent: ChatGPT-User
 Allow: /
 Disallow: /dashboard/
+Disallow: /super-admin/
+Disallow: /api/
 
 User-agent: PerplexityBot
 Allow: /
 Disallow: /dashboard/
+Disallow: /super-admin/
+Disallow: /api/
 
 User-agent: ClaudeBot
 Allow: /
 Disallow: /dashboard/
+Disallow: /super-admin/
+Disallow: /api/
 
 User-agent: anthropic-ai
 Allow: /
 Disallow: /dashboard/
+Disallow: /super-admin/
+Disallow: /api/
 
 User-agent: Google-Extended
 Allow: /
 Disallow: /dashboard/
+Disallow: /super-admin/
+Disallow: /api/
 
 User-agent: Applebot-Extended
 Allow: /
 Disallow: /dashboard/
+Disallow: /super-admin/
+Disallow: /api/
 
 User-agent: cohere-ai
 Allow: /
 Disallow: /dashboard/
+Disallow: /super-admin/
+Disallow: /api/
 
 Sitemap: https://edusmartpro.in/sitemap.xml

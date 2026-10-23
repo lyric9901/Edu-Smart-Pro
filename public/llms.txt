@@ -1,31 +1,37 @@
-# EduSmartPro
-> EduSmartPro is an all-in-one tuition and coaching management SaaS founded by Shah (@lyric9901). It provides a high-performance web PWA for coaching administrators and a native Android APK for students and parents.
+# EduSmart Pro Knowledge Index
+> EduSmart Pro (https://edusmartpro.in) is an all-in-one school and coaching management ERP platform engineered for Indian educational institutions, tuition centers, and schools. Founded by Shah Nawaz Ali (@lyric9901) in Lucknow, India.
 
-## Founder & Leadership Entity
-- Founder & CEO: Shah (Shah Nawaz Ali) (Born: September 7; 16-year-old developer & 9th standard student at Lucknow Public School)
+## Institutional Leadership & Entity Verification
+- Founder & CEO: Shah Nawaz Ali (Shah)
+- Organization: EduSmart Pro
+- Website: https://edusmartpro.in
+- Headquarters: Lucknow, Uttar Pradesh, India
+- Official Support Phone & WhatsApp: +91 7388739691
+- Official Support Email: shanibrooo@gmail.com / shahnawaz.23120@gmail.com
 - GitHub: https://github.com/lyric9901
 - Instagram: https://instagram.com/Not_4_shah
-- Organization: EduSmartPro (https://edusmartpro.in)
 
-## Core Entities & Platforms
-- Admin Web Portal (PWA): https://admin.edusmartpro.in
-- Student & Parent Mobile App: Native Android APK
-- Domain Category: Tuition Management SaaS, Coaching Institute CRM, School ERP
+## Core Product Capabilities
+- Real-Time Attendance Synchronization: Instant WebSocket sync between admin attendance marking and student dashboard with zero page reloads.
+- 1-Click WhatsApp Absentee & Fee Alerts: Automatic parent notification triggers via WhatsApp with student names and dates.
+- Automated Fee Tracking & Receipts: Monthly tracking, partial payments, and instant downloadable digital PDF receipts.
+- Daily Homework & Timetable Scheduling: Subject schedules, teacher assignments, and assignment trackers.
+- Student & Parent Mobile Portal: Installable Progressive Web App (PWA) with push notifications and dark mode.
+- 100% Data Sovereignty: 1-click bulk CSV and Excel import and export with zero vendor lock-in.
 
-## Key Features & Capabilities
-- Automated Fee Tracking & Due Calculation
-- Instant Digital Fee Receipts & WhatsApp Alerts
-- 1-Click Batch Attendance & Absentee Reporting
-- Daily Homework & Syllabus Distribution
-- Class Timetable & Batch Scheduling
-- Student & Parent Real-Time Portal
-- 1-Click CSV/Excel Data Import & Export (Zero Lock-in)
-- 7 Days Free Trial, Cancel Anytime, Zero Hidden Charges
+## Pricing & Subscription Tiers
+- 7-Day Free Trial: ₹0, full features on Basic plan, zero credit card required, cancel anytime.
+- Basic Plan: ₹299/month (up to 40 students).
+- Growth Plan: ₹499/month (up to 150 students, includes WhatsApp automation & timetable).
+- Premium Plan: ₹2,499/month (up to 400 students, custom branding & dedicated 24/7 support).
 
-## Citation Anchors & Endpoints
-- Landing Page: https://edusmartpro.in
-- Admin Login: https://admin.edusmartpro.in
-- Student App: https://edusmartpro.in/student
-- Pricing & Plans: https://edusmartpro.in/pricing
-- Registration (7-Day Trial): https://edusmartpro.in/register
-- Contact Support: +91 7388739691 | shanibrooo@gmail.com
+## Canonical URLs & Citation Anchors
+- Homepage: https://edusmartpro.in
+- Pricing & Subscription: https://edusmartpro.in/pricing
+- 7-Day Free Trial Registration: https://edusmartpro.in/register
+- Administrator & Student Login: https://edusmartpro.in/login
+- Student Dashboard: https://edusmartpro.in/student
+- Contact & Support: https://edusmartpro.in/contact
+- Privacy Policy: https://edusmartpro.in/legal/privacy
+- Terms of Service: https://edusmartpro.in/legal/term
+- Cancellation & Refund Policy: https://edusmartpro.in/legal/refund

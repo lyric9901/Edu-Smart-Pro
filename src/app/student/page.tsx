@@ -9,6 +9,7 @@ import {
     getInstitution, 
     getBatches, 
     subscribeToBatches, 
+    subscribeToStudentData,
     subscribeToNotices, 
     subscribeToUser, 
     dismissNotices, 
@@ -183,36 +184,88 @@ function StudentContent() {
     }, [currentStudent?.id, currentStudent?.phone, currentStudent?.name]);
 
     useEffect(() => {
-        if (!currentStudent?.institutionCode || !currentStudent?.batchId || !currentStudent?.id) return;
+        if (!currentStudent?.institutionCode || !currentStudent?.id) return;
 
-        const unsubBatch = subscribeToBatches(currentStudent.institutionCode, (batchesList) => {
-            const data = batchesList.find(b => b.id === currentStudent.batchId);
-            if (data) {
-                const updatedStudentData = (data.students || []).find(s => String(s.id) === String(currentStudent.id));
-                if (updatedStudentData) {
-                    const mergedData = {
-                        ...updatedStudentData,
-                        batchName: data.name,
-                        batchId: currentStudent.batchId,
-                        institutionCode: currentStudent.institutionCode,
-                        batchTiming: data.timing,
-                        timetable: Array.isArray(data.timetable) ? data.timetable : []
-                    };
+        const unsubStudent = subscribeToStudentData(
+            currentStudent.institutionCode,
+            currentStudent.batchId || "",
+            currentStudent.id,
+            {
+                onAttendanceUpdate: (date, status) => {
                     setStudents(prev => {
                         const newStudents = [...prev];
-                        newStudents[activeStudentIndex] = mergedData;
-                        localStorage.setItem("eduSmartStudentsList", JSON.stringify(newStudents));
+                        const target = newStudents[activeStudentIndex];
+                        if (target) {
+                            const updatedAttendance = { ...(target.attendance || {}), [date]: status };
+                            newStudents[activeStudentIndex] = { ...target, attendance: updatedAttendance };
+                            try {
+                                localStorage.setItem("eduSmartStudentsList", JSON.stringify(newStudents));
+                            } catch {}
+                        }
+                        return newStudents;
+                    });
+                },
+                onFullAttendanceRefresh: (attendance) => {
+                    setStudents(prev => {
+                        const newStudents = [...prev];
+                        const target = newStudents[activeStudentIndex];
+                        if (target) {
+                            newStudents[activeStudentIndex] = { ...target, attendance };
+                            try {
+                                localStorage.setItem("eduSmartStudentsList", JSON.stringify(newStudents));
+                            } catch {}
+                        }
+                        return newStudents;
+                    });
+                },
+                onFeeUpdate: (fees) => {
+                    setStudents(prev => {
+                        const newStudents = [...prev];
+                        const target = newStudents[activeStudentIndex];
+                        if (target) {
+                            newStudents[activeStudentIndex] = { ...target, fees };
+                            try {
+                                localStorage.setItem("eduSmartStudentsList", JSON.stringify(newStudents));
+                            } catch {}
+                        }
+                        return newStudents;
+                    });
+                },
+                onAssignmentsUpdate: (list) => {
+                    setAssignments(list.sort((a: any, b: any) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt)));
+                },
+                onTimetableUpdate: (timetable) => {
+                    setStudents(prev => {
+                        const newStudents = [...prev];
+                        const target = newStudents[activeStudentIndex];
+                        if (target) {
+                            newStudents[activeStudentIndex] = { ...target, timetable };
+                            try {
+                                localStorage.setItem("eduSmartStudentsList", JSON.stringify(newStudents));
+                            } catch {}
+                        }
+                        return newStudents;
+                    });
+                },
+                onBatchInfoUpdate: (info) => {
+                    setStudents(prev => {
+                        const newStudents = [...prev];
+                        const target = newStudents[activeStudentIndex];
+                        if (target) {
+                            newStudents[activeStudentIndex] = { 
+                                ...target, 
+                                batchName: info.name || target.batchName, 
+                                batchTiming: info.timing || target.batchTiming 
+                            };
+                            try {
+                                localStorage.setItem("eduSmartStudentsList", JSON.stringify(newStudents));
+                            } catch {}
+                        }
                         return newStudents;
                     });
                 }
-
-                if (data.assignments) {
-                    setAssignments(Object.values(data.assignments).sort((a: any, b: any) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt)));
-                } else {
-                    setAssignments([]);
-                }
             }
-        });
+        );
 
         const unsubNotices = subscribeToNotices(currentStudent.institutionCode, (list) => {
             const sorted = [...list].sort((a: any, b: any) => getTimestamp(b.createdAt) - getTimestamp(a.createdAt));
@@ -220,7 +273,7 @@ function StudentContent() {
         });
 
         return () => {
-            unsubBatch();
+            unsubStudent();
             unsubNotices();
         };
     }, [currentStudent?.institutionCode, currentStudent?.batchId, currentStudent?.id, activeStudentIndex]);

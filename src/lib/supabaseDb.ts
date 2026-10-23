@@ -323,7 +323,7 @@ export async function getBatches(institutionCode: string, branchId?: string): Pr
     assignmentsRes,
     timetableRes,
   ] = await Promise.all([
-    supabase.from("students").select("*").eq("institution_id", institutionCode),
+    supabase.from("students").select("id, name, phone, roll_number, performance").eq("institution_id", institutionCode),
     supabase.from("batch_students").select("*").eq("institution_id", institutionCode).in("batch_id", batchIds),
     supabase.from("attendance").select("*").eq("institution_id", institutionCode).in("batch_id", batchIds),
     supabase.from("fee_records").select("*").eq("institution_id", institutionCode).in("batch_id", batchIds),
@@ -549,11 +549,14 @@ export async function addStudent(
   }
 
   // 2. Link student to batch in batch_students junction
-  const { error: bsError } = await supabase.from("batch_students").upsert({
-    institution_id: institutionCode,
-    batch_id: batchId,
-    student_id: studentId,
-  });
+  const { error: bsError } = await supabase.from("batch_students").upsert(
+    {
+      institution_id: institutionCode,
+      batch_id: batchId,
+      student_id: studentId,
+    },
+    { onConflict: "institution_id,batch_id,student_id" }
+  );
 
   if (bsError) {
     console.error("Error linking student to batch:", bsError);
@@ -599,7 +602,9 @@ export async function addMultipleStudents(
     student_id: s.id,
   }));
 
-  const { error: jError } = await supabase.from("batch_students").upsert(junctionRows);
+  const { error: jError } = await supabase
+    .from("batch_students")
+    .upsert(junctionRows, { onConflict: "institution_id,batch_id,student_id" });
   if (jError) {
     console.error("Error linking multiple students:", jError);
     throw jError;
@@ -668,13 +673,16 @@ export async function recordAttendance(
   status: "present" | "absent" | "late"
 ): Promise<boolean> {
   const sid = String(studentId);
-  const { error } = await supabase.from("attendance").upsert({
-    institution_id: institutionCode,
-    batch_id: batchId,
-    student_id: sid,
-    date,
-    status,
-  });
+  const { error } = await supabase.from("attendance").upsert(
+    {
+      institution_id: institutionCode,
+      batch_id: batchId,
+      student_id: sid,
+      date,
+      status,
+    },
+    { onConflict: "institution_id,batch_id,student_id,date" }
+  );
 
   if (error) {
     console.error("Error recording attendance:", error);
@@ -699,7 +707,9 @@ export async function recordBulkAttendance(
     status: r.status,
   }));
 
-  const { error } = await supabase.from("attendance").upsert(rows);
+  const { error } = await supabase
+    .from("attendance")
+    .upsert(rows, { onConflict: "institution_id,batch_id,student_id,date" });
   if (error) {
     console.error("Error recording bulk attendance:", error);
     throw error;
@@ -717,16 +727,19 @@ export async function recordFee(
   amount = 0
 ): Promise<boolean> {
   const sid = String(studentId);
-  const { error } = await supabase.from("fee_records").upsert({
-    institution_id: institutionCode,
-    batch_id: batchId,
-    student_id: sid,
-    year,
-    month,
-    status,
-    amount,
-    paid_at: status === "paid" ? new Date().toISOString() : null,
-  });
+  const { error } = await supabase.from("fee_records").upsert(
+    {
+      institution_id: institutionCode,
+      batch_id: batchId,
+      student_id: sid,
+      year,
+      month,
+      status,
+      amount,
+      paid_at: status === "paid" ? new Date().toISOString() : null,
+    },
+    { onConflict: "institution_id,batch_id,student_id,year,month" }
+  );
 
   if (error) {
     console.error("Error recording fee:", error);
@@ -755,7 +768,9 @@ export async function recordBulkFees(
     paid_at: status === "paid" ? new Date().toISOString() : null,
   }));
 
-  const { error } = await supabase.from("fee_records").upsert(rows);
+  const { error } = await supabase
+    .from("fee_records")
+    .upsert(rows, { onConflict: "institution_id,batch_id,student_id,year,month" });
   if (error) {
     console.error("Error recording bulk fees:", error);
     throw error;
@@ -1116,49 +1131,231 @@ export function subscribeToBatches(
   // Initial fetch
   getBatches(institutionCode).then((batches) => onChange(batches));
 
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+  const debouncedFetch = () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      getBatches(institutionCode).then((b) => onChange(b));
+    }, 150);
+  };
+
+  const channelName = `batches_rt_${institutionCode}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   const channel = supabase
-    .channel(`batches_realtime_${institutionCode}`)
+    .channel(channelName)
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "batches", filter: `institution_id=eq.${institutionCode}` },
-      () => getBatches(institutionCode).then((b) => onChange(b))
+      debouncedFetch
     )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "students", filter: `institution_id=eq.${institutionCode}` },
-      () => getBatches(institutionCode).then((b) => onChange(b))
+      debouncedFetch
     )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "batch_students", filter: `institution_id=eq.${institutionCode}` },
-      () => getBatches(institutionCode).then((b) => onChange(b))
+      debouncedFetch
     )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "attendance", filter: `institution_id=eq.${institutionCode}` },
-      () => getBatches(institutionCode).then((b) => onChange(b))
+      debouncedFetch
     )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "fee_records", filter: `institution_id=eq.${institutionCode}` },
-      () => getBatches(institutionCode).then((b) => onChange(b))
+      debouncedFetch
     )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "exam_scores", filter: `institution_id=eq.${institutionCode}` },
-      () => getBatches(institutionCode).then((b) => onChange(b))
+      debouncedFetch
     )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "assignments", filter: `institution_id=eq.${institutionCode}` },
-      () => getBatches(institutionCode).then((b) => onChange(b))
+      debouncedFetch
     )
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "timetable_slots", filter: `institution_id=eq.${institutionCode}` },
-      () => getBatches(institutionCode).then((b) => onChange(b))
+      debouncedFetch
     )
     .subscribe();
+
+  return () => {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    supabase.removeChannel(channel);
+  };
+}
+
+export interface StudentDataSubscriptionCallbacks {
+  onAttendanceUpdate: (date: string, status: "present" | "absent" | "late") => void;
+  onFullAttendanceRefresh?: (attendance: Record<string, "present" | "absent" | "late">) => void;
+  onAssignmentsUpdate?: (assignments: DBAssignment[]) => void;
+  onTimetableUpdate?: (timetable: DBTimeSlot[]) => void;
+  onBatchInfoUpdate?: (info: { name: string; timing: { start?: string; end?: string } }) => void;
+  onFeeUpdate?: (feeMap: Record<string, Record<string, "paid" | "pending">>) => void;
+}
+
+export function subscribeToStudentData(
+  institutionCode: string,
+  batchId: string,
+  studentId: string | number,
+  callbacks: StudentDataSubscriptionCallbacks
+): () => void {
+  const sid = String(studentId);
+
+  // 1. Initial Targeted Fetch for this specific student
+  const fetchStudentData = async () => {
+    try {
+      const [attRes, feeRes, asgRes, timeRes, batchRes] = await Promise.all([
+        supabase.from("attendance").select("date, status").eq("institution_id", institutionCode).eq("student_id", sid),
+        supabase.from("fee_records").select("year, month, status").eq("institution_id", institutionCode).eq("student_id", sid),
+        batchId ? supabase.from("assignments").select("*").eq("institution_id", institutionCode).eq("batch_id", batchId) : Promise.resolve({ data: [] }),
+        batchId ? supabase.from("timetable_slots").select("*").eq("institution_id", institutionCode).eq("batch_id", batchId) : Promise.resolve({ data: [] }),
+        batchId ? supabase.from("batches").select("name, timing_start, timing_end").eq("institution_id", institutionCode).eq("id", batchId).maybeSingle() : Promise.resolve({ data: null })
+      ]);
+
+      if (attRes.data && callbacks.onFullAttendanceRefresh) {
+        const attDict: Record<string, "present" | "absent" | "late"> = {};
+        attRes.data.forEach((row: any) => {
+          attDict[row.date] = row.status;
+        });
+        callbacks.onFullAttendanceRefresh(attDict);
+      }
+
+      if (feeRes.data && callbacks.onFeeUpdate) {
+        const feeDict: Record<string, Record<string, "paid" | "pending">> = {};
+        feeRes.data.forEach((row: any) => {
+          const yr = String(row.year);
+          if (!feeDict[yr]) feeDict[yr] = {};
+          feeDict[yr][row.month] = row.status;
+        });
+        callbacks.onFeeUpdate(feeDict);
+      }
+
+      if (asgRes.data && callbacks.onAssignmentsUpdate) {
+        const asgList: DBAssignment[] = asgRes.data.map((a: any) => ({
+          id: a.id,
+          title: a.title,
+          description: a.description || "",
+          dueDate: a.due_date,
+          createdAt: a.created_at,
+        }));
+        callbacks.onAssignmentsUpdate(asgList);
+      }
+
+      if (timeRes.data && callbacks.onTimetableUpdate) {
+        const slots: DBTimeSlot[] = timeRes.data.map((ts: any) => ({
+          id: ts.id,
+          day: ts.day,
+          subject: ts.subject,
+          startTime: ts.start_time,
+          endTime: ts.end_time,
+          room: ts.room || "",
+          teacher: ts.teacher || "",
+        }));
+        callbacks.onTimetableUpdate(slots);
+      }
+
+      if (batchRes.data && callbacks.onBatchInfoUpdate) {
+        callbacks.onBatchInfoUpdate({
+          name: batchRes.data.name || "",
+          timing: {
+            start: batchRes.data.timing_start || "",
+            end: batchRes.data.timing_end || ""
+          }
+        });
+      }
+    } catch (e) {
+      console.error("Error in initial student data fetch:", e);
+    }
+  };
+
+  fetchStudentData();
+
+  // 2. Realtime Channel with isolated unique channel identifier
+  const channelName = `std_rt_${institutionCode}_${sid}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+  const channel = supabase
+    .channel(channelName)
+    // Instant attendance event stream
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "attendance", filter: `student_id=eq.${sid}` },
+      (payload: any) => {
+        if (payload.new && payload.new.date && payload.new.status) {
+          callbacks.onAttendanceUpdate(payload.new.date, payload.new.status);
+        } else {
+          fetchStudentData();
+        }
+      }
+    )
+    // Instant fee event stream
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "fee_records", filter: `student_id=eq.${sid}` },
+      () => {
+        fetchStudentData();
+      }
+    );
+
+  if (batchId) {
+    channel
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "assignments", filter: `batch_id=eq.${batchId}` },
+        () => {
+          supabase
+            .from("assignments")
+            .select("*")
+            .eq("institution_id", institutionCode)
+            .eq("batch_id", batchId)
+            .then((res) => {
+              if (res.data && callbacks.onAssignmentsUpdate) {
+                callbacks.onAssignmentsUpdate(
+                  res.data.map((a: any) => ({
+                    id: a.id,
+                    title: a.title,
+                    description: a.description || "",
+                    dueDate: a.due_date,
+                    createdAt: a.created_at,
+                  }))
+                );
+              }
+            });
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "timetable_slots", filter: `batch_id=eq.${batchId}` },
+        () => {
+          supabase
+            .from("timetable_slots")
+            .select("*")
+            .eq("institution_id", institutionCode)
+            .eq("batch_id", batchId)
+            .then((res) => {
+              if (res.data && callbacks.onTimetableUpdate) {
+                callbacks.onTimetableUpdate(
+                  res.data.map((ts: any) => ({
+                    id: ts.id,
+                    day: ts.day,
+                    subject: ts.subject,
+                    startTime: ts.start_time,
+                    endTime: ts.end_time,
+                    room: ts.room || "",
+                    teacher: ts.teacher || "",
+                  }))
+                );
+              }
+            });
+        }
+      );
+  }
+
+  channel.subscribe();
 
   return () => {
     supabase.removeChannel(channel);
@@ -1171,8 +1368,9 @@ export function subscribeToNotices(
 ): () => void {
   getNotices(institutionCode).then((notices) => onChange(notices));
 
+  const channelName = `notices_rt_${institutionCode}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
   const channel = supabase
-    .channel(`notices_realtime_${institutionCode}`)
+    .channel(channelName)
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "notices", filter: `institution_id=eq.${institutionCode}` },
